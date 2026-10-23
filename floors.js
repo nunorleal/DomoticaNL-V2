@@ -19,6 +19,7 @@
  document.getElementById('open-cellar').addEventListener('click',()=>{
   document.getElementById('basement-dialog-title').textContent='Cave';document.getElementById('basement-dialog-text').textContent='Divisão no piso −1 · entrada em baixo';
   const info=document.getElementById('basement-dialog-info');info.innerHTML='<div id="cellar-temperature-detail"></div><p class="cellar-door-status" role="status"></p><div class="backup-actions"><button class="secondary-action cellar-data-refresh" type="button">Atualizar dados</button><button class="secondary-action cellar-door-settings" type="button">Sensor da porta</button><button class="secondary-action cellar-temperature-settings" type="button">Sensor de temperatura</button></div>';
+  window.CasaPopupUI?.refresh(info.querySelector('.cellar-data-refresh'),'Atualizar dados da cave');
   info.querySelector('.cellar-temperature-settings').addEventListener('click',()=>window.CasaCellarTemperature.openSettings());window.CasaCellarTemperature?.draw();window.CasaShelly?.ensureFresh('cellar');
   info.querySelector('.cellar-data-refresh').addEventListener('click',()=>window.CasaShelly?.refresh());info.querySelector('.cellar-door-settings').addEventListener('click',()=>window.CasaDoor.openSettings('cellar'));showPopup('basement-dialog');window.CasaDoor.sync();window.CasaShelly?.doorEnsureFresh('cellar');
  });

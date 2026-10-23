@@ -9,3 +9,7 @@ popup-ui.js move os elementos existentes sem trocar listeners ou regras dos coma
 ## Fechar — 2.05
 
 Todos os popups podem fechar pelo X ou por toque/clique na área exterior, incluindo equipamentos criados dinamicamente e definições do MeteoNL. Tocar nos controlos ou no espaço interior mantém o popup aberto. Arrastar um controlo para fora não é tratado como toque exterior. O gesto de fecho é consumido e não atua nos elementos por baixo.
+
+## Atualizar — 2.06
+
+Todos os botões de atualização manual passam a círculos com o mesmo símbolo de duas setas, incluindo sensores, janelas, cave, meteorologia e consulta geral Shelly. O nome da ação mantém-se no título e na acessibilidade; os listeners e as condições de disponibilidade não mudam.
