@@ -371,3 +371,9 @@ Verificado820×1180 e1180×820:centros SVG/botão coincidem(dx/dy0)nos quatro at
 Usar dialog-dismiss.js:install(document) em delegação capture para todos os dialogs da Casa, incluindo criados depois de app.js. Substitui o bind pontual antigo. Fechar só quando pointerdown e click incidem no mesmo dialog aberto e fora do seu retângulo. Não fechar em padding interior,controlos,arrasto iniciado dentro,pointercancel ou clique sem início. Consumir o click exterior antes de fechar para não atingir planta/atuadores. Preservar os listeners X e Escape existentes.
 
 Settings Meteo usa a mesma política,instalada no dialog com callback onClose e cleanupReact;não fechar apenas pelo event.target===dialog,que incluía paddinginterior. Não mudar saves/importação/comandos. Testes225 aprovados;fixture820×1180:termoventilador e definições fecham por exterior,cozinha/termoventilador/Meteo porX,padding interior mantém aberto,zero comandos/erros. Prova review/popup-fechar-2.05.png.
+
+# Todos os botões de atualizar com símbolo — 2.06
+
+Atualizações manuais usam o ícone refresh do catálogo app.js num botão circular refresh-icon-button,sem texto visível,comtitle earia-label que identificam a ação. popup-ui.symbol marca a classe para refresh;inicializa os IDs terminados -refresh e normalize trata sensor-room-info/window-refresh. A cave chama CasaPopupUI.refresh após criar o botão. Preservar nós/listeners/disabled:alteração só visual,sem pedidos adicionais. Meteo retry também usa o desenho de duas setas e label Atualizar meteorologia. Manter centralização Safari,48px(círculoscompactosmobileconservam44),coresazuis e focoacessível.
+
+Verificado popupmaster com sensor/luz/janela:3SVGs,semtexto,raio50%;refreshsensor funcional,caverefreshSVG,zero comandos/erros.225 testes aprovados. Prova review/atualizar-circular-2.06.png.

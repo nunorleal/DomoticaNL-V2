@@ -66,3 +66,8 @@ svg.ui-icon{display:block;flex-shrink:0;fill:none;stroke:currentColor;stroke-wid
 .equipment-popup .fan-overview{justify-content:center;margin:24px 0 18px}.equipment-popup .fan-overview>div:empty{display:none}.equipment-popup .fan-overview .fan-symbol{width:90px;height:90px}
 .equipment-popup #fan-state{font-size:11px;font-weight:400;display:block;margin-top:5px}
 .equipment-popup .alarm-metrics small:empty{display:none}
+
+/* Every manual refresh uses the same two-arrow symbol and circular target. */
+.popup button.refresh-icon-button{appearance:none;-webkit-appearance:none;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;flex:none;width:48px;min-width:48px;height:48px;min-height:48px;padding:11px;border:1px solid #9eb8ca66;border-radius:50%;background:#8baac01c;color:#426b89;line-height:1}
+.popup button.refresh-icon-button>svg{display:block;width:24px;height:24px;margin:0;flex:none;pointer-events:none}
+.popup button.refresh-icon-button:focus-visible{outline:3px solid #87b8d8;outline-offset:3px}
