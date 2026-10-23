@@ -1,0 +1,14 @@
+.heater-object{position:absolute;z-index:3;display:block;width:6.4%;aspect-ratio:1;min-width:0;padding:0;transform:translate(-50%,-50%);background:transparent;border:1px solid transparent;border-radius:8px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;filter:drop-shadow(1px 2px 2px #06142155)}
+.heater-object img,.heater-preview img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;-webkit-user-drag:none}
+.heater-object .heater-night,.heater-preview .heater-night{position:absolute;inset:0;opacity:var(--heater-night,0)}
+.heater-object:hover,.heater-object:focus-visible{background:#8abddd24;border-color:#c7e9f6;outline:2px solid #426e8c;outline-offset:2px;filter:drop-shadow(1px 2px 2px #06142155)}
+.heater-object.dragging{cursor:grabbing;z-index:6;outline:2px solid #b5d8f0}
+.heater-preview{position:relative;width:150px;height:150px;margin:0 auto 20px}
+.heater-popup label{display:block;font-size:12px;color:#4f6d85;margin:22px 0 8px}
+.heater-popup select{width:100%;min-height:44px;border:1px solid #cbdbe8;border-radius:10px;background:#f5f8fb;padding:10px;font:inherit;color:var(--ink)}
+.heater-popup .settings-explanation{margin-top:12px}
+.heater-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.heater-links>*{flex:1}
+/* Confirmed ON: trace the transparent sprite silhouette, independent of hover/focus. */
+.heater-render{position:absolute;inset:0;display:block;pointer-events:none}
+.heater-object[data-power=on] .heater-render{filter:drop-shadow(1px 0 0 #23eb86) drop-shadow(-1px 0 0 #23eb86) drop-shadow(0 1px 0 #23eb86) drop-shadow(0 -1px 0 #23eb86) drop-shadow(0 0 4px #14d873b3)}

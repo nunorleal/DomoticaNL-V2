@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <filter id="cement" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="4" seed="18" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncR type="linear" slope=".22" intercept=".21"/><feFuncG type="linear" slope=".22" intercept=".21"/><feFuncB type="linear" slope=".22" intercept=".21"/></feComponentTransfer>
+    </filter>
+  </defs>
+  <path fill="#525252" d="M0 0h256v256H0z"/>
+  <path filter="url(#cement)" d="M0 0h256v256H0z"/>
+</svg>
