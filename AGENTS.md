@@ -351,3 +351,23 @@ Substitui o filtro escuro2.00: em red-night o fundo é preto, sem paisagem, e n�
 Preferências opcionais redSchedule=night/custom,redStart,redEnd (HH:mm), validadas e exportadas na chave Meteo existente. Defaults night/23:00/07:00 preservam o modo anterior. night segue ativação de cabeceira;custom ativa vermelho no intervalo próprio, mesmo se cabeceira geral off, e fora dele regressa à cabeceira colorida ou dia conforme o horário geral. Color desativa vermelho. Intervalos atravessam meia-noite; início inclusivo/fim exclusivo;horas iguais significam24h. redActive no meteo-core é puro, sem pedidos/atuações. Inputs time usam onInput para guardar corretamente no Safari.
 
 Verificado820×1180,horário próprio dentro/fora,preferências mantidas ao reabrir definições,zero erros/comandos.218 testes aprovados incluindo limites/meia-noite/legados/validação/backup. Prova review/meteo-contraste-2.02.png.
+
+# PWA iPad — 2.03
+
+Manifesto manifest.webmanifest com name/short_name Domótica,id/start_url/scope relativos ./,displaystandalone,orientationany. Manter caminhos relativos para raiz ou subpasta GitHub Pages e não colocar parâmetros de ensaio no lançamento. index inclui manifest,apple-touch-icon180,Applecapable/title/status black-translucent e viewport-fitcover. Ícones PNG opacos180/192/512 e maskable512 em assets/icons;fonteSVG local baseada no símbolo da casa.
+
+pwa.css é exclusivamente @media(display-mode:standalone),com insets de segurança em cabeçalho,planta,rodapé,popups e hostMeteo(iframe recebe viewport protegido). Não mudar organização,geometria ou lógica dos equipamentos. Sem serviceworker por decisão explícita: instalação iPadOS não o exige e não criar caches/interceção Cloud nem controlos offline. Não persistir credenciais por instalação.
+
+Ver PWA-IPAD.md para instalação Safari,armazenamento possivelmente separado/backup eHTTPS. TestadoHTTP localhost,manifest application/manifest+json,ícones/CSS200,layout820×1180 e1180×820,zero comandos/erros,222 testes. Instalação/insets físicos só confirmáveis no iPad;HTTPS público não verificado semURL. Prova review/pwa-ipad-2.03.png.
+
+# Ícones MeteoNL centrados no Safari iPad — 2.04
+
+A fotografia do utilizador mostra SVGs da barra Meteo deslocados dentro dos círculos. .icon-button repõe appearance/-webkit-appearance none,padding/margin0,box-sizingborder-box,min-width37 e flex-shrink0;usar inline-flex com align-items/justify-contentcenter em vez de grid sobre o botão nativo. SVG direto displayblock,margin/padding0 e sem shrink. Preservar37×37,desenhos,cores,spinning,ações e posições. Aplica também ao fechar definições.
+
+Verificado820×1180 e1180×820:centros SVG/botão coincidem(dx/dy0)nos quatro atalhos e no fechar;zero comandos/erros e222 testes aprovados. Sem alterações aos controlos Shelly. Prova review/meteo-icons-centrados-2.04.png.
+
+# Fechar popups pelo X ou exterior — 2.05
+
+Usar dialog-dismiss.js:install(document) em delegação capture para todos os dialogs da Casa, incluindo criados depois de app.js. Substitui o bind pontual antigo. Fechar só quando pointerdown e click incidem no mesmo dialog aberto e fora do seu retângulo. Não fechar em padding interior,controlos,arrasto iniciado dentro,pointercancel ou clique sem início. Consumir o click exterior antes de fechar para não atingir planta/atuadores. Preservar os listeners X e Escape existentes.
+
+Settings Meteo usa a mesma política,instalada no dialog com callback onClose e cleanupReact;não fechar apenas pelo event.target===dialog,que incluía paddinginterior. Não mudar saves/importação/comandos. Testes225 aprovados;fixture820×1180:termoventilador e definições fecham por exterior,cozinha/termoventilador/Meteo porX,padding interior mantém aberto,zero comandos/erros. Prova review/popup-fechar-2.05.png.

@@ -173,7 +173,7 @@ document.getElementById('open-overview').addEventListener('click',()=>showPopup(
 document.getElementById('open-scenes').addEventListener('click',()=>showPopup('scenes-dialog'));
 document.getElementById('home-button').addEventListener('click',()=>document.querySelectorAll('dialog[open]').forEach(d=>d.close()));
 document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>document.getElementById(b.dataset.close).close()));
-document.querySelectorAll('dialog').forEach(d=>{let outside=false;const isOutside=e=>{const r=d.getBoundingClientRect();return e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom};d.addEventListener('pointerdown',e=>outside=e.target===d&&isOutside(e));d.addEventListener('click',e=>{if(outside&&e.target===d&&isOutside(e))d.close();outside=false})});
+window.CasaDialogDismiss.install(document);
 document.getElementById('hotspots').addEventListener('keydown',e=>{if(e.target.matches('.room-hit')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();selectRoom(e.target.dataset.room)}});
 window.addEventListener('environmentchange',()=>{drawRoomLighting();const caption=document.querySelector('.room-light-caption');if(caption)caption.textContent=isCloudLight(current().id)?window.CasaShelly.lightCaption(current().id):window.CasaEnvironment.roomDescription(current(),rooms)});
 window.addEventListener('pagehide',persist);restoreRoomLayout();setMode('lights');

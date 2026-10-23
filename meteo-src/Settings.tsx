@@ -1,3 +1,4 @@
+import { install as installDismiss } from "../dialog-dismiss.js";
 import { openCasaSettings } from "./bridge";
 import { fetchJson } from "./network";
 import { useEffect, useRef, useState } from "react";
@@ -23,7 +24,8 @@ export function Settings({
   useEffect(() => {
     const el = dialog.current;
     el?.showModal();
-    return () => el?.close();
+    const cleanup = el ? installDismiss(el, onClose) : () => {};
+    return () => { cleanup(); el?.close(); };
   }, []);
   async function search(e: React.FormEvent) {
     e.preventDefault();
@@ -58,9 +60,6 @@ export function Settings({
       className="settings"
       aria-labelledby="settings-title"
       onCancel={onClose}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
     >
       <header>
         <div>
