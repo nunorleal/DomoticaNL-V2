@@ -1,0 +1,8 @@
+#meteo-view {position:fixed;inset:0;z-index:10000;background:#152f42;}
+#meteo-view[hidden] {display:none;}
+#meteo-view iframe {display:block;width:100%;height:100%;border:0;}
+html.meteo-visible,html.meteo-visible body {overflow:hidden;}
+
+.meteo-loading {position:absolute;top:24px;left:50%;transform:translateX(-50%);width:min(90vw,420px);z-index:2;padding:20px;background:#163442;color:#fff;border:1px solid #ffffff40;border-radius:16px;text-align:center;box-shadow:0 8px 30px #0004;}
+.meteo-loading[hidden] {display:none;}
+.meteo-loading button {padding:12px 20px;border-radius:10px;background:#dcece9;color:#163f43;min-height:44px;}
