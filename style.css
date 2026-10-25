@@ -121,3 +121,9 @@ body:before{background:linear-gradient(var(--street-shade-top),var(--street-shad
 .room-pin-sensor-status{max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:center}
 .room-pin[data-room=balcony] .room-pin-sensor-values{flex-direction:column;gap:1px;font-size:clamp(7px,calc(var(--pin-max-width)*.16),10px)}
 .room-pin[data-room=balcony] .sensor-separator{display:none}
+
+/* Trace only the overhead lamp disk; preserve the full-size transparent click target. */
+.lamp-on-halo{fill:none;stroke:var(--device-on-color);stroke-width:var(--device-on-width);vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 4px var(--device-on-glow));opacity:0;pointer-events:none;transition:opacity .25s ease}
+
+/* One screen-pixel contour shared by every powered object on the plan. */
+:root{--device-on-width:1px;--device-on-color:#23eb86;--device-on-glow:#14d873b3;--device-on-filter:drop-shadow(var(--device-on-width) 0 0 var(--device-on-color)) drop-shadow(calc(-1 * var(--device-on-width)) 0 0 var(--device-on-color)) drop-shadow(0 var(--device-on-width) 0 var(--device-on-color)) drop-shadow(0 calc(-1 * var(--device-on-width)) 0 var(--device-on-color)) drop-shadow(0 0 4px var(--device-on-glow))}

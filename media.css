@@ -56,3 +56,16 @@ body.window-master-open .window-closed-master,body.window-bedroom2-open .window-
 .office-monitor-off-screen{opacity:1;transition:opacity .25s ease}
 .office-image-stage[data-monitor-power=on] .office-monitor-off-screen{opacity:0}
 @media(prefers-reduced-motion:reduce){.office-monitor-off-screen{transition:none}}
+
+/* Permanent activity highlight on the floor plan; hover and popup controls stay independent. */
+.media-console-trigger[data-screen-working=true],.office-desk-trigger[data-screen-working=true]{background:transparent;border:var(--device-on-width) solid var(--device-on-color);outline:none;box-shadow:0 0 4px var(--device-on-glow)}
+.media-console-trigger[data-screen-working=true]>svg,.office-desk-trigger[data-screen-working=true]>.office-desk-icon{color:#b9ffda;background:#176440e6;box-shadow:0 0 7px #14d87399}
+
+/* TV spill stays on the living-room floor, below the permanent white-wall mask. */
+.tv-floor-reflection,.office-floor-reflection{opacity:0;filter:brightness(var(--screen-floor-brightness,1));pointer-events:none;mix-blend-mode:screen;transition:opacity .65s ease}
+.tv-floor-reflection[data-working=true],.office-floor-reflection[data-working=true]{opacity:var(--screen-floor-strength,.6)}
+@media(prefers-reduced-motion:reduce){.tv-floor-reflection,.office-floor-reflection{transition:none}}
+
+/* Keep the active green edge; hover/focus adds the same outer blue outline as other plan devices. */
+.media-console-trigger[data-screen-working=true]:hover,.media-console-trigger[data-screen-working=true]:focus-visible,.office-desk-trigger[data-screen-working=true]:hover,.office-desk-trigger[data-screen-working=true]:focus-visible{background:transparent;outline:2px solid var(--plan-highlight-outline);outline-offset:2px}
+.media-console-trigger[data-screen-working=true]:hover>svg,.media-console-trigger[data-screen-working=true]:focus-visible>svg,.office-desk-trigger[data-screen-working=true]:hover>.office-desk-icon,.office-desk-trigger[data-screen-working=true]:focus-visible>.office-desk-icon{color:#e8f6ff;background:#295573e6}

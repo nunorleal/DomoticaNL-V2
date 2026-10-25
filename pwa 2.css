@@ -1,0 +1,17 @@
+/* Only the installed web app: retain the Safari layout and respect iPadOS insets. */
+@media (display-mode: standalone) {
+  html,body{min-height:100dvh}
+  .topbar{padding-left:calc(30px + env(safe-area-inset-left));padding-right:calc(30px + env(safe-area-inset-right))}
+  #house-view,#basement-view{left:env(safe-area-inset-left);right:env(safe-area-inset-right)}
+  .plan-stage{max-width:100%}
+  .bottom-dock{max-width:calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right))}
+  .shelly-activity{right:calc(30px + env(safe-area-inset-right))}
+  dialog.popup{inset:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);margin:auto;max-width:calc(100vw - 28px - env(safe-area-inset-left) - env(safe-area-inset-right));max-height:calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+  /* Give the embedded Meteo its own safe viewport: insets in an iframe can be zero. */
+  #meteo-view{box-sizing:border-box;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);background:#000}
+  .meteo-loading{top:calc(24px + env(safe-area-inset-top))}
+}
+@media (display-mode: standalone) and (max-width:550px) {
+  .topbar{height:calc(72px + env(safe-area-inset-top));padding-left:calc(17px + env(safe-area-inset-left));padding-right:calc(17px + env(safe-area-inset-right))}
+  .shelly-activity{right:calc(17px + env(safe-area-inset-right))}
+}

@@ -1,0 +1,13 @@
+.popup.room-overview,.popup.equipment-popup.room-overview{width:min(520px,calc(100vw - 36px))}
+.room-devices-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 4px}
+.room-device-count{font-size:11px;color:#63849c}
+.room-device-list{display:flex;flex-direction:column}
+.room-device-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 0;border-bottom:1px solid #a6c4d433;min-height:74px}
+.room-device-row:last-child{border-bottom:0}
+.room-device-description{display:block;flex:1;min-width:0;text-align:left;background:none;padding:0;color:#294f6b}
+button.room-device-description{min-height:48px;border-radius:6px}
+.room-device-description strong{display:block;font-size:14px;font-weight:500;line-height:1.3}
+.room-device-description small{display:block;margin-top:5px;font-size:11px;line-height:1.5;color:#63849c;overflow-wrap:anywhere}
+.room-device-description:focus-visible{outline:2px solid #87b8d8;outline-offset:3px}
+.room-device-open{flex:none;width:48px;height:48px;min-height:48px;padding:12px;border:1px solid #9eb8ca66;border-radius:50%;background:#8baac01c;color:#426b89}
+.room-device-open svg{width:24px;height:24px}

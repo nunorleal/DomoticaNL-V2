@@ -522,3 +522,101 @@ Pedido explícito:mostrar linha no slider de intensidade,igual à dos estores. A
 Pedido explícito:caber todo o popup,cortando imagem por cima e por baixo. Manter largura mínima640px limitada à viewport2.24. office.fit agora atribui à cena apenas altura restante depois do cabeçalho e painel;fotografia mantém proporção e tamanho original dentro de stage único com todos os overlays/banners/alvossolidários. Recorte usa42% do excesso emcima(limite20% daimagem),restanteembaixo,priorizando os equipamentos. Cabeçalho embutido duplicado oculta-se quando há corte para evitar umbannerparcial. Popup e painel sem scroll;imagem não deformada,monitorpreto e alvos alinhados.
 
 Fixture isolada820×1180:clientHeight=scrollHeight1150;1180×820:790/790,painel203/203,todos os8alvos/banners contidos na cena. SeleçãoTerraMaster funcional,zero erros/comandos.241 testes aprovados,buildMeteo concluído. Provas review/secretaria-sem-scroll-2.27.png e review/secretaria-sem-scroll-paisagem-2.27.png.
+
+# Realce de utilização das consolas na planta — 2.28
+
+Pedido corrigido explicitamente:feedbackvisual na planta sobre consolaTV e secretária,não nos popups. Os dois triggers existentes recebem data-screen-working e realceazul persistente(contorno,aureola e íconeazul) enquanto emutilização;hover/clique/ocultarícones mantêm comportamento. Não acrescentar halo/legenda aos ecrãs dos popups.
+
+CasaMediaCore.screenWorking exige associação,ontrue,leitura não stale e potênciafinita>10WTV(exclui regeneração2..10) ou>2Wmonitor(limiarvisual para descartar consumoemespera). Não altera estado do relé,imagem do monitor/regrasTV ou comandos. syncOperatingPlan reaplica apósmediachange e no timer local2s existente também quando popup fechado;sem consultasnovas. Leituras ausentes/desatualizadas não afirmam utilização.
+
+242 testes aprovados com limites/standby/regeneração/ausência/offlineindireto,buildMeteo concluído. Fixture comTV23,5W e monitor25W:ambos realçados na planta e nenhum realce novo dentro dos popups;zero comandos. Prova review/planta-consolas-em-utilizacao-2.28.png.
+
+# Reflexo da televisão no chão — 2.29
+
+Pedido explícito:luz/reflexo daTV no chão da sala na planta. media.js acrescenta grupoSVGtv-floor-reflection à room-lighting,antes dawhite-wall-overlay,recortado pelo night-clip-living. Gradientesazuis com blur9 nas coordenadas315..445,y839 projetam luz atéy985,à frente da consola,sem atingir sofá/paredes ou captar cliques. Preservar máscaras/renders de luz atuais.
+
+Visibilidade segue exclusivamente screenWorkingTV2.28:potênciafresca>10W,ontrue,sem regeneração/standby. Intensidadevisual .3diurna até.85noite conformeCasaEnvironment.darkness;environmentchange sincroniza sem consultas ou comandos. Transição suave,respeita reducedmotion. Sem persistência/configuração nova.
+
+242 testes ebuildMeteo aprovados. Fixture isolada820×1180:TV23,5W,reflexo visível à frente da consola,opacidade.85noturno,clipliving e máscara deparedes acima,zero erros/comandos. Prova review/tv-reflexo-chao-2.29.png.
+
+# Contornos verdes e previews diurnos — 2.30
+
+Pedidos explícitos:realce daTV/secretária na planta verde como desumidificador;aparelhos nos popups emmodo diurno. media.css troca apenas paleta de[data-screen-working=true] para#23eb86/halo#14d873,igual ao desumidificador. Estados/limiares/hover existentes e reflexoazulado daTV no chão preservados.
+
+heater/dehumidifier.drawLighting mantêm noite dinâmica apenas no objeto da planta;variávelnight do dialog fica0 para revelar sempre o renderdiurno nos popups. Sem mudanças ao controlo/consumo/layout/arrasto ou à iluminação da planta.
+
+242 testes ebuildMeteo aprovados. Verificação visual não executada:revisãoautomática rejeitou iniciar a fixture por limite deutilização do serviço,não por determinação de insegurança. Não contornar essa revisão ou contactar equipamentosreais.
+
+# Reflexo do monitor e visibilidade com iluminação — 2.31
+
+Pedido explícito:adicionar luz do monitor na planta e manter ambos os reflexos visíveis também no render de iluminação elétrica. office.js acrescenta grupooffice-floor-reflection antes dawhite-wall-overlay,clippedpor night-clip-bedroom2;gradientesblur9 projetam luzfria à frente da secretária575..714,y558..671,sem alvos de interação. Usa screenWorkingmonitor existente>2W;estadoOFF/desatualizado não mostrareflexo. Preservar contornosverdes2.30 e popupsdiurnos.
+
+CasaMediaCore.reflectionStrength partilhada:.6base+.25darkness+.15electricOpacity,entradas finitas limitadas0..1,totalaté1. TV e monitor usam--screen-floor-strength para não apagar/atenuar demasiado a luz com renderelétrico oudiurno. Ambos os grupos ficam acima dos renders noturno/elétrico e abaixo da máscara branca de paredes. syncPlan/ambiente e timerlocalexistente atualizam apenasvisual;sem novospedidos/persistência/comandos.
+
+243 testes aprovados,incluindo intensidadefinita nos modosdiurno/noturno/elétrico,JScheck ebuildMeteo concluídos. Verificação visual pendente:início dafixture anteriormente bloqueado por revisãoautomática devido a limite deutilização;nenhuma tentativa de contornar ou testar equipamentosreais.
+
+# Contorno único nas consolas — 2.32
+
+Pedido explícito:retirar linha dupla do contorno da consolaTV e usar o estilo sóbrio do termoventilador. Regra partilhada de utilizaçãoTV/secretária passa a border2pxverde#23eb86,sem outline,sem preenchimento e apenas sombraexterna suave6px#14d873b3. Não aplicar anel adicional inset. Hover/seleção/estado/limiares/reflexos preservados.
+
+BuildMeteo concluído. Fixture isolada820×1180:ambos emutilização com border2px,outline none,backgroundtransparente e uma sombraexterna;reflexosTV/monitor continuamvisíveis. Zero comandos. Prova review/contorno-unico-consolas-2.32.png.
+
+# Inventário de dispositivos por divisão — 2.33
+
+Pedido explícito:clique no banner da divisão mostra todos os seus equipamentos com estado/botão de alimentação. Novo room-devices-core.entries partilhado por UI e scope de leitura:iluminação por divisão,sensores master/living/balcony,estores/janelas nasquatrodivisões,cincomedia+portaentrada na sala,quatrooffice no Gui,trêskitchen na cozinha eportáteis conforme roomId atual. Não duplicar candeeiro da consola. Sem IDs/credenciais novos ou novos dados persistidos.
+
+room-devices.js renderiza lista compacta no detailViewroom,com nome clicável para controlos individuais,potência/atividade quando existente,temperatura/humidade,contactos e percentagem doestore. Botões CasaPowerButton reutilizam snapshots/guards e commandLight/Media/Office/Kitchen/Heater/Dehumidifier;verdes apenas comONreportado,unknown/desatualizado/pending desativados,sem otimismonem retries. Relés mostram Com/Sem energia para não confundir standby/regeneração com utilização. Luzes semassociação mantêm simulação explícita. Sem botão de alimentação em sensores/estores. Refreshcircularúnico consulta sóinventário. Nome do candeeiro abre slider jáexistente,estore abre controlossem mover,media/officeopen(id) selecionaaparelho sem comandar. Portáteis expõem getterroomId eopen sem mudarposição.
+
+app.drawDetail delega apenas detailViewroom e mantém controlos específicos de candeeiro/estore. consumption.room não acrescenta consumo isolado do candeeiro à listageral. CSSroom-overview520pxmáximo,responsivo/listascroll. Atualizações reutilizam linhas/botões para preservar foco;sem gráficos ou explicaçõeslongas.
+
+Shelly roomDeviceBindings deriva scope da mesma lista e resolve associaçõesexistentes;popup room agora prioriza todos os IDs da divisão,com deduplicação e lotesexistentes. Contextos light/blind/selecionadomedia mantêm scopeindividual. selectRoom deixa renovação inicial a focusPopup,evitando consultasfragmentadas duplicadas;refreshEquipmentroom resolve mesmo inventário. Sem alterar intervalos/fila/limites/frescura/confirmações.
+
+246 testes aprovados:inventárioSala semduplicações,membershipportáteis,isolamentoentredivisões,scopecompleto e contextosindividuais;teste antigo blind-access atualizado para permitir leitura doestore no inventário mas continuar a separar movimentos/controlos. BuildMeteo eJScheck concluídos. Fixture820×1180:Sala10dispositivos,Gui7,Cozinha6,Principal5incluiheater;botãoTV enviou apenas umset/switch deadbeefff00/canal0/onfalse e confirmou;clique nomeTV abriu respetivo popup sem novos comandos. Ecrã390×844 semoverflowhorizontal(client/scrollWidth350). Zero erros. Prova review/dispositivos-sala-2.33.png.
+
+# Reflexos mais fortes com luz acesa — 2.34
+
+Pedido explícito:dar mais ênfase à luz projetada por TV/monitor no renderelétrico. reflectionStrength mantém .6base/.85escuro mas aumenta contribuiçãoelétrica de.15 para.7,limitada1. Ambos os grupos recebem brightness1+1.25electricOpacity em variávelCSSprópria:até2.25x com luzacesa,1x apagada. Não ampliarprojeções/recortes nem alterar limiares,estado/fila,Shelly,contornosverdes ou popups. Blur/gradientes e paredebranca permanecem.
+
+246 testes ebuildMeteo aprovados;teste asseguraopacidade1 comelétrico1 e>.9 comcontribuição.45. Fixture isolada820×1180,3candeeirosONreportados,TV/monitorativos:reflexos sobre render quente,opacity1 ebrightness2.25,zero comandos. Prova review/reflexos-luz-acesa-2.34.png.
+
+# Auréolas verdes dos candeeiros — 2.35
+
+Pedido explícito:auréolaverde nas três lâmpadas acesas. CasaLamps.halo usa os pontos/radius existentes do disco visto de cima(master737,223;Gui750,534;sala475,840),com círculo radius+1,linhaúnica2px#23eb86 e sombra4px#14d873b3. app insere círculos noSVGroom-lighting após renders deiluminação e antes dawhite-wall-overlay. drawRoomLighting liga opacidade arooms.light existente,que deriva doONreportado para associaçõesreais ou simulação explícita. Nenhum novoestadootimista,pedido ou comando.
+
+Alvos44pxdehover/clique permanecemtransparentes e separados;halo segue somente odisco,sem pés/mobiliário/parede.246 testes ebuildMeteo aprovados. Fixture820×1180:trêsONopacidade1,desligadosopacidade0,zero comandos. Carregamento inicial teve scriptCasaPowerButton ausente transitoriamente;reload carregou todos os controlos,sem alterar código alheio à tarefa. Prova review/candeeiros-aureola-verde-2.35.png.
+
+# Lista de Shellys no banner da cave — 2.36
+
+Pedido explícito:bannerCave deve mostrar também os equipamentos do local. Coreentriescellar contém ventoinha,alarme/arm,alarme/trigger,sensorcellar e portacellar. O carregamento continua no estacionamento comoseu acessoexistente. CasaRoomDevices.openCellar usa basement-dialog com a mesma lista/toolbar/estados das divisões,sem duplicar cabeçalho ou textos antigos. Ventoinha usa commandFan;alarme/arm usa commandAlarm(polaridade/guardsexistentes);alarme/trigger é sóleitura,sem botão de alimentação e sem ramo de comando. Nomesventoinha/alarme abrem os popups individuais existentes. Sensor/porta conservam leitura real sem inventar valores.
+
+InventáriosDOM emWeakMapperhostpara atualizações simultâneas de detail-card e basement-dialog-info não trocarem os handlers/linhas. GetterdoorSnapshot usa e.id;CasaFan expõeopen. Floorsbanner delega ao novo inventário quando disponível,preservando fallbackantigo e acessoEV separado. Scopebasement e refreshEquipmentcellar resolvem a mesma listadeassociaçõesfan/alarm2/sensor/door comdeduplicação;nenhum novo timer/fila/ID/configuração persistida. Semmovimentos ou atuaçõesaoabrir.
+
+248 testes ebuildMeteo aprovados,novos testesinventorycellar e isolamento de prioridades. Fixture820×1180:5linhas;trigger0botõesdepotência;ventoinhaON ealarmeArmado;togglefan enviou exatamenteumset/switch deadbeefbb01/canal0/onfalse e confirmouDesligado;clicarDisparo abriu popupAlarme sematuar. Zero erros. Prova review/dispositivos-cave-2.36.png.
+
+# Hover sobre consolas ligadas — 2.37
+
+Pedido explícito:consolaTV/secretária perderam feedbackdehover enquanto realçadas a verde. Causa:regra[data-screen-working=true] substituía fundo/outlines das regras:hover originais. Acrescentar regras específicas paraactive:hover/active:focus-visible:preenchimentoazulvar(--plan-highlight-bg) e íconemaisclaro,singleborderverde mantido,outline none semanelduplo. Estado/desenho/reflexos ecliques preservados;alteraçãoCSSapenas.
+
+BuildMeteo concluído. Fixture820×1180:TV/monitorativos,hoververdadeirocombackgroundrgba117,172,216,.26,borderverdeRGB35,235,134,outline none. Ao moverparaoutro,primeiro regressaaotransparente;clicarsecretária abre office-dialog normalmente. Zero comandos. Prova review/hover-consola-ligada-2.37.png.
+
+# Espessura uniforme dos contornos verdes — 2.38
+
+Pedido explícito:todas as linhasverdes da planta iguais,consolas mais finas. TokensCSSpartilhados--device-on-width1px,--device-on-color#23eb86,--device-on-glow#14d873b3 efilterdecontorno. Consolas usam border1px eglow4px;halos das lâmpadas stroke1px comvector-effectnon-scaling-stroke para não variar com escaladaplanta. Heater/dehumidifier/fan reutilizamfiltercomoffsets±1px. Alarme armado usa haloSVG1pxnon-scaling eglow4px,preservando animação/estadovermelho dedisparo. Não afetar botõespopups,hoverazul,limiares,estados oureflexos.
+
+BuildMeteo concluído. Fixture820×1180:consolasborder1px,lâmpadasstroke1pxnon-scaling,aparelhosfilter±1px/glow4px;na cave alarme1px efilterfanigual. Zero comandos. Prova review/contornos-uniformes-2.38.png.
+
+# Definições Shelly organizadas por divisão — 2.39
+
+Pedido explícito:agrupar as configurações dos Shellys por divisão. Novo shelly-rooms.js monta secções com nomes atuais das divisões e move os gruposDOM existentes(sala/multimédia/porta,Gui/secretária,cozinha,cave/porta/alarme/ventoinha,portáteis conforme roomId). Contadorgeral emCasa·geral eEV emEstacionamento. Secções vazias ocultas. Secções são abertas/cabeçalhos simples;details individuais preservam colapso/acessibilidade e atalhos diretos sem novos antecessores fechados.
+
+Mapeamentos partilhados de candeeiros/sensores/estores movidos como fieldsets reais para details individuais por divisão,com labels/IDs/valores/listeners intactos;originaiscontainers/grupos mantidos ocultos para compatibilidade. Janela mantém seu nódetails/inputs existente com summaryJanela econtentwrapper. Não clonar campos,reescrever associações ou persistir novaestrutura. Guardarconfiguração globalmantido;grupos dedicados mantêm os seus botões existentes.
+
+Antes de Shelly.fill,CasaShellyRooms.restore devolve fieldsets às fontes;fillregenera campos comoantes;sync reposiciona os novosnós. Isto evitaIDsduplicados,perda devalores ou deixar leitores de formulário a usar nósantigos. Sync não move nós cujo parentjá estácorreto,preserva edição;atualiza nomes/portáteis emeventosexistentes sem pedidosCloud. Warnings,jump evalidationusamIDs/antecessores reais econtinuamfuncionais.
+
+248 testes ebuildMeteo aprovados. Fixture820×1180:101campos(comchave),zeroIDsduplicados;100camposnão secretos exatamenteiguais antes/depoisdeGuardarconfiguração,reabertura epreenchimento;zero comandos. Atalho do popupcandeeiroSala abre novo grupocorreto,DeviceIDvisível e focado. Zero erros. Prova review/shelly-definicoes-divisoes-2.39.png.
+
+# Hover exterior das consolas ligadas — 2.40
+
+Pedido explícito: TV e secretária em utilização devem manter o contorno verde e receber o realce azul exterior ao passar o rato, coerente com os restantes dispositivos. Em media.css, o hover/focus dos triggers com data-screen-working=true mantém background transparente e acrescenta outline azul de 2px com offset 2px. Contorno verde de 1px e reflexos preservados; sem alterações de comandos ou leituras.
+
+Build Meteo concluído. Verificação na fixture isolada a 820×1180 para ambas as consolas ligadas: hover verdadeiro, fundo transparente, border verde 1px, outline azul 2px exterior com offset 2px; zero comandos. Provas review/hover-exterior-secretaria-2.40.png e review/hover-exterior-tv-2.40.png.
