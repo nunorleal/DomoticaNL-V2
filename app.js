@@ -92,7 +92,7 @@ function drawRoomLighting(){
   host.innerHTML=`<svg class="room-lighting" viewBox="0 140 1024 1180" preserveAspectRatio="none" aria-hidden="true"><defs>${Object.entries(lightingZones).map(([id,d])=>`<clipPath id="night-clip-${id}" clipPathUnits="userSpaceOnUse"><path d="${d} ${doorThresholdZones[id]||''}" fill="white" shape-rendering="${id==='balcony'?'auto':'crispEdges'}"/></clipPath>`).join('')}<clipPath id="white-wall-clip" clipPathUnits="userSpaceOnUse">${whiteWallZones.map(d=>`<path d="${d}" fill="white"/>`).join('')}</clipPath></defs>${Object.entries(lightingZones).map(([id,d])=>`<g data-light-zone="${id}">${window.CasaLamps.patch(id,'day')}${window.CasaDoor.patch(id,'day')}${window.CasaWindows.patch(id,'day')}<g class="room-night-render"><image href="assets/planta-noturna-sofa-v2.png" x="0" y="0" width="1024" height="1536" preserveAspectRatio="none" clip-path="url(#night-clip-${id})"/>${window.CasaLamps.patch(id,'night')}${window.CasaDoor.patch(id,'night')}${window.CasaWindows.patch(id,'night')}</g><g class="room-electric-render"><image href="assets/planta-noturna-iluminada.png" x="0" y="0" width="1024" height="1536" preserveAspectRatio="none" clip-path="url(#night-clip-${id})"/>${window.CasaLamps.patch(id,'electric')}${window.CasaDoor.patch(id,'electric')}${window.CasaWindows.patch(id,'electric')}</g></g>`).join('')}<image class="white-wall-overlay" href="assets/planta-realista-sofa-v2.png" x="0" y="0" width="1024" height="1536" preserveAspectRatio="none" clip-path="url(#white-wall-clip)"/></svg>`;
  }
  Object.keys(lightingZones).forEach(id=>{const r=rooms.find(r=>r.id===id),zone=host.querySelector(`[data-light-zone="${id}"]`);const opacity=window.CasaEnvironment.darkness(r,rooms);zone.classList.toggle('is-off',opacity>.5);zone.style.setProperty('--night-opacity',opacity);zone.style.setProperty('--electric-opacity',window.CasaEnvironment.electricOpacity(r,rooms));});
- window.CasaOffice?.syncPlan();window.CasaHeater?.drawLighting();window.CasaDehumidifier?.drawLighting();
+ window.CasaHallCamera?.drawLighting();window.CasaOffice?.syncPlan();window.CasaHeater?.drawLighting();window.CasaDehumidifier?.drawLighting();
 }
 
 const roomPolygonCache=new Map();
@@ -104,9 +104,8 @@ function updateBlindBannerVisibility(){document.getElementById('hotspots').class
 function sensorBannerInfo(r){
  if(!window.CasaShelly?.sensorBinding(r.id))return null;
  const d=window.CasaShelly.sensorReading(r.id),format=v=>Number.isFinite(v)?v.toLocaleString('pt-PT',{maximumFractionDigits:1}):'—';
- const temperatureOnly=r.id==='balcony',hasValues=Number.isFinite(d?.temperature)||!temperatureOnly&&Number.isFinite(d?.humidity),cached=hasValues&&(!d.online||d.error||Date.now()-d.fetchedAt>120000);
+ const hasValues=Number.isFinite(d?.temperature)||Number.isFinite(d?.humidity),cached=hasValues&&(!d.online||d.error||Date.now()-d.fetchedAt>120000);
  const status=!d?'Por consultar':cached?'Última leitura':!hasValues?'Indisponível':'';
- if(temperatureOnly)return {text:format(d?.temperature)+' °C',status,aria:'temperatura '+(Number.isFinite(d?.temperature)?format(d.temperature)+' graus Celsius':'indisponível')+(status?', '+status:'')};
  return {text:format(d?.temperature)+' °C · '+format(d?.humidity)+' %',status,aria:`temperatura ${Number.isFinite(d?.temperature)?format(d.temperature)+' graus Celsius':'indisponível'}, humidade ${Number.isFinite(d?.humidity)?format(d.humidity)+' por cento':'indisponível'}${status?', '+status:''}`};
 }
 function roomBanner(r){

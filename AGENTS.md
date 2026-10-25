@@ -377,3 +377,47 @@ Settings Meteo usa a mesma política,instalada no dialog com callback onClose e 
 Atualizações manuais usam o ícone refresh do catálogo app.js num botão circular refresh-icon-button,sem texto visível,comtitle earia-label que identificam a ação. popup-ui.symbol marca a classe para refresh;inicializa os IDs terminados -refresh e normalize trata sensor-room-info/window-refresh. A cave chama CasaPopupUI.refresh após criar o botão. Preservar nós/listeners/disabled:alteração só visual,sem pedidos adicionais. Meteo retry também usa o desenho de duas setas e label Atualizar meteorologia. Manter centralização Safari,48px(círculoscompactosmobileconservam44),coresazuis e focoacessível.
 
 Verificado popupmaster com sensor/luz/janela:3SVGs,semtexto,raio50%;refreshsensor funcional,caverefreshSVG,zero comandos/erros.225 testes aprovados. Prova review/atualizar-circular-2.06.png.
+
+# Substituição dos sensores de varanda e cave — 2.07
+
+Pedido explícito de25/10/2026:temperatura varanda XB211299192082120,cave XB211299197137945. replacedTemperatureBindings em ShellyCore substitui só esses dois mapas,usa componentes0/tipoenvironment e preserva canais se já tem o mesmoID. Migração única casa-nl-temperature-sensors-replaced-v2 após migrações anteriores e antes da consulta inicial;guardar configuração validada antes de marcar concluída. Não altera contactos de portas,janelas,atuadores ou outras divisões. Varanda continua a alimentar a leituraReal do Meteo.
+
+Sensores aceitam statusDeviceId(XB ouhex),incluindo guardar formulário/importar/exportar. Manter deviceIdhex rígido paraatuadores. CompararXB sem distinguir maiúsculas/minúsculas no dirty do formulário e correspondência de respostas,conservandoXB no pedidoCloud. Não inferir temperatura interna nem inventar valores. Novo marcador validado comoBoolean no backup. Fixture marca migração já aplicada para não consultar IDs reais;testes deXB usam IDs fictícios.228 testes aprovados:substituição isolada,componentes,config/backup,IDsreadonly e respostasCloud com casos diferentes.
+
+# Humidade nos banners varanda/cave — 2.08
+
+Por pedido posterior, varanda deixa de ser só temperatura:sensorBannerInfo usa a apresentação comum «°C · %»,aria de ambos os valores e qualidadeÚltima leitura/Indisponível sem inventar valores. Esta instrução substitui a restrição de temperatura apenas na varanda. cellar-temperature mostra temperatura/humidade lado a lado no banner da cave e título do popup ajustado. Usar as mesmas leiturasCloud dos novos sensores2.07,sem novos pedidos,timers ou mudanças no MeteoReal. Valores ausentes ficam—,incluindo sensores legados sem humidade.
+
+Fixtureblutemps exclusivamenteXBfictícios com respostasCloudem minúsculas,componentes0. Verificado820×1180,varanda e cave comhumidade,sem colisão comestores,zero comandos/erros e228 testes aprovados. Provas review/humidade-varanda-2.08.png e review/humidade-cave-2.08.png.
+
+# Controlos acima,consumos no fim — 2.09
+
+Instrução posterior do utilizador substitui a ordem de2.01:todos os popups de equipamento mostram controlos/botões primeiro e Consumo(potência/acumulado)no fim. popup-ui.consumptionLast move a secção existente para último filho do seu host,de forma idempotente após normalize,tanto room(light/blind/divisão)como outros equipamentos,incluindo painéis de multimédia/secretária. Não recriar secções/listeners ou mudar lógicaShelly. Removidas as regras que punhamconsumo antes dos botões de luz/multimédia.
+
+Estores conservam slider,abrir/parar/fechar eatalhoscirculares antesdoconsumo. Verificadofixture820×1180,estores,candeeiro,termoventilador,cozinha,multimédia/secretária;secções abaixo dosbotões eúltimasnoseuhost,zero comandos/erros.228 testesaprovados. Provas review/consumos-em-baixo-estore-2.09.png e review/consumos-em-baixo-luz-2.09.png.
+
+# Indicação de piso junto ao rodapé — 2.10
+
+Por pedido do utilizador, retirar o cabeçalho superior «PISO −1 / Cave e estacionamento». Mostrar apenas «Piso −1» na cave e «Piso 1» na casa, centrado por cima do rodapé fixo. O identificador interno da casa continua 0: só muda o texto apresentado. floor-indicator é filho absoluto do bottom-dock, acompanha os insets de segurança e não interfere com cliques;role status/aria-live polite anuncia a mudança. Preservar navegação entre pisos,gestos e lógica Shelly.
+
+Verificado820×1180 e1180×820:indicação acompanha o piso,sem título superior e sem colisão com rodapé;zero erros/comandos.228 testes aprovados. Provas review/piso-menos-1-rodape-2.10.png e review/piso-1-rodape-2.10.png.
+
+# Câmara do hall — 2.11
+
+Por pedido explícito, adicionar UniFi G3 Instant à entrada da casa, coordenadas180,986 do render original, orientada para a porta156,1058. camera.js/camera.css e SVGs locais camera-g3-overhead/front: vista superior na planta, realce e cone azul apenas em hover/foco, alvo44px e popup sóbrio acessível. Iluminação acompanha a sala através de CasaHallCamera.drawLighting no redraw comum, sem timers/pedidos. Preservar todos os renders e geometria das divisões.
+
+Dados fornecidos: câmara192.168.10.57,MACd0:21:f9:95:9b:69,consolaProtect192.168.10.1. O botão Ver no Protect abre explicitamente https://192.168.10.1/protect numa nova página com noopener/noreferrer; não inferir ID internoProtect pelo MAC,não apresentar vídeo/online fictício,não criar iframe/fetch ou guardar credenciais. Esta entrega é elemento/acesso ao Protect,sem transmissão integrada. Não alterar configurações da câmara/consola ou transporteShelly. Endereço real não contactado nos testes.
+
+Verificadofixture820×1180:elemento junto à entrada,popup,hrefProtect,fechoX/exterior,zero erros/comandos;228 testes aprovados. Provas review/camera-hall-planta-2.11.png e review/camera-hall-popup-2.11.png.
+
+# Acesso remoto à câmara sem VPN — 2.12
+
+Pedido posterior substitui o destino local2.11:Ver no Protect abre https://unifi.ui.com/ (Site Manager oficial),com autenticaçãoUniFi e escolha de consola/Protect pelo utilizador. Legenda «Acesso remoto · Conta UniFi». Não construir URL de consola/câmara sem o identificadorProtect,não expor stream público,não guardar credenciais,não alterar router/portas/RemoteManagement. Acesso real depende da consola associada à conta e RemoteManagement ativo; não confirmado por sessão autenticada nesta entrega. Documentação oficial: https://help.ui.com/hc/en-us/articles/115012240067-Enabling-UniFi-Remote-Management . Verificadofixture820×1180:href remoto,legenda,popup e zero comandos. node --check camera.js e buildMeteo concluídos. Prova review/camera-remota-2.12.png.
+
+# Transmissão da câmara no popup — 2.13
+
+O utilizador forneceu um link privado monitor.ui.com e pediu vídeo incorporado,sem navegar no Site Manager. Não colocar esse link/UUID em código,documentação,fixtures ou recursos publicados. camera-core.config valida apenas HTTPS monitor.ui.com/UUID exato,sem credenciais/query/outrosdomínios. Preferência opcional casa-nl-camera-hall-v1={url},localStorage e backup com validação estrita. Formulário na engrenagem permite associar/substituir/remover o link;avisa inclusão na cópiaJSON e expiraçãoProtect.
+
+camera.js cria iframe apenas ao abrir/guardar/atualizar manualmente;allow autoplay/fullscreen,referrer no-referrer,sandbox scripts/same-origin/presentation. Remover iframe ao fechar(X/exterior)ou pagehide para libertar sessão. Não usar polling,nemfetchCloud,nem comandos. Popup820px adaptável ao iPad. Conservar leitorUniFi sem recortesCSS frágeis que ocultem mensagens;os controlos/identificação internos dependem da UniFi,por ser origem diferente,não prometer extração direta do vídeo. Botões locais refresh/settings circulares.
+
+Teste do link fornecido mostrou vídeo real no popup e partilha com expiração26/10/2026às12:07. A UniFi identifica-a como Câmara Estúdio G3;usar o link pedido sem inferir que é outra câmara. Partilha suporta uma sessão:outras tentativas devolveram Livestream Share Link is in Use/MAX_CONNECTIONS_REACHED;não fazer retriesautomáticos nem garantir disponibilidade concorrente. Não gravar imagens privadas da transmissão em recursos publicados.229 testes aprovados incluindo validação de destinos/credenciais,buildMeteo e sintaxeJS. Shelly fixture sem comandos.
