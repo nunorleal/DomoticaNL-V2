@@ -71,9 +71,10 @@
  }
  function deviceIds(config){const energy=(typeof module==='object'&&module.exports?require('./energy-core.js'):globalThis.CasaEnergyCore).binding(config);return [...new Set([config.mediaBindings,config.officeBindings,config.kitchenBindings,config.windowBindings,config.fan?{fan:config.fan}:{},config.heater?{heater:config.heater}:{},config.dehumidifier?{dehumidifier:config.dehumidifier}:{},energy?{home:energy}:{},config.bindings,config.lightBindings,config.sensorBindings,config.alarm,config.door?{entrance:config.door}:{},config.cellarDoor?{cellar:config.cellarDoor}:{},config.ev?Object.fromEntries(['meter','totalMeter','relay'].filter(k=>config.ev[k]).map(k=>[k,config.ev[k]])):{}].flatMap(b=>Object.values(b||{}).map(v=>v.deviceId)))]}
  function deviceBatches(config){const ids=deviceIds(config),batches=[];for(let i=0;i<ids.length;i+=10)batches.push(ids.slice(i,i+10));return batches}
- function lightCommand(binding,on){
+ function lightCommand(binding,on,brightness){
   if(!binding||!['switch','light'].includes(binding.type)||!Number.isInteger(binding.channel)||binding.channel<0||binding.channel>15||typeof on!=='boolean')throw Error('Comando de candeeiro inválido.');
-  return {id:deviceId(binding.deviceId),channel:binding.channel,on,type:binding.type};
+  if(brightness!==undefined&&(binding.type!=='light'||!Number.isInteger(brightness)||brightness<0||brightness>100))throw Error('Intensidade inválida.');
+  return {id:deviceId(binding.deviceId),channel:binding.channel,on,type:binding.type,...(brightness!==undefined?{brightness}:{})};
  }
  function lightStatus(device,binding){
   if(!device||typeof device!=='object')return null;
@@ -90,12 +91,14 @@
   // Resolve only the selected channel from actual status. Never guess a different channel or retry a command with another endpoint.
   const output=candidates.find(o=>o.type===binding.type)||(candidates.length===1?candidates[0]:null),c=output?.value;
   const on=typeof c?.output==='boolean'?c.output:typeof c?.ison==='boolean'?c.ison:null;
-  return {online:device.online===1||device.online===true,hasOutput:!!output,on,resolvedType:output?.type||null,resolvedChannel:output?.channel??null,detected:!!output&&output.type!==binding.type,availableOutputs:outputs.map(o=>o.type+':'+o.channel).slice(0,32),power:number(c?.apower??c?.power),brightness:number(c?.brightness),errors:Array.isArray(c?.errors)?c.errors.filter(x=>typeof x==='string').slice(0,20):[],model:String(device.code||device.type||'').slice(0,100)};
+  return {online:device.online===1||device.online===true,hasOutput:!!output,on,resolvedType:output?.type||null,resolvedChannel:output?.channel??null,detected:!!output&&output.type!==binding.type,availableOutputs:outputs.map(o=>o.type+':'+o.channel).slice(0,32),power:number(c?.apower??c?.power),brightness:typeof c?.brightness==='number'&&Number.isFinite(c.brightness)&&c.brightness>=0&&c.brightness<=100?c.brightness:null,errors:Array.isArray(c?.errors)?c.errors.filter(x=>typeof x==='string').slice(0,20):[],model:String(device.code||device.type||'').slice(0,100)};
  }
  function resolvedLightCommand(binding,reading,on){
   if(!reading?.hasOutput||!['switch','light'].includes(reading.resolvedType)||reading.resolvedChannel!==binding.channel)throw Error('Consulte a saída do candeeiro antes de enviar comandos.');
   return lightCommand({...binding,type:reading.resolvedType},on);
  }
+ function canDim(d,now=Date.now()){return canLightControl(d,now)&&now>=d.fetchedAt&&d.resolvedType==='light'&&Number.isFinite(d.brightness)&&d.brightness>=0&&d.brightness<=100}
+ function dimmerCommand(binding,reading,brightness){if(!canDim(reading)||reading.resolvedChannel!==binding?.channel)throw Error('Consulte uma saída de luz com intensidade antes de ajustar.');return lightCommand({...binding,type:'light'},brightness>0,brightness)}
  function canLightControl(d,now=Date.now()){return !!(d?.online&&d.hasOutput&&typeof d.on==='boolean'&&!d.error&&!d.missing&&!d.errors?.length&&Number.isFinite(d.fetchedAt)&&now-d.fetchedAt<=120000)}
  function command(binding,position){
   if(!binding||!Number.isInteger(binding.channel)||binding.channel<0||binding.channel>15)throw Error('Associação de estore inválida.');
@@ -115,5 +118,5 @@
   for(const [room,b]of Object.entries(bindings)){if(!ROOM_IDS.includes(room))throw Error('Divisão inválida.');const c=command(b,position),id=c.id+'_'+c.channel;if(used.has(id))throw Error('Estores repetidos.');used.add(id);devices.push({id:c.id,channel:c.channel})}
   if(!devices.length||devices.length>4)throw Error('Selecione entre 1 e 4 estores.');return {devices,position};
  }
- return {replacedTemperatureBindings,balconySensorBindings,SUPPLIED_LIGHT_IDS,suppliedLightBindings,ROOM_IDS,LIGHT_ROOM_IDS,SENSOR_ROOM_IDS,sensorStatus,deviceIds,deviceBatches,server,deviceId,statusDeviceId,config,status,lightCommand,lightStatus,resolvedLightCommand,canLightControl,command,canControl,groupCommand};
+ return {replacedTemperatureBindings,balconySensorBindings,SUPPLIED_LIGHT_IDS,suppliedLightBindings,ROOM_IDS,LIGHT_ROOM_IDS,SENSOR_ROOM_IDS,sensorStatus,deviceIds,deviceBatches,server,deviceId,statusDeviceId,config,status,lightCommand,lightStatus,resolvedLightCommand,canLightControl,canDim,dimmerCommand,command,canControl,groupCommand};
 });

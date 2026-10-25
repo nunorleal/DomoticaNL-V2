@@ -58,3 +58,12 @@ test('office commands preserve explicit ID, exact channel and Boolean state, nev
 
 
 test('Gui association fills all four supplied IDs, channel zero, and preserves existing edited associations',()=>{const expected={monitor:{deviceId:'441db8',channel:0},apollo:{deviceId:'e43ad8',channel:0},terramaster:{deviceId:'e9df12',channel:0},blackdrive:{deviceId:'bb8ac4',channel:0}};assert.deepEqual(M.associateOffice({}),expected);assert.deepEqual(M.associateOffice(undefined),expected);const edited={deviceId:'abcdef',channel:3};assert.deepEqual(M.associateOffice({monitor:edited}),{...expected,monitor:edited});assert.deepEqual(C.config({...base,officeBindings:M.associateOffice({})}).officeBindings,expected)});
+
+
+test('TV regeneration is only an estimate between 2 and 10 W inclusive with live, powered readings',()=>{
+ const r={online:true,hasOutput:true,on:true,errors:[],fetchedAt:100,meter:{online:true,hasMeter:true,power:6,energyKWh:1,errors:[]}},binding={deviceId:'deadbeef0011',channel:0};
+ for(const power of [2,4,6,10])assert.equal(M.tvRegenerating(M.state(binding,{...r,meter:{...r.meter,power}},101,4)),true);
+ for(const power of [0,1.999,10.001,20,null,NaN])assert.equal(M.tvRegenerating(M.state(binding,{...r,meter:{...r.meter,power}},101,4)),false);
+ for(const bad of [{...r,on:false},{...r,online:false},{...r,error:true},{...r,missing:true},{...r,fetchedAt:-50000},{...r,meter:{...r.meter,error:true}}])assert.equal(M.tvRegenerating(M.state(binding,bad,101,4)),false);
+ assert.equal(M.tvRegenerating(M.state(null,r,101,4)),false);
+});

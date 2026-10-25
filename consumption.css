@@ -71,3 +71,25 @@ svg.ui-icon{display:block;flex-shrink:0;fill:none;stroke:currentColor;stroke-wid
 .popup button.refresh-icon-button{appearance:none;-webkit-appearance:none;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;flex:none;width:48px;min-width:48px;height:48px;min-height:48px;padding:11px;border:1px solid #9eb8ca66;border-radius:50%;background:#8baac01c;color:#426b89;line-height:1}
 .popup button.refresh-icon-button>svg{display:block;width:24px;height:24px;margin:0;flex:none;pointer-events:none}
 .popup button.refresh-icon-button:focus-visible{outline:3px solid #87b8d8;outline-offset:3px}
+
+/* Match the outer popup to its complete image; compact screens can scroll vertically. */
+.media-popup[open]{height:auto;overflow-y:auto;overflow-x:hidden}
+.media-popup .media-scene{flex:none;min-height:0}
+
+.light-intensity-control{margin:16px 0;color:#345d7a}
+.light-intensity-control>div{display:flex;justify-content:space-between;gap:12px;font-size:12px}
+.light-intensity-control label{font-weight:500}
+.light-intensity-control output{font-variant-numeric:tabular-nums}
+.light-intensity-control input[type=range]{display:block;width:100%;height:6px;margin:21px 0;touch-action:pan-y}
+.light-intensity-control small{display:block;font-size:10px;line-height:1.4;color:#63839b}
+.light-intensity-control input:disabled{opacity:.45}
+
+/* Keep the desk heading and meter values on one line in the wider popup. */
+.office-popup .media-popup-header h2{white-space:nowrap;padding-right:0}
+.office-popup .consumption-metrics strong{white-space:nowrap;overflow-wrap:normal}
+@media(max-width:520px){.office-popup .media-popup-header h2{font-size:clamp(16px,4.6vw,23px)}}
+
+/* Crop the photograph as one unit so its device targets stay aligned. */
+.office-popup[open]{overflow:hidden}
+.office-popup .media-control-panel{max-height:none;overflow:visible}
+.office-popup .office-scene-cropped .office-image-heading{display:none}

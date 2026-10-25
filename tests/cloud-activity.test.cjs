@@ -14,3 +14,17 @@ test('background reads keep healthy cached controls available, but never hide co
  assert.equal(C.state(v,146000).ready,false);v.unavailable=1;assert.equal(C.state(v,100001).ready,false);
 });
 test('rate-limit pause exposes remaining seconds and cannot report ready',()=>{const v=input();v.session.retryAt=131000;const d=C.state(v,100001);assert.equal(d.phase,'cooldown');assert.equal(d.ready,false);assert.match(d.label,/31 s/)});
+
+test('ageing and never-read devices are not classified as offline or unavailable',()=>{
+ const r={online:true,fetchedAt:100000};assert.equal(C.readingCondition(r,false,146000),'stale');assert.equal(C.readingCondition(null,false,146000),'pending');assert.equal(C.readingCondition(r,true,100001),'ready');
+ for(const extra of [{online:false},{error:true},{missing:true},{errors:['fault']}])assert.equal(C.readingCondition({...r,...extra},false,146000),'unavailable');
+ assert.equal(C.readingCondition(r,false,100001),'unavailable');assert.equal(C.readingCondition(r,true,146000,120000),'ready');
+});
+test('focused popup explains paused fleet updates instead of reporting stale devices as unavailable',()=>{
+ const d=C.state(input({focused:true,focusProblems:false,staleDevices:20,pendingDevices:2,pausedDevices:22}),100001);
+ assert.equal(d.phase,'focused');assert.equal(d.label,'Prioridade ao dispositivo');assert.equal(d.unavailable,0);assert.equal(d.staleDevices,20);assert.equal(d.pendingDevices,2);assert.equal(d.pausedDevices,22);assert.equal(d.availableDevices,1);assert.equal(d.ready,false);
+ for(const [extra,phase]of [[{sending:true},'sending'],[{confirming:1},'confirming'],[{session:{retryAt:110000}},'cooldown']])assert.equal(C.state(input({focused:true,...extra}),100001).phase,phase);
+});
+test('without a popup, data awaiting refresh remains distinct from unavailable devices',()=>{
+ assert.equal(C.state(input({staleDevices:5}),100001).label,'5 com dados antigos');assert.equal(C.state(input({pendingDevices:5}),100001).label,'5 por consultar');assert.equal(C.state(input({unavailable:5}),100001).label,'5 indisponíveis');
+});

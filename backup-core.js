@@ -10,7 +10,8 @@
  function validateStorage(data){
   if(!object(data)||Object.keys(data).length>100)fail();safe(data);
   for(const k of Object.keys(data))if(!allowed(k))fail();
-  if(Object.hasOwn(data,'casa-nl-camera-hall-v1')){try{const core=typeof module==='object'&&module.exports?require('./camera-core.js'):globalThis.CasaCameraCore;data['casa-nl-camera-hall-v1']=core.config(data['casa-nl-camera-hall-v1'])}catch{fail()}}
+  // Retired camera links are neither restored nor exported.
+  delete data['casa-nl-camera-hall-v1'];
   const states=data['casa-nl-realistic-v2'];
   if(!Array.isArray(states)||states.length!==IDS.length||new Set(states.map(r=>r?.id)).size!==IDS.length)fail();
   for(const r of states){if(!object(r)||!IDS.includes(r.id)||typeof r.light!=='boolean')fail();if(BLINDS.includes(r.id)&&(!Number.isFinite(r.blind)||r.blind<0||r.blind>100))fail()}
@@ -23,6 +24,7 @@
   if(Object.hasOwn(data,'casa-nl-heater-added-v1')&&typeof data['casa-nl-heater-added-v1']!=='boolean')fail();
   if(Object.hasOwn(data,'casa-nl-heater-layout-v1')){try{const core=typeof module==='object'&&module.exports?require('./heater-core.js'):globalThis.CasaHeaterCore;data['casa-nl-heater-layout-v1']=core.layout(data['casa-nl-heater-layout-v1'])}catch{fail()}}
   if(Object.hasOwn(data,'casa-nl-show-console-icons')&&typeof data['casa-nl-show-console-icons']!=='boolean')fail();
+  for(const key of ['casa-nl-media-device-labels-v1','casa-nl-office-device-labels-v1'])if(Object.hasOwn(data,key)&&typeof data[key]!=='boolean')fail();
   if(typeof data['casa-nl-show-banners']!=='boolean')fail();
   if(Object.hasOwn(data,'casa-nl-temperature-sensors-replaced-v2')&&typeof data['casa-nl-temperature-sensors-replaced-v2']!=='boolean')fail();
   if(Object.hasOwn(data,'casa-nl-balcony-sensor-added-v1')&&typeof data['casa-nl-balcony-sensor-added-v1']!=='boolean')fail();
