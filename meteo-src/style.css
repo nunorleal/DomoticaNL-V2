@@ -1606,17 +1606,19 @@ main.focus-view>:not(.hero){display:none!important}
 
 /* Red night: a black background and clear red foreground, without the old double dimming. */
 html.red-night,html.red-night body{background:#000}
+/* The tint must blend with an opaque black surface, including on iPad Safari. */
+.red-night #root{min-height:100dvh;background:#000;isolation:isolate}
 .red-night .landscape{display:none}
-.red-night .night-veil{background:#000;opacity:1!important}
+.red-night .night-veil{display:none}
 .red-night main *{color:#fff!important}
 .red-night .bedside .panels,.red-night .bedside .date,.red-night .bedside .location,.red-night .bedside .sun-times,.red-night .bedside .topbar,.red-night .bedside .app-footer,.red-night .bedside .current-summary{opacity:1}
 .red-night .weather-icon{filter:grayscale(1) brightness(1.4)}
 .red-night main .clock,.red-night main .temperature{ text-shadow:none }
-.red-night .current-panel,.red-night .hour-card,.red-night .day-card{background:#ffffff06!important;border-color:#ffffff20!important}
-.red-night dialog.settings{background:#090000;color:#ff6358;border-color:#92362e}
+.red-night .glass,.red-night .hour.now,.red-night .lamp-notice,.red-night .hour-card,.red-night .day-card,.red-night .icon-button,.red-night .demo-badge,.red-night .meteo-refresh-button{background:#000!important;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;border-color:#ffffff20!important}
+.red-night dialog.settings{background:#000;color:#ff6358;border-color:#92362e}
 .red-night dialog.settings *{color:inherit!important}
 .red-night dialog.settings::backdrop{background:#000d}
-.red-night dialog.settings input,.red-night dialog.settings select,.red-night dialog.settings button{background-color:#220806;border-color:#8b3930;accent-color:#ed5d50}
+.red-night dialog.settings input,.red-night dialog.settings select,.red-night dialog.settings button{background-color:#000;border-color:#8b3930;accent-color:#ed5d50}
 
 /* Avoid the inline SVG baseline and native button padding on iPad Safari. */
 .icon-button>svg{display:block;flex-shrink:0;margin:0;padding:0;pointer-events:none}

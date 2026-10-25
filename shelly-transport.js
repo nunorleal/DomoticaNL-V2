@@ -10,7 +10,7 @@
    if(!Array.isArray(payload.ids)||!payload.ids.length||payload.ids.length>10)throw Error('Consulta de dispositivos inválida.');
    endpoint='get';body={ids:[...new Set(payload.ids.map(CORE.statusDeviceId))],select:['status']};
   }else if(path==='light'){
-   const c=CORE.lightCommand({deviceId:payload.id,channel:payload.channel,type:payload.type},payload.on);endpoint='set/'+c.type;body={id:c.id,channel:c.channel,on:c.on};
+   const c=CORE.lightCommand({deviceId:payload.id,channel:payload.channel,type:payload.type},payload.on,payload.brightness);endpoint='set/'+c.type;body={id:c.id,channel:c.channel,on:c.on,...(c.brightness!==undefined?{brightness:c.brightness}:{})};
   }else if(path==='cover'){
    endpoint='set/cover';body=CORE.command({deviceId:payload.id,channel:payload.channel},payload.position);
   }else if(path==='covers'){

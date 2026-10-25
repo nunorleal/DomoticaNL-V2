@@ -113,3 +113,11 @@ body:before{background:linear-gradient(var(--street-shade-top),var(--street-shad
 .lamp-trigger{position:absolute;z-index:1;min-width:44px;min-height:44px;transform:translate(-50%,-50%);padding:0;border:1px solid transparent;border-radius:50%;background:transparent;pointer-events:auto;cursor:pointer;touch-action:manipulation}
 .lamp-trigger:hover,.lamp-trigger:focus-visible{background:var(--plan-highlight-bg);border-color:var(--plan-highlight-border);outline:2px solid var(--plan-highlight-outline);outline-offset:2px;box-shadow:0 0 8px var(--plan-highlight-glow)}
 .lamp-settings{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;padding:12px;border-radius:50%}.lamp-settings svg{width:24px;height:24px}
+
+/* Readings wrap as complete measurements, within the room's available width. */
+.room-pin.has-sensor{min-width:0;box-sizing:border-box}
+.room-pin-sensor-values{display:flex;flex-wrap:wrap;justify-content:center;column-gap:2px;max-width:100%;white-space:normal;text-align:center}
+.room-pin-sensor-values .sensor-measure{white-space:nowrap}
+.room-pin-sensor-status{max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:center}
+.room-pin[data-room=balcony] .room-pin-sensor-values{flex-direction:column;gap:1px;font-size:clamp(7px,calc(var(--pin-max-width)*.16),10px)}
+.room-pin[data-room=balcony] .sensor-separator{display:none}

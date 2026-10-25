@@ -21,3 +21,38 @@ body.window-master-open .window-closed-master,body.window-bedroom2-open .window-
 .media-utility .media-power-toggle{display:inline-flex;align-items:center;justify-content:center;border:1px solid #c9d3ce;border-radius:50%;width:44px;min-width:44px;height:44px;padding:10px;background:#dce1de;color:#78847e;box-shadow:none}.media-utility .media-power-toggle svg{width:22px;height:22px}.media-utility .media-power-toggle[data-power=on]{background:#0ca966;border-color:#079254;color:white}.media-utility .media-power-toggle[data-power=unknown]{background:#eee8d8;border-color:#cabc98;color:#9a8652}.media-utility .media-power-toggle:disabled{cursor:default;opacity:.55}.media-utility .media-power-toggle[aria-busy=true]{outline:2px dotted #52786b;outline-offset:3px}
 
 .missing-ids-warning{margin:12px 0;padding:12px 14px;border:1px solid #d69a86;border-radius:12px;background:#fff1eb;color:#a33f26;font-size:12px;line-height:1.5}.missing-ids-warning[hidden]{display:none}.missing-ids-warning summary{cursor:pointer;font-weight:600}.missing-ids-warning p{font-size:11px;margin:8px 0}.missing-ids-links{display:flex;flex-wrap:wrap;gap:6px}.missing-ids-links button{font-size:11px;padding:6px 9px;border-radius:7px;background:#ffe2d5;color:#8d331e;text-align:left}#shelly-form .shelly-id-missing{border-color:#b9583a;box-shadow:0 0 0 1px #b9583a33}.missing-id-hint{display:block;color:#aa432b;font-size:11px;margin:3px 0 8px}.missing-id-hint[hidden]{display:none}
+
+/* Low consumption is an estimate of panel maintenance, never a command or confirmed TV mode. */
+.media-tv-regeneration{position:absolute;z-index:2;left:42.2%;top:25.3%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;color:#b6d9f0;text-shadow:0 1px 4px #000;pointer-events:none}
+.media-tv-regeneration[hidden]{display:none}
+.media-tv-regeneration svg{width:clamp(22px,4vw,36px);height:clamp(22px,4vw,36px);filter:drop-shadow(0 0 5px #74b4e680)}
+.media-tv-regeneration small{font-size:clamp(9px,1.5vw,12px);font-weight:400}
+.media-image-stage[data-tv-regenerating=true] .media-device-banner[data-media-device=tv] small{color:#b6d9f0}
+
+/* Physical device targets remain available when the optional name banners are hidden. */
+.media-device-hit{position:absolute;z-index:2;display:block;margin:0;padding:0;border:1px solid transparent;border-radius:7px;background:transparent;appearance:none;-webkit-appearance:none;cursor:pointer;touch-action:manipulation;color:var(--plan-highlight-border,#b9d9ed)}
+.media-device-hit:hover,.media-device-hit:focus-visible{background:var(--plan-highlight-bg,#8abddd24);border-color:var(--plan-highlight-border,#c7e9f6);outline:2px solid var(--plan-highlight-outline,#426e8c);outline-offset:2px;box-shadow:0 0 12px #7ebbe044}
+.media-device-hit[aria-pressed=true]{border-color:#a5cee880}
+.media-labels-toggle{display:flex;align-items:center;gap:7px;width:fit-content;min-height:28px;margin-top:6px;font-size:11px;color:#52718b;cursor:pointer}
+.media-labels-toggle input{appearance:auto;-webkit-appearance:checkbox;accent-color:#477b9d;width:16px;height:16px;margin:0}
+.device-labels-hidden .media-device-banner,.device-labels-hidden .media-device-dot,.device-labels-hidden .media-tv-connector{display:none}
+/* Banners must remain above physical targets where a label crosses another device. */
+.media-image-stage .media-device-banner{z-index:4}
+.media-image-stage .media-device-dot{z-index:5}
+
+/* Fixed percentage heights cannot accommodate wrapped names and stale-state captions. */
+.media-image-stage .media-device-banner{height:auto!important;min-height:44px;padding:7px 8px;gap:3px;box-sizing:border-box;justify-content:center}
+.media-device-banner>span,.media-device-banner>small{display:block;flex:none;width:100%;min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.25}
+
+.compact-device-banners .media-device-banner{font-size:10px}
+.compact-device-banners .media-device-banner small{font-size:9px}
+.compact-device-banners [data-media-device=playstation],.compact-device-banners [data-media-device=vodafone],.compact-device-banners [data-media-device=unifi]{left:64%!important;width:35%!important}
+.compact-device-banners [data-media-device=playstation]{top:42%!important}
+.compact-device-banners [data-media-device=vodafone]{top:56%!important}
+.compact-device-banners [data-media-device=unifi]{top:70%!important}
+
+/* Cover only the monitor pixels; retain its frame, webcam and all interactive targets. */
+.office-screen-effects{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.office-monitor-off-screen{opacity:1;transition:opacity .25s ease}
+.office-image-stage[data-monitor-power=on] .office-monitor-off-screen{opacity:0}
+@media(prefers-reduced-motion:reduce){.office-monitor-off-screen{transition:none}}

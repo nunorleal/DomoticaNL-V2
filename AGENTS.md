@@ -421,3 +421,104 @@ O utilizador forneceu um link privado monitor.ui.com e pediu vídeo incorporado,
 camera.js cria iframe apenas ao abrir/guardar/atualizar manualmente;allow autoplay/fullscreen,referrer no-referrer,sandbox scripts/same-origin/presentation. Remover iframe ao fechar(X/exterior)ou pagehide para libertar sessão. Não usar polling,nemfetchCloud,nem comandos. Popup820px adaptável ao iPad. Conservar leitorUniFi sem recortesCSS frágeis que ocultem mensagens;os controlos/identificação internos dependem da UniFi,por ser origem diferente,não prometer extração direta do vídeo. Botões locais refresh/settings circulares.
 
 Teste do link fornecido mostrou vídeo real no popup e partilha com expiração26/10/2026às12:07. A UniFi identifica-a como Câmara Estúdio G3;usar o link pedido sem inferir que é outra câmara. Partilha suporta uma sessão:outras tentativas devolveram Livestream Share Link is in Use/MAX_CONNECTIONS_REACHED;não fazer retriesautomáticos nem garantir disponibilidade concorrente. Não gravar imagens privadas da transmissão em recursos publicados.229 testes aprovados incluindo validação de destinos/credenciais,buildMeteo e sintaxeJS. Shelly fixture sem comandos.
+
+# Retirar integração da câmara — 2.14
+
+Pedido explícito posterior:retirar integração por exigir renovação diária do URL. Remover elemento/popup/scripts/CSS/SVGs da câmara e hook de iluminação;eliminar capturas antigas específicas da integração dos recursos publicados. app.js remove a preferência local casa-nl-camera-hall-v1 ao iniciar;backup-core descarta a chave legada ao validar,para não exportar/restaurar links temporários. Não contactar a câmara/consola nem revogar remotamente partilhas como efeito desta remoção. Não alterar outras funcionalidades/associações. BuildMeteo concluído e228 testes aprovados.
+
+O utilizador pediu aviso caso a situação mude. Criada automação heartbeat semanal às segundas10:00,Europe/Lisbon,«Verificar integração permanente UniFi Protect»,que consulta fontes oficiais e só avisa se surgir solução suportada e verificada para vídeo privado em PWA/iPad,remoto semVPN e sem renovação diária. A automação não altera app/dispositivos/permissões.
+
+# Prioridade ao equipamento aberto — 2.15
+
+Pedido do utilizador:ao abrir dispositivo,suspender atualizações de outros equipamentos. shelly.popupIds resolve contexto room(light/blind/divisão),seleção multimédia/secretária,cozinha,aparelhos,alarme,EV,contador,cave. showPopup agenda focusPopup depois do desenho;seleção de dispositivos multimédia atualiza também o foco e close delegado volta à política geral. IDs deduplicados,sem alterar associações/persistência.
+
+Ao mudar foco,invalidar restantes lotes de leitura e cancelar status em curso,conservando caches. Leituras normais/pendentes na fila são filtradas novamente para os IDs do popup antes de enviar. Consultar prioritariamente se necessário,reutilizando coalescência10s;durante popup a rotina só renova os IDs abertos a cada15s e recupera apenas deferredReads desses IDs. Sem popup retomar consulta geral após2s,sem esvaziar leituras ou gerar comandos. Refresh da cave passa a ser específico à cave.
+
+Exceção intencional:verificações limitadas de comandos já aceites (confirmation:true) podem consultar o respetivo ID fora do popup;preservar prazos,tentativas,guards,Parar,prioridade de atuações,serialização,intervaloCloud e429. Não interromper leitura de confirmação ativa ao trocar popup. Não criar retries de comandos nem estados otimistas. Outros banners conservam últimas leituras e qualidade conforme frescura.
+
+231 testes aprovados,incluindo interrupção da consulta geral sem apagar valores,filtragem de leituras previamente enfileiradas,exceção de confirmação,recuperação restrita e retoma. Fixture820×1180 com consulta lenta:após abrir candeeiro master os próximos pedidos continham apenas o ID fictício desse candeeiro;zero erros/comandos. Prova review/prioridade-popup-2.15.png. BuildMeteo atualizado.
+
+# Indicação de regeneração da TV — 2.16
+
+Pedido explícito:entre2e10W mostrar símbolo no ecrã da TV por provável regeneração. CasaMediaCore.tvRegenerating usa exclusivamente snapshot configurado,reléON,dados atuais/não stale e potência finita2..10W inclusive. É inferência por consumo,nunca modo confirmado da LG. media.js sobrepõe símbolo refresh azul e legendaRegeneração no centro do ecrã preto;banner/estado dizem Regeneração estimada e título/aria explicam intervalo. Sobrepõe a apresentaçãoLigada dentro deste intervalo mesmo acima do limiar legado4W;fora dele conserva a regra anterior e não alteraactivityThreshold,PS5 ou outros equipamentos.
+
+Não controlar relés,persistir novo estado,criar polling ou modificar prioridades2.15. Manter alimentação distinta de atividade. Não mostrar símbolo com dados antigos/offline/erro/semmedição/reléOFF. Fixturetvregen usa TVfictícia6W.232 testes aprovados,incluindo limites2/10,fora do intervalo,offline,ausência e staleness. UI820×1180:ecrãpreto,símboloazul,legendaestimada,6W/12kWh,zero comandos. Prova review/tv-regeneracao-2.16.png. BuildMeteo atualizado.
+
+# Popups à largura das imagens — 2.17
+
+Pedido:retirar faixas laterais escuras dos popupsTV/secretária e ajustar o próprio popup à largura do render. fit em media.js/office.js usa proporção original,largura disponível e altura útil depois do cabeçalho/painel,até820px e1120px;largura mínima360px limitada ao ecrã para manter controlos legíveis. Aplicar a mesma largura à imagem e ao dialog acrescentando apenas as bordas. ResizeObserver acompanha cena,cabeçalho e painel;resize recalcula a partir do viewport para permitir voltar a alargar após rotação. Não recortar/esticar renders ou deslocar banners.
+
+consumption.css posterior remove altura fixa/flex da cena e permite scroll vertical do popup em alturas pequenas,sem scrollhorizontal. Imagens completas,controlos econsumos preservados;sem alteraçõesShelly/pedidos. Verificado820×1180 e1180×820:TV761,9/446,2px e secretária545,3/362px,imagem2px menor pelas bordas,semoverflowhorizontal e semloopResizeObserver. Zero comandos;232 testes aprovados e buildMeteo concluído. Provas review/popup-largura-secretaria-2.17.png e review/popup-largura-tv-2.17.png.
+
+# Aparelhos selecionáveis nas imagens e legendas opcionais — 2.18
+
+Pedido do utilizador:realce azul ao passar o rato no próprio dispositivo dos popupsTV/secretária,e seleção por clique,com check de ocultar as legendas dentro de ambos. Áreas media-device-hit mantêm coordenadas relativas à imagem e selecionam o mesmo ID dos banners,reutilizando draw/focusPopup2.15. Clique/teclado nunca envia comando;alimentação só nos botões explícitos existentes. Alvos acessíveis mesmo sem legendas. Banners ficam acima dos alvos nas sobreposições.
+
+Checks nativos «Legendas dos dispositivos» em cada cabeçalho,persistidos independentemente como Boolean em casa-nl-media-device-labels-v1 e casa-nl-office-device-labels-v1,por omissão true;backup opcional validado. Ocultar apenas banners,pontos e conectores,não painéis de controlo ou símbolo de regeneração. Não confundir com preferência dos ícones na planta.
+
+Imagens tinham legendas embutidas:três versões limpas via imagegen integrado em assets/multimedia-sala-limpa-v2.png,multimedia-sala-limpa-apagada-v2.png e secretaria-gui-limpa-v2.png,originais preservados. Ver POPUP-DISPOSITIVOS.md com prompt e validação. Preservar iluminaçãoTV/PS5,ajuste de largura2.17,associações e comandos.233 testes aprovados,UI820×1180 e1180×820,preferência mantida,seleção dePS5/TerraMaster comlegendas ocultas,zero erros/comandos. Provas review/dispositivos-ps5-sem-legendas-2.18.png e review/dispositivos-secretaria-sem-legendas-2.18.png.
+
+# Texto contido nos banners — 2.19
+
+Correção pedida para nomes/consumos fora das caixas e temperatura/humidade na varanda. Bannersmedia passam de altura percentual fixa a heightauto com prioridade sobre inline,min44px,padding e line-height explícitos. Nome/estado com largura100%,quebra de linha e sem shrink. Alargados/distribuídos PS5/Vodafone/UniFi e discoexterno;UniFi mais abaixo para não cruzar os pontos. CenaTV abaixo520px usa arranjo compacto comfont10/9 e três banners distribuídos verticalmente. Não cortar/ocultar texto ou valores.
+
+roomBanner separa duas medições em sensor-measure,com unidades inseparáveis;varanda usa coluna de duas linhas e font adaptado à largura máxima da divisão. Status pode quebrar linha. Resize atualiza --pin-max-width antes de conter/recolocar os banners,para não conservar largura antiga após rotação. Preservar arrasto,preferências,leituras,qualidade,alvosinterativos e pedidosShelly.
+
+233 testes aprovados,JS/buildMeteo concluídos. Verificação820×1180 e1180×820:nove bannersmedia/office comscrollWidth/Height dentro declientWidth/Height;varanda44px sem overflow,temperatura/humidade em duas linhas. Zero erros/comandos. Provas review/banner-varanda-ajustado-2.19.png e review/banners-dispositivos-ajustados-2.19.png.
+
+# Candeeiro da consola usa luz da sala — 2.20
+
+Pedido explícito:associar candeeiro do popup multimédia à mesma luz da sala. Acrescentar alvo sobre abat-jour,realceazul,banner opcional e seleção local living-lamp;sem nova entrada em mediaBindings ouID/canal. Snapshot usa lightBinding/lightReading/lampSnapshot('living'),controlo usa commandLight('living',on),refresh light/living e definições focam shelly-light-id-living. Scope do popup resolve living-lamp para a associação living existente. Reutilizar guards,frescura,confirmação e estado real;lampSnapshot passa a expor pending sem IDs/segredos.
+
+Consumo partilhado usa rolelight/idliving. consumption.mount reutiliza o mesmo painel ao trocar rolemedia/light e limpa assinatura,sem duplicar cartões ou manter consumo da TV selecionada anteriormente. Não inventar medições ausentes. Iluminação do candeeiro/consola continua a seguir apenas o estado confirmado da luz living,com os renders existentes. Sem alterações aos outros equipamentos,layout da planta ou associação da sala.
+
+234 testes aprovados,incluindo ID/scope partilhado sem associação media. Fixture fictícia820×1180:seleção consultou luzliving,clique explícito enviou apenas set/switch deadbeef3333/canal0/ontrue e confirmação mudou iluminação da consola;nenhum equipamento real contactado. Alternância TV/candeeiro mantém um painel de consumo e role correto,zero erros. Prova review/candeeiro-popup-luz-sala-2.20.png.
+
+# Monitor da secretária com ecrã preto — 2.21
+
+Pedido explícito:quando o monitor estiver desligado,o seu ecrã fica preto no popup. office.js acrescenta SVG sobre apenas os píxeis do ecrã(129,486..896,718 em1024×1536),preservando moldura,webcam,restantefotografia,banners e alvosclicáveis. Estado visual segue mediaSnapshot('monitor').on confirmado:falso preto,verdadeiro revela render original;desconhecido não mostra imagem iluminada. Não criar novo limiar de consumo ou inferir standby,nem mudar comandos/associações. Overlaysem pointerevents,camada1 sob realces/banners,transição respeita reducedmotion.
+
+Fixture office=off apenas ID fictício deadbeefee00OFF.234 testes aprovados e buildMeteo concluído. Verificação820×1180:OFF opacidade1,ecrãpreto sem recortar moldura,sem comandos reais. Prova review/monitor-preto-2.21.png.
+
+# Contador distingue espera e indisponibilidade — 2.22
+
+Pedido/diagnóstico:ao abrir popup e suspender consultas gerais2.15,o contador marcava como indisponíveis os restantes equipamentos porque usava validadores de atuação que expiram com a idade. Não significa perda da ligação dos Shellys.
+
+CasaCloudActivityCore.readingCondition separa erro/offline/missing/errocomponentes/leiturasinválidas atuais(unavailable),semconsulta(pending) e timestampantigo(stale). activitySnapshot deduplica as categorias porID com prioridadedeerro e preserva120s para sensores;max45s restantes. No popup o contador mostra «Prioridade ao dispositivo» e estado poratualizar quando necessário,sem tratar a espera do resto comooffline. Detalhes separam Indisponíveis,Dados desatualizados,Ainda por consultar eEm espera pelo popup. Contagens disponíveis descontam valoresantigos/pendentes;fasefocused não declara todosprontos. Envio,confirmar,429,erros de consulta eestado de fila conservam precedência.
+
+Alteração apenas de diagnóstico/apresentação:nenhuma mudança a polling,prioridade,guards,comandos,frescura paraatuação ou leituras recebidas.237 testes aprovados,incluindo tempoenvelhecido vsfalha,scope eprecedênciadecomandos/pausas. BuildMeteo concluído.
+Verificado em fixture1180×820 após envelhecimento das leituras de fundo:contador «Shelly · Prioridade ao dispositivo»,TV atualizada e restantes mantêmúltimaleitura,sem comandos/erros. Prova review/contador-prioridade-popup-2.22.png.
+
+# Intensidade dos três candeeiros — 2.23
+
+Pedido explícito:slider além deON/OFF na sala,quartoGui/bedroom2 eprincipal/master. brightnessControl monta controlo nativo0..100 em decorateLight e também no candeeiro partilhado do popupmultimédia. input apenas ajusta rascunho;change(largar/teclado)envia uma só alteração pela fila existente. Valor0 enviaONfalse;acima0ONtrue combrightness. Manter botão de alimentação e último valor confirmado;nenhuma escrita no arranque/consultas/importação nem persistência otimista.
+
+CORE.lightStatus aceita brightness finita0..100 de lightsGen1/light:nGen2 no canal exato. canDim exige tipo real light,percentagem reportada,estado online/fresco/sem erros/não futuro. dimmerCommand e transport/lightCommand validam inteiro0..100 e proíbembrightness em switch. Transporte usa o endpointCloudv2set/light com id/channel/on/brightness;guard verifica novamente saída/tipo/canal/frescura no envio,sem inventar capacidade em relés.
+
+commandLight opcionalbrightness reutiliza lightTargets e confirmação limitada3tentativas/30s;brightnessTargets adicional obriga novoON epercentagem correspondente antes de confirmar. Expiração/settle/configlimpamambos;nunca retry deatuações. ComandoON/OFFmaisnovo cancela expectativa antiga debrightness. lampSnapshot expõe brightness/canDim semIDssegredos. Sliders desativados e «Intensidade indisponível» quando a Cloud não reporta capacidade;não mudar tipo/canal/configuração para forçar dimmer. Sem novos timers/pedidos de polling.
+
+Documentação confirmada: https://shelly-api-docs.shelly.cloud/cloud-control-api/communication-v2/ (Control aLight),https://shelly-api-docs.shelly.cloud/gen2/ComponentsAndServices/Light/ .241 testes aprovados:Gen1/2,canal/tipocorreto,intervalos,stale/futuro/offline,transporte,confirmação depercentagem e expiração. Fixture dimmers exclusivamenteIDsfictícios,brightness65/45/70. SalaEnd enviou exatamenteumset/light deadbeef3333,canal0,ontrue,brightness100;receção posterior confirmou100. Três sliders ativos,consolamultimédia partilha100,zero erros. Prova review/intensidade-candeeiro-2.23.png. BuildMeteo concluído.
+
+# Largura do popup da secretária — 2.24
+
+Pedido explícito:alargar o popup para título e valores de consumo ficarem numa linha. office.fit conserva ajuste proporcional da imagem,mas usa largura mínima640px limitada pela área disponível(viewport−28px),em vez de360px. A altura disponível deixa de apertar o popup abaixo desse mínimo;em ecrãs baixos mantém scrollvertical nativo. Apenas secretária,sem alterações ao popupTV ou à comunicaçãoShelly.
+
+CSS restrito aoffice-popup impede quebra do título e dos valores/unidades,com tamanho adaptativo do título abaixo520px. Imagem completa sem recorte,alvos,banners e controlos preservados. Verificação em fixture isolada820×1180,1180×820 e390×844:sem overflowhorizontal,título e valores numa linha,zero comandos e erros.241 testes aprovados e buildMeteo concluído. Prova completa820×1450 em review/secretaria-largura-2.24.png.
+
+# Fundo preto no modo vermelho da MeteoNL — 2.25
+
+Pedido explícito:fundo completamente preto,apenas informação e símbolos vermelhos. #root recebe fundo opaco#000,minheight100dvh e isolation:isolate apenas emred-night,garantindo que a camada multiply multiplica uma superfíciepreta em vez de tingir uma superfície transparente. Paisagem e nightveil ocultos no vermelho;cartões,horaatual,botões,aviso e definições têm fundopreto sem blur/sombras coloridas. Preservar paleta/intensidade de primeiro plano,horários,modocolorido,layout e controlos.
+
+BuildMeteo e241 testes aprovados. Verificação1180×820:palettered,root/card/hour rgb(0,0,0),isolationisolate;píxeisde fundo confirmados#000 na captura. Prova review/meteo-vermelho-preto-2.25.png. Nenhum comandoShelly.
+
+# Slider das luzes igual ao dos estores — 2.26
+
+Pedido explícito:mostrar linha no slider de intensidade,igual à dos estores. A regra global do range usa gradiente com--value;nas luzes faltava essa variável,o que invalidava o fundo. brightnessControl define--value ao apresentar a leitura e durante input(rascunho),sem novos comandos. Campo mantém cursor partilhado e linha6px,substituindoaltura32px por margens21px para preservar espaço vertical. Controlo partilhado aplica-se aos três candeeiros e candeeiro da consola. Sem alteração deenviochange,confirmação ou guardas.
+
+241 testes ebuildMeteo aprovados. Fixture dimmers:sliderSala70%,gradiente azul até70% e linha6px,cursor correspondente,zero comandos. Prova review/slider-luzes-linha-2.26.png.
+
+# Secretária inteira sem scroll — 2.27
+
+Pedido explícito:caber todo o popup,cortando imagem por cima e por baixo. Manter largura mínima640px limitada à viewport2.24. office.fit agora atribui à cena apenas altura restante depois do cabeçalho e painel;fotografia mantém proporção e tamanho original dentro de stage único com todos os overlays/banners/alvossolidários. Recorte usa42% do excesso emcima(limite20% daimagem),restanteembaixo,priorizando os equipamentos. Cabeçalho embutido duplicado oculta-se quando há corte para evitar umbannerparcial. Popup e painel sem scroll;imagem não deformada,monitorpreto e alvos alinhados.
+
+Fixture isolada820×1180:clientHeight=scrollHeight1150;1180×820:790/790,painel203/203,todos os8alvos/banners contidos na cena. SeleçãoTerraMaster funcional,zero erros/comandos.241 testes aprovados,buildMeteo concluído. Provas review/secretaria-sem-scroll-2.27.png e review/secretaria-sem-scroll-paisagem-2.27.png.

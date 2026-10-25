@@ -3,7 +3,7 @@
  'use strict';
  const CORE=window.ShellyCore,KEY='casa-nl-shelly-cloud-v1',SESSION='casa-nl-shelly-session-v1',$=id=>document.getElementById(id);
  let config={schemaVersion:1,server:'',authKey:'',rememberKey:false,bindings:{},lightBindings:{}},key='',busy=false,generation=0,lastFetched=0;
- let refreshing=false,readEpoch=0,readTask=null,nextRefreshAt=0,urgentReads=0,activeReadPriority=false;const deferredReads=new Set(),checkedDevices=new Map();
+ let refreshing=false,readEpoch=0,readTask=null,nextRefreshAt=0,urgentReads=0,activeReadPriority=false,activeReadConfirmation=false,nextFocusRefreshAt=0,focusKey="null";const deferredReads=new Set(),checkedDevices=new Map();
  const lastRelay=r=>r?.hasOutput&&typeof r.on==='boolean'&&Number.isFinite(r.fetchedAt)?{on:r.on,fetchedAt:r.fetchedAt}:null;
  const blockingRead=()=>busy&&!refreshing||Date.now()<(transport.stats(config.server).retryAt||0);
  const confirmations=window.CasaConfirmationCore.create(),targetRevisions=new Map();
@@ -22,7 +22,7 @@
   for(const ticket of confirmations.expired()){
    const [kind,id]=ticket.key.split(':');
    if(kind==='cover'){targets.delete(id);feedback(message,true)}
-   else if(kind==='light'){lightTargets.delete(id);lightMessages.set(id,message)}
+   else if(kind==='light'){lightTargets.delete(id);brightnessTargets.delete(id);lightMessages.set(id,message)}
    else if(kind==='media'){mediaTargets.delete(id);mediaMessages.set(id,message)}
    else if(kind==='ev'){evTarget=null;evMessage=message}
    else if(kind==='alarm'){alarmTarget=null;alarmMessage=message}
@@ -48,7 +48,7 @@
  const sensorReadings=new Map();
  const sensorBinding=id=>config.sensorBindings?.[id]||null;
  const sensorReading=id=>sensorReadings.get(id)||null;
- const lightReadings=new Map(),lightTargets=new Map(),lightMessages=new Map();let lightGroupBusy=false;
+ const lightReadings=new Map(),lightTargets=new Map(),brightnessTargets=new Map(),lightMessages=new Map();let lightGroupBusy=false;
  const readings=new Map(),targets=new Map(),sequences=new Map();let commandCount=0,groupBusy=false,stopping=false,pollTimer,lastMessage='',lastError=false;
  try{const saved=localStorage.getItem(KEY);if(saved)config=CORE.config(JSON.parse(saved));const session=JSON.parse(sessionStorage.getItem(SESSION)||'null');key=config.authKey||(session?.server===config.server?session.key:'')||''}catch{fanMigrationAllowed=false}
  if(fanMigrationAllowed&&config.fan===undefined){try{const next=CORE.config({...config,fan:{deviceId:'8819dc',channel:0}});localStorage.setItem(KEY,JSON.stringify(next));config=next}catch{fanMessage='Associe a ventoinha nas definições: ID 8819dc, canal 0.'}}
@@ -64,6 +64,8 @@
  try{if(fanMigrationAllowed&&!localStorage.getItem('casa-nl-door-ids-restored-v1')){const next=CORE.config({...config,...CasaDoorCore.suppliedBindings(config)});localStorage.setItem(KEY,JSON.stringify(next));config=next;localStorage.setItem('casa-nl-door-ids-restored-v1','true')}}catch{lastMessage='Confirme os IDs dos sensores das duas portas nas definições.';lastError=true}
 
  try{if(fanMigrationAllowed&&!localStorage.getItem('casa-nl-balcony-sensor-added-v1')){const next=CORE.config({...config,sensorBindings:CORE.balconySensorBindings(config.sensorBindings)});localStorage.setItem(KEY,JSON.stringify(next));config=next;localStorage.setItem('casa-nl-balcony-sensor-added-v1','true')}}catch{}
+
+ try{if(fanMigrationAllowed&&!localStorage.getItem('casa-nl-temperature-sensors-replaced-v2')){const next=CORE.config({...config,sensorBindings:CORE.replacedTemperatureBindings(config.sensorBindings)});localStorage.setItem(KEY,JSON.stringify(next));config=next;localStorage.setItem('casa-nl-temperature-sensors-replaced-v2','true')}}catch{lastMessage='Confirme os novos sensores de temperatura da varanda e da cave nas definições.';lastError=true}
 
  try{if(fanMigrationAllowed&&!localStorage.getItem('casa-nl-heater-added-v1')){if(config.heater===undefined){const next=CORE.config({...config,heater:{deviceId:'ea9d29',channel:0}});localStorage.setItem(KEY,JSON.stringify(next));config=next}localStorage.setItem('casa-nl-heater-added-v1','true')}}catch{heaterMessage='Confirme o ID ea9d29 e o canal nas definições.'}
  try{if(fanMigrationAllowed&&!localStorage.getItem('casa-nl-dehumidifier-added-v1')){if(config.dehumidifier===undefined){const next=CORE.config({...config,dehumidifier:{deviceId:'88d798',channel:0}});localStorage.setItem(KEY,JSON.stringify(next));config=next}localStorage.setItem('casa-nl-dehumidifier-added-v1','true')}}catch{dehumidifierMessage='Confirme o ID 88d798 e o canal nas definições.'}
@@ -88,11 +90,11 @@
   const lampNames={master:'Abajur com flores',bedroom2:'Candeeiro preto',living:'Candeeiro de pé cromado'};
   $('shelly-light-mappings').innerHTML=CORE.LIGHT_ROOM_IDS.map(id=>{const r=rooms.find(r=>r.id===id),b=lightBinding(id);return `<fieldset class="shelly-mapping shelly-light-mapping"><legend>${escapeHTML(r.name)}</legend><p class="settings-explanation">${lampNames[id]}</p><label for="shelly-light-id-${id}">Device ID do candeeiro</label><input id="shelly-light-id-${id}" type="text" autocomplete="off" spellcheck="false" maxlength="48" placeholder="Ex.: aabbcc112233" value="${escapeHTML(b?.deviceId||'')}"><div class="shelly-light-options"><div><label for="shelly-light-channel-${id}">Canal da luz</label><input id="shelly-light-channel-${id}" type="number" min="0" max="15" step="1" value="${b?.channel??0}"></div><div><label for="shelly-light-type-${id}">Tipo preferido</label><select id="shelly-light-type-${id}"><option value="switch"${b?.type!=='light'?' selected':''}>switch · Relé / tomada</option><option value="light"${b?.type==='light'?' selected':''}>light · Luz / dimmer</option></select></div></div><p class="settings-explanation light-mapping-state">${b?'Associação guardada':'Sem associação'}</p></fieldset>`}).join('');
 
-  $('shelly-sensor-mappings').innerHTML=CORE.SENSOR_ROOM_IDS.map(id=>{const r=id==='cellar'?{name:'Cave'}:rooms.find(r=>r.id===id),b=sensorBinding(id);return `<fieldset class="shelly-mapping"><legend>${escapeHTML(r.name)}</legend><label for="shelly-sensor-id-${id}">Device ID do sensor</label><input id="shelly-sensor-id-${id}" type="text" autocomplete="off" spellcheck="false" maxlength="48" placeholder="Ex.: aabbcc112233" value="${escapeHTML(b?.deviceId||'')}">${id==='cellar'?`<label for="shelly-sensor-type-cellar">Tipo de sensor</label><select id="shelly-sensor-type-cellar"><option value="door-window2"${b?.type==='door-window2'?' selected':''}>Shelly Door Window 2 · temperatura</option><option value="environment"${b?.type!=='door-window2'?' selected':''}>Sensor de temperatura e humidade</option></select>`:''}<details class="shelly-help"><summary>Componentes do sensor (avançado)</summary><p class="settings-explanation">Nos H&amp;T habituais ambos são 0. Altere apenas se o dispositivo usar outros IDs de componente.</p><div class="shelly-light-options"><div><label for="shelly-sensor-temperature-${id}">Temperatura</label><input id="shelly-sensor-temperature-${id}" type="number" min="0" max="255" step="1" value="${b?.temperatureChannel??0}"></div><div><label for="shelly-sensor-humidity-${id}">Humidade</label><input id="shelly-sensor-humidity-${id}" type="number" min="0" max="255" step="1" value="${b?.humidityChannel??0}"></div></div></details><p class="settings-explanation light-mapping-state">${b?'Sensor associado':'Sem associação'}</p></fieldset>`}).join('');
+  $('shelly-sensor-mappings').innerHTML=CORE.SENSOR_ROOM_IDS.map(id=>{const r=id==='cellar'?{name:'Cave'}:rooms.find(r=>r.id===id),b=sensorBinding(id);return `<fieldset class="shelly-mapping"><legend>${escapeHTML(r.name)}</legend><label for="shelly-sensor-id-${id}">Device ID do sensor</label><input id="shelly-sensor-id-${id}" type="text" autocomplete="off" spellcheck="false" maxlength="48" placeholder="Ex.: aabbcc112233 ou XB…" value="${escapeHTML(b?.deviceId||'')}">${id==='cellar'?`<label for="shelly-sensor-type-cellar">Tipo de sensor</label><select id="shelly-sensor-type-cellar"><option value="door-window2"${b?.type==='door-window2'?' selected':''}>Shelly Door Window 2 · temperatura</option><option value="environment"${b?.type!=='door-window2'?' selected':''}>Sensor de temperatura e humidade</option></select>`:''}<details class="shelly-help"><summary>Componentes do sensor (avançado)</summary><p class="settings-explanation">Nos H&amp;T habituais ambos são 0. Altere apenas se o dispositivo usar outros IDs de componente.</p><div class="shelly-light-options"><div><label for="shelly-sensor-temperature-${id}">Temperatura</label><input id="shelly-sensor-temperature-${id}" type="number" min="0" max="255" step="1" value="${b?.temperatureChannel??0}"></div><div><label for="shelly-sensor-humidity-${id}">Humidade</label><input id="shelly-sensor-humidity-${id}" type="number" min="0" max="255" step="1" value="${b?.humidityChannel??0}"></div></div></details><p class="settings-explanation light-mapping-state">${b?'Sensor associado':'Sem associação'}</p></fieldset>`}).join('');
 
   window.CasaAssociationWarnings?.sync();
  }
- function dirty(){if(window.CasaWindows.dirty(config.windowBindings))return true;if(window.CasaMediaForm.dirty(config.mediaBindings,config.officeBindings,config.kitchenBindings))return true;if($('shelly-sensor-type-cellar').value!==(sensorBinding('cellar')?.type||'environment'))return true;if(window.CasaFanForm.dirty(config.fan))return true;if(window.CasaHeaterForm.dirty(config.heater))return true;if(window.CasaDehumidifierForm.dirty(config.dehumidifier))return true;if(window.CasaAlarmForm.dirty(config.alarm))return true;if(window.CasaEnergyForm.dirty(config.homeEnergy))return true;if(window.CasaDoor.dirty(config.door)||window.CasaDoor.dirty(config.cellarDoor,'cellar-door'))return true;if(window.CasaEVForm.dirty(config.ev))return true;if($('shelly-server').value.trim()!==config.server||$('shelly-key').value.trim()!==key||$('shelly-remember').checked!==config.rememberKey)return true;return CORE.SENSOR_ROOM_IDS.some(id=>$('shelly-sensor-id-'+id).value.trim().toLowerCase()!==(sensorBinding(id)?.deviceId||'')||Number($('shelly-sensor-temperature-'+id).value)!==(sensorBinding(id)?.temperatureChannel??0)||Number($('shelly-sensor-humidity-'+id).value)!==(sensorBinding(id)?.humidityChannel??0))||CORE.LIGHT_ROOM_IDS.some(id=>$('shelly-light-id-'+id).value.trim().toLowerCase()!==(lightBinding(id)?.deviceId||'')||Number($('shelly-light-channel-'+id).value)!==(lightBinding(id)?.channel??0)||$('shelly-light-type-'+id).value!==(lightBinding(id)?.type||'switch'))||CORE.ROOM_IDS.some(id=>$('shelly-id-'+id).value.trim().toLowerCase()!==(binding(id)?.deviceId||'')||Number($('shelly-channel-'+id).value)!==(binding(id)?.channel??0))}
+ function dirty(){if(window.CasaWindows.dirty(config.windowBindings))return true;if(window.CasaMediaForm.dirty(config.mediaBindings,config.officeBindings,config.kitchenBindings))return true;if($('shelly-sensor-type-cellar').value!==(sensorBinding('cellar')?.type||'environment'))return true;if(window.CasaFanForm.dirty(config.fan))return true;if(window.CasaHeaterForm.dirty(config.heater))return true;if(window.CasaDehumidifierForm.dirty(config.dehumidifier))return true;if(window.CasaAlarmForm.dirty(config.alarm))return true;if(window.CasaEnergyForm.dirty(config.homeEnergy))return true;if(window.CasaDoor.dirty(config.door)||window.CasaDoor.dirty(config.cellarDoor,'cellar-door'))return true;if(window.CasaEVForm.dirty(config.ev))return true;if($('shelly-server').value.trim()!==config.server||$('shelly-key').value.trim()!==key||$('shelly-remember').checked!==config.rememberKey)return true;return CORE.SENSOR_ROOM_IDS.some(id=>$('shelly-sensor-id-'+id).value.trim().toLowerCase()!==(sensorBinding(id)?.deviceId||'').toLowerCase()||Number($('shelly-sensor-temperature-'+id).value)!==(sensorBinding(id)?.temperatureChannel??0)||Number($('shelly-sensor-humidity-'+id).value)!==(sensorBinding(id)?.humidityChannel??0))||CORE.LIGHT_ROOM_IDS.some(id=>$('shelly-light-id-'+id).value.trim().toLowerCase()!==(lightBinding(id)?.deviceId||'')||Number($('shelly-light-channel-'+id).value)!==(lightBinding(id)?.channel??0)||$('shelly-light-type-'+id).value!==(lightBinding(id)?.type||'switch'))||CORE.ROOM_IDS.some(id=>$('shelly-id-'+id).value.trim().toLowerCase()!==(binding(id)?.deviceId||'')||Number($('shelly-channel-'+id).value)!==(binding(id)?.channel??0))}
  function reapply(){for(const id of CORE.ROOM_IDS){const r=rooms.find(r=>r.id===id);if(!binding(id))continue;stopMotion(id);const d=reading(id);r.blind=Number.isFinite(d?.position)?d.position:0}for(const id of CORE.LIGHT_ROOM_IDS){if(!lightBinding(id))continue;const r=rooms.find(r=>r.id===id),d=lightReading(id);r.light=typeof d?.on==='boolean'?d.on:false}}
  function lightCaption(id){
   const d=lightReading(id);
@@ -114,19 +116,21 @@
   const caption=host.querySelector('.room-light-caption');caption.textContent=lightCaption(r.id).split(' · ')[0];
   const p=document.createElement('p');p.className='shelly-light-feedback';p.setAttribute('role','status');p.textContent=lightMessages.get(r.id)||'';section.append(p);
   const b=document.createElement('button');b.className='secondary-action';b.textContent='Atualizar dados do candeeiro';b.disabled=busy||commandCount>0||lightGroupBusy;b.addEventListener('click',()=>refreshEquipment(detailView==='light'?'light':'room',r.id));section.append(b);
+  brightnessControl(section,r.id);
   const note=host.querySelector('.selected-device-note');note.textContent='Candeeiro real Shelly Cloud.';
  }
- async function commandLight(id,on){
+ async function commandLight(id,on,brightness){
   if(!lightBinding(id)||lightTargets.has(id)||blockingRead()||commandCount||groupBusy||lightGroupBusy)return;
   if(dirty()||!key||!config.server||!CORE.canLightControl(lightReading(id))){lightMessages.set(id,'Atualize os dados e confirme o tipo de saída, canal e ligação Cloud.');render();return}
-  const version=generation,payload=CORE.resolvedLightCommand(lightBinding(id),lightReading(id),on);commandCount++;lightMessages.set(id,'A enviar o comando ao candeeiro…');summary();render();
+  let payload;try{payload=brightness===undefined?CORE.resolvedLightCommand(lightBinding(id),lightReading(id),on):CORE.dimmerCommand(lightBinding(id),lightReading(id),brightness)}catch(error){lightMessages.set(id,error.message);render();return}
+  const version=generation;commandCount++;lightMessages.set(id,'A enviar o comando ao candeeiro…');summary();render();
   try{
    const result=await api('light',payload);if(version!==generation)return;if(!result.accepted)throw Error('O Cloud não confirmou o comando.');
-   lightTargets.set(id,on);lightMessages.set(id,'Comando aceite. A aguardar o estado reportado pelo candeeiro.');
+   lightTargets.set(id,payload.on);if(brightness!==undefined)brightnessTargets.set(id,brightness);else brightnessTargets.delete(id);lightMessages.set(id,'Comando aceite. A aguardar o estado reportado pelo candeeiro.');
   }catch(error){if(version===generation){lightMessages.set(id,error.message);notify('Não foi possível confirmar o comando do candeeiro.')}}
   finally{commandCount--;if(version===generation){summary();render();settleLights();render();schedulePoll()}}
  }
- function settleLights(){for(const [id,on]of lightTargets){const d=lightReading(id);if(confirmationCurrent('light:'+id,d)&&d.on===on){lightTargets.delete(id);lightMessages.set(id,'')}}}
+ function settleLights(){for(const [id,on]of lightTargets){const d=lightReading(id);if(confirmationCurrent('light:'+id,d)&&d.on===on&&(!brightnessTargets.has(id)||Number.isFinite(d.brightness)&&Math.abs(d.brightness-brightnessTargets.get(id))<.5)){lightTargets.delete(id);brightnessTargets.delete(id);lightMessages.set(id,'')}}}
  function lightGroupFeedback(text,error=false){const p=$('all-light-status');p.textContent=text;p.hidden=mode!=='lights';p.classList.toggle('error',error)}
  async function commandAllLights(on,demoCount=0){
   if(blockingRead()||commandCount||groupBusy||lightGroupBusy)return;
@@ -140,7 +144,7 @@
    try{for(const [id,b]of Object.entries(config.lightBindings||{})){
     const name=rooms.find(r=>r.id===id).name;
     if(!CORE.canLightControl(lightReading(id))){failed++;report.push(name+': '+lightCaption(id));continue}
-    try{const result=await api('light',CORE.resolvedLightCommand(b,lightReading(id),on));if(version!==generation)return;if(!result.accepted)throw Error('Sem confirmação');accepted++;lightTargets.set(id,on);lightMessages.set(id,'Comando aceite. A aguardar o estado reportado.');report.push(name+': comando aceite')}
+    try{const result=await api('light',CORE.resolvedLightCommand(b,lightReading(id),on));if(version!==generation)return;if(!result.accepted)throw Error('Sem confirmação');accepted++;brightnessTargets.delete(id);lightTargets.set(id,on);lightMessages.set(id,'Comando aceite. A aguardar o estado reportado.');report.push(name+': comando aceite')}
     catch(error){if(version!==generation)return;failed++;lightMessages.set(id,error.message);report.push(name+': '+error.message)}
    }}finally{commandCount--}
    
@@ -193,7 +197,7 @@
   if(path==='covers')return payload.devices.every(p=>commandFresh('cover',{...p,position:payload.position}));
   if(path==='cover'){const id=Object.keys(config.bindings).find(id=>config.bindings[id].deviceId===payload.id&&config.bindings[id].channel===payload.channel);return !!id&&CORE.canControl(reading(id),payload.position)}
   const light=Object.keys(config.lightBindings||{}).find(id=>lightBinding(id).deviceId===payload.id&&lightBinding(id).channel===payload.channel);
-  if(light)return CORE.canLightControl(lightReading(light));
+  if(light)return CORE.canLightControl(lightReading(light))&&(payload.brightness===undefined||CORE.canDim(lightReading(light))&&lightReading(light).resolvedChannel===payload.channel&&lightReading(light).resolvedType===payload.type);
   const media=[...MC.IDS,...MC.OFFICE_IDS,...MC.KITCHEN_IDS].find(id=>mediaBinding(id)?.deviceId===payload.id&&mediaBinding(id).channel===payload.channel);
   if(media)return MC.state(mediaBinding(media),mediaReadings[media]).canControl;
   for(const [b,d]of [[config.fan,fanReading],[config.heater,heaterReading],[config.dehumidifier,dehumidifierReading],[config.alarm?.arm,alarmReadings.arm],[config.ev?.relay,evReadings.relay]])if(b?.deviceId===payload.id&&b.channel===payload.channel)return AL.fresh(d);
@@ -211,7 +215,7 @@
    if(commandCount||groupBusy||lightGroupBusy||blockingRead()||dirty()){schedulePoll();return}
    const due=confirmations.due();if(!due.length){schedulePoll();return}
    confirmations.attempted(due.map(e=>e.key));
-   await refresh({quiet:true,ids:[...new Set(due.map(e=>e.id))],force:true,priority:true});
+   await refresh({quiet:true,ids:[...new Set(due.map(e=>e.id))],force:true,priority:true,confirmation:true});
    if(version!==generation)return;confirmations.finished(due.filter(e=>confirmations.get(e.key)===e).map(e=>e.key));
    if(due.some(e=>confirmations.get(e.key)!==e)){schedulePoll();return}
    settleCovers();settleLights();settleEV();settleAlarm();settleFan();settleHeater();settleDehumidifier();settleMedia();
@@ -260,17 +264,42 @@
   }catch(error){if(version===generation){groupFeedback(error.name==='AbortError'?'Comando conjunto sem confirmação. Atualize os dados antes de tentar novamente.':error.message,true);notify('Verifique o resultado nos controlos gerais.')}}
   finally{if(submitted)commandCount--;groupBusy=false;summary();render();schedulePoll()}
  }
- async function refresh({quiet=false,ids=null,force=false,priority=false}={}){
+ // A popup owns routine reads; accepted commands retain their bounded verification.
+ function popupIds(){
+  const dialog=[...document.querySelectorAll('dialog[open]')].at(-1);if(!dialog)return null;let entries;
+  switch(dialog.id){
+   case 'room-dialog':entries=detailView==='light'?[lightBinding(selected)]:detailView==='blind'?[binding(selected)]:[lightBinding(selected),sensorBinding(selected),config.windowBindings?.[selected]];break;
+   case 'media-dialog':case 'office-dialog':{const role=dialog.id==='media-dialog'?'media':'office',id=dialog.querySelector('[data-'+role+'-device][aria-pressed="true"]')?.dataset[role+'Device'];entries=[id==='living-lamp'?lightBinding('living'):mediaBinding(id)];break}
+   case 'kitchen-device-dialog':entries=[mediaBinding(dialog.dataset.device)];break;
+   case 'heater-dialog':entries=[config.heater];break;
+   case 'dehumidifier-dialog':entries=[config.dehumidifier];break;
+   case 'fan-dialog':entries=[config.fan];break;
+   case 'alarm-dialog':entries=AL.ROLES.map(role=>config.alarm?.[role]);break;
+   case 'ev-dialog':entries=EV.ROLES.map(role=>config.ev?.[role]);break;
+   case 'energy-dialog':entries=[window.CasaEnergyCore.binding(config)];break;
+   case 'basement-dialog':entries=[sensorBinding('cellar'),config.cellarDoor];break;
+   default:return null;
+  }
+  return [...new Set(entries.filter(Boolean).map(b=>b.deviceId))].filter(Boolean);
+ }
+ function focusPopup(){
+  const ids=popupIds(),next=JSON.stringify(ids);if(next===focusKey)return;focusKey=next;nextFocusRefreshAt=Date.now()+15000;
+  if(readTask&&!activeReadConfirmation){readEpoch++;transport.cancelStatus?.()}
+  if(ids!==null){if(ids.length)refresh({quiet:true,ids,priority:true})}else nextRefreshAt=Date.now()+2000;
+ }
+ function scopeReads(ids,confirmation=false){const scope=popupIds();return confirmation||scope===null?ids:ids.filter(id=>scope.includes(id))}
+ async function refresh({quiet=false,ids=null,force=false,priority=false,confirmation=false}={}){
   const version=generation,queuedAt=Date.now(),waited=!!readTask;
+  if(!confirmation&&popupIds()!==null)priority=true;
   if(priority){urgentReads++;if(readTask&&!activeReadPriority){readEpoch++;transport.cancelStatus?.()}}
   try{
    while(readTask)await readTask;
    if(version!==generation||commandCount||(!priority&&urgentReads))return;
    if(blockingRead()){if(ids)for(const id of ids.filter(Boolean))deferredReads.add(id);return}
-   const wanted=ids===null?CORE.deviceIds(config):[...new Set(ids.filter(Boolean))];
+   const wanted=scopeReads(ids===null?CORE.deviceIds(config):[...new Set(ids.filter(Boolean))],confirmation);
    const chosen=wanted.filter(id=>!(waited&&(checkedDevices.get(id)||0)>=queuedAt)&&(force||ids===null||Date.now()-(checkedDevices.get(id)||0)>10000));
    if(!chosen.length)return;
-   activeReadPriority=priority;const task=refreshDevices({quiet,ids:chosen});readTask=task;
+   activeReadPriority=priority;activeReadConfirmation=confirmation;const task=refreshDevices({quiet,ids:chosen});readTask=task;
    try{return await task}finally{if(readTask===task)readTask=null}
   }finally{if(priority)urgentReads--}
  }
@@ -281,7 +310,7 @@
  function applyReadings(result,batchIds){
    lastFetched=Date.now();const requested=new Set(batchIds.map(id=>id.toLowerCase())),has=b=>!!b&&requested.has(b.deviceId.toLowerCase());for(const id of batchIds)checkedDevices.set(id,lastFetched);for(const [id,b]of Object.entries(config.bindings)){if(!has(b))continue;const device=result.devices.find(d=>typeof d.id==='string'&&d.id.toLowerCase()===b.deviceId),d=CORE.status(device,b.channel);readings.set(id,d?{...d,fetchedAt:lastFetched}:{missing:true,online:false,hasCover:false,position:null,state:null,calibrated:null,errors:[],fetchedAt:lastFetched})}
    for(const [id,b]of Object.entries(config.lightBindings||{})){if(!has(b))continue;const device=result.devices.find(d=>typeof d.id==='string'&&d.id.toLowerCase()===b.deviceId),d=CORE.lightStatus(device,b);lightReadings.set(id,d?{...d,fetchedAt:lastFetched}:{missing:true,online:false,hasOutput:false,on:null,fetchedAt:lastFetched})}
-   for(const [id,b]of Object.entries(config.sensorBindings||{})){if(!has(b))continue;const device=result.devices.find(d=>typeof d.id==='string'&&d.id.toLowerCase()===b.deviceId),d=CORE.sensorStatus(device,b);sensorReadings.set(id,d?{...d,fetchedAt:lastFetched}:{missing:true,online:false,temperature:null,humidity:null,battery:null,fetchedAt:lastFetched})}
+   for(const [id,b]of Object.entries(config.sensorBindings||{})){if(!has(b))continue;const device=result.devices.find(d=>typeof d.id==='string'&&d.id.toLowerCase()===b.deviceId.toLowerCase()),d=CORE.sensorStatus(device,b);sensorReadings.set(id,d?{...d,fetchedAt:lastFetched}:{missing:true,online:false,temperature:null,humidity:null,battery:null,fetchedAt:lastFetched})}
    for(const [id,b]of Object.entries({...config.mediaBindings,...config.officeBindings,...config.kitchenBindings})){if(!has(b))continue;const device=result.devices.find(d=>d.id?.toLowerCase()===b.deviceId);mediaReadings[id]={...EV.relayStatus(device,b),meter:EV.meterStatus(device,{...b,component:'auto'}),missing:!device,fetchedAt:lastFetched}}
    if(has(config.fan)){const b=config.fan,device=result.devices.find(d=>d.id?.toLowerCase()===b.deviceId);fanReading={...EV.relayStatus(device,b),missing:!device,fetchedAt:lastFetched}}
    if(has(config.heater)){const b=config.heater,device=result.devices.find(d=>d.id?.toLowerCase()===b.deviceId);heaterReading={...EV.relayStatus(device,b),missing:!device,fetchedAt:lastFetched}}
@@ -305,7 +334,7 @@
    for(const batch of batches){if(version!==generation||epoch!==readEpoch)return;const chunk=await api('status',{ids:batch},()=>epoch===readEpoch);if(version!==generation||epoch!==readEpoch)return;if(!Array.isArray(chunk.devices))throw Error('Resposta inesperada do Cloud.');applyReadings(chunk,batch);for(const id of batch)unresolved.delete(id.toLowerCase());activity.doneRequests++;activity.doneDevices+=batch.length;activityChanged()}if(version!==generation)return;
    activity.error=false;if(!quiet||lastError)feedback('Dados atualizados com os estados reportados pelo Shelly.');
   }catch(e){if(version!==generation||epoch!==readEpoch)return;if(ids.length<CORE.deviceIds(config).length&&transport.stats(config.server).lastFailure==='limit')for(const id of ids)deferredReads.add(id);activity.error=true;for(const {b}of consumptionBindings())if(has(b)){const key=CasaConsumptionCore.identity(config.server,b),r=consumptionReadings.get(key);if(r)consumptionReadings.set(key,{...r,error:true})}for(const id of Object.keys(config.windowBindings||{}))if(has(config.windowBindings[id]))windowReadings[id]={...windowReadings[id],error:true};for(const id of Object.keys({...config.mediaBindings,...config.officeBindings,...config.kitchenBindings}))if(has(mediaBinding(id)))mediaReadings[id]={...mediaReadings[id],error:true};if(has(config.fan))fanReading={...fanReading,error:true};if(has(config.heater))heaterReading={...heaterReading,error:true};if(has(config.dehumidifier))dehumidifierReading={...dehumidifierReading,error:true};for(const id of Object.keys(config.bindings)){if(!has(config.bindings[id]))continue;const old=reading(id);readings.set(id,old?{...old,error:true}:{online:false,hasCover:false,position:null,errors:[],error:true})}for(const id of Object.keys(config.lightBindings||{})){if(!has(config.lightBindings[id]))continue;const old=lightReading(id);lightReadings.set(id,{...old,error:true})}for(const id of Object.keys(config.sensorBindings||{}))if(has(config.sensorBindings[id]))sensorReadings.set(id,{...sensorReading(id),error:true});for(const role of EV.ROLES)if(has(config.ev?.[role]))evReadings[role]={...evReadings[role],error:true};if(has(window.CasaEnergyCore.binding(config)))energyReading={...energyReading,error:true};if(has(config.door))doorReading={...doorReading,error:true};if(has(config.cellarDoor))cellarDoorReading={...cellarDoorReading,error:true};for(const role of AL.ROLES)if(has(config.alarm?.[role]))alarmReadings[role]={...alarmReadings[role],error:true};feedback(e.name==='AbortError'?'A consulta demorou demasiado. Tente novamente.':e.message||'Consulta indisponível.',true)}
-  finally{activeReadPriority=false;if(version===generation)activity.running=false;busy=false;refreshing=false;if(ids.length===CORE.deviceIds(config).length)nextRefreshAt=transport.stats(config.server).lastFailure==='limit'?Math.max(Date.now()+1000,transport.stats(config.server).retryAt||0):Date.now()+(epoch===readEpoch?30000:2000);summary();if(document.querySelector('#room-dialog :active')){drawPlan();drawList();updateSummary()}else render();if(version!==generation&&key&&config.server&&CORE.deviceIds(config).length)refresh({quiet:true})}
+  finally{activeReadPriority=false;activeReadConfirmation=false;if(version===generation)activity.running=false;busy=false;refreshing=false;if(ids.length===CORE.deviceIds(config).length)nextRefreshAt=transport.stats(config.server).lastFailure==='limit'?Math.max(Date.now()+1000,transport.stats(config.server).retryAt||0):Date.now()+(epoch===readEpoch?30000:2000);summary();if(document.querySelector('#room-dialog :active')){drawPlan();drawList();updateSummary()}else render();if(version!==generation&&key&&config.server&&CORE.deviceIds(config).length)refresh({quiet:true})}
  }
  $('open-shelly').addEventListener('click',()=>{fill();summary();showPopup('shelly-dialog')});
  $('shelly-refresh').addEventListener('click',refresh);
@@ -316,20 +345,20 @@
    if(localStorage.getItem(KEY)!==savedConfigText)throw Error('A configuração foi alterada noutra janela. Recarregue a app antes de guardar para não perder associações.');
    const bindings={};for(const id of CORE.ROOM_IDS){const input=$('shelly-id-'+id).value.trim();if(input)bindings[id]={deviceId:CORE.deviceId(input),channel:Number($('shelly-channel-'+id).value)}}
    const lightBindings={};for(const id of CORE.LIGHT_ROOM_IDS){const input=$('shelly-light-id-'+id).value.trim();if(input)lightBindings[id]={deviceId:CORE.deviceId(input),channel:Number($('shelly-light-channel-'+id).value),type:$('shelly-light-type-'+id).value}}
-   const sensorBindings={};for(const id of CORE.SENSOR_ROOM_IDS){const input=$('shelly-sensor-id-'+id).value.trim();if(input)sensorBindings[id]={deviceId:CORE.deviceId(input),temperatureChannel:Number($('shelly-sensor-temperature-'+id).value),humidityChannel:Number($('shelly-sensor-humidity-'+id).value),...(id==='cellar'?{type:$('shelly-sensor-type-cellar').value}:{})}}
+   const sensorBindings={};for(const id of CORE.SENSOR_ROOM_IDS){const input=$('shelly-sensor-id-'+id).value.trim();if(input)sensorBindings[id]={deviceId:CORE.statusDeviceId(input),temperatureChannel:Number($('shelly-sensor-temperature-'+id).value),humidityChannel:Number($('shelly-sensor-humidity-'+id).value),...(id==='cellar'?{type:$('shelly-sensor-type-cellar').value}:{})}}
    const newKey=$('shelly-key').value.trim(),rememberKey=$('shelly-remember').checked;
    const windowBindings=window.CasaWindows.read(config.windowBindings),ev=window.CasaEVForm.read(config.ev),door=window.CasaDoor.read(config.door),cellarDoor=window.CasaDoor.read(config.cellarDoor,'cellar-door'),homeEnergy=window.CasaEnergyForm.read(config.homeEnergy),alarm=window.CasaAlarmForm.read(config.alarm),fan=window.CasaFanForm.read(),heater=window.CasaHeaterForm.read(),dehumidifier=window.CasaDehumidifierForm.read(),mediaBindings=window.CasaMediaForm.read(config.mediaBindings),officeBindings=window.CasaMediaForm.readOffice(config.officeBindings),kitchenBindings=window.CasaMediaForm.readKitchen(config.kitchenBindings);
    const next=CORE.config({...(windowBindings!==undefined?{windowBindings}:{}),schemaVersion:1,server:$('shelly-server').value.trim(),authKey:newKey,rememberKey,bindings,lightBindings,sensorBindings,...(ev!==undefined?{ev}:{}),...(door!==undefined?{door}:{}),...(homeEnergy!==undefined?{homeEnergy}:{}),...(cellarDoor!==undefined?{cellarDoor}:{}),...(alarm!==undefined?{alarm}:{}),...(mediaBindings!==undefined?{mediaBindings}:{}),...(officeBindings!==undefined?{officeBindings}:{}),...(kitchenBindings!==undefined?{kitchenBindings}:{}),fan,heater,dehumidifier});
    if(CORE.deviceIds(next).length&&(!next.server||!newKey))throw Error('Indique o servidor e a chave para associar os equipamentos.');
    const before=localStorage.getItem(KEY),beforeSession=sessionStorage.getItem(SESSION);
    try{localStorage.setItem(KEY,JSON.stringify(next));if(rememberKey)sessionStorage.removeItem(SESSION);else sessionStorage.setItem(SESSION,JSON.stringify({server:next.server,key:newKey}))}catch(error){if(before===null)localStorage.removeItem(KEY);else localStorage.setItem(KEY,before);if(beforeSession===null)sessionStorage.removeItem(SESSION);else sessionStorage.setItem(SESSION,beforeSession);throw Error('Não foi possível guardar a configuração neste navegador.')}
-   savedConfigText=JSON.stringify(next);consumptionReadings.clear();generation++;readEpoch++;nextRefreshAt=0;deferredReads.clear();checkedDevices.clear();activity={totalRequests:0,doneRequests:0,totalDevices:0,doneDevices:0,running:false,error:false};lastFetched=0;for(const id of CasaWindowsCore.IDS)delete windowReadings[id];for(const id of [...MC.IDS,...MC.OFFICE_IDS,...MC.KITCHEN_IDS])delete mediaReadings[id];mediaTargets.clear();mediaMessages.clear();fanReading=null;fanTarget=null;fanMessage="";heaterReading=null;heaterTarget=null;heaterMessage="";dehumidifierReading=null;dehumidifierTarget=null;dehumidifierMessage="";alarmReadings={};alarmTarget=null;alarmMessage='';energyReading=null;doorReading=null;cellarDoorReading=null;evReadings={};evTarget=null;evMessage='';clearTimeout(pollTimer);targetRevisions.clear();targets.clear();lightTargets.clear();lightMessages.clear();confirmations.clear();config=next;key=newKey;readings.clear();lightReadings.clear();sensorReadings.clear();reapply();fill();summary();render();feedback('Configuração guardada. Consulte os dados para ativar os controlos reais dos equipamentos associados.');if(key&&config.server)refresh({quiet:true});
+   savedConfigText=JSON.stringify(next);consumptionReadings.clear();generation++;readEpoch++;nextRefreshAt=0;deferredReads.clear();checkedDevices.clear();activity={totalRequests:0,doneRequests:0,totalDevices:0,doneDevices:0,running:false,error:false};lastFetched=0;for(const id of CasaWindowsCore.IDS)delete windowReadings[id];for(const id of [...MC.IDS,...MC.OFFICE_IDS,...MC.KITCHEN_IDS])delete mediaReadings[id];mediaTargets.clear();mediaMessages.clear();fanReading=null;fanTarget=null;fanMessage="";heaterReading=null;heaterTarget=null;heaterMessage="";dehumidifierReading=null;dehumidifierTarget=null;dehumidifierMessage="";alarmReadings={};alarmTarget=null;alarmMessage='';energyReading=null;doorReading=null;cellarDoorReading=null;evReadings={};evTarget=null;evMessage='';clearTimeout(pollTimer);targetRevisions.clear();targets.clear();lightTargets.clear();brightnessTargets.clear();lightMessages.clear();confirmations.clear();config=next;key=newKey;readings.clear();lightReadings.clear();sensorReadings.clear();reapply();fill();summary();render();feedback('Configuração guardada. Consulte os dados para ativar os controlos reais dos equipamentos associados.');if(key&&config.server)refresh({quiet:true});
   }catch(error){feedback(error.message,true)}
  });
  function ensureFresh(id){const l=lightReading(id),s=sensorReading(id);if((lightBinding(id)&&(!l?.fetchedAt||Date.now()-l.fetchedAt>30000||l.error))||(sensorBinding(id)&&(!s?.fetchedAt||Date.now()-s.fetchedAt>60000||s.error)))refresh({quiet:true,ids:[lightBinding(id)?.deviceId,sensorBinding(id)?.deviceId]})}
  function ensureBlindFresh(id){const d=reading(id);if(binding(id)&&(!d?.fetchedAt||Date.now()-d.fetchedAt>30000||d.error))return refresh({quiet:true,ids:[binding(id).deviceId]})}
  function refreshEquipment(role,id){
-  const entries=role==='light'?[lightBinding(id)]:role==='blind'?[binding(id)]:role==='room'?[lightBinding(id),sensorBinding(id),config.windowBindings?.[id]]:role==='media'?[mediaBinding(id)]:role==='ev'?EV.ROLES.map(k=>config.ev?.[k]):role==='alarm'?AL.ROLES.map(k=>config.alarm?.[k]):role==='energy'?[window.CasaEnergyCore.binding(config)]:[config[role]];
+  const entries=role==='light'?[lightBinding(id)]:role==='blind'?[binding(id)]:role==='cellar'?[sensorBinding('cellar'),config.cellarDoor]:role==='room'?[lightBinding(id),sensorBinding(id),config.windowBindings?.[id]]:role==='media'?[mediaBinding(id)]:role==='ev'?EV.ROLES.map(k=>config.ev?.[k]):role==='alarm'?AL.ROLES.map(k=>config.alarm?.[k]):role==='energy'?[window.CasaEnergyCore.binding(config)]:[config[role]];
   return refresh({quiet:true,ids:entries.filter(Boolean).map(b=>b.deviceId),force:true,priority:true});
  }
  function energySnapshot(){return {...window.CasaEnergyCore.state(config,energyReading),reading:energyReading?structuredClone(energyReading):null,busy:blockingRead()||commandCount>0||groupBusy||lightGroupBusy}}
@@ -439,15 +468,19 @@
   catch(error){if(version===generation)alarmMessage=error.message}
   finally{commandCount--;if(version===generation){summary();settleAlarm();settleFan();settleHeater();settleDehumidifier();settleMedia();summary();schedulePoll()}}
  }
+ function brightnessControl(host,id){
+  let control=host.querySelector('.light-intensity-control');if(!control){control=document.createElement('div');control.className='light-intensity-control';control.innerHTML='<div><label>Intensidade</label><output></output></div><input type="range" min="0" max="100" step="1"><small role="status"></small>';host.append(control);const range=control.querySelector('input'),out=control.querySelector('output');range.setAttribute('aria-label','Intensidade de '+(rooms.find(r=>r.id===id)?.name||'candeeiro'));range.addEventListener('input',()=>{control.dataset.editing='true';out.textContent=range.value+' %';range.style.setProperty('--value',range.value+'%')});range.addEventListener('change',()=>{control.dataset.editing='false';commandLight(id,Number(range.value)>0,Number(range.value))});range.addEventListener('pointercancel',()=>{control.dataset.editing='false';brightnessControl(host,id)})}
+  const d=lampSnapshot(id),range=control.querySelector('input');range.disabled=!d.canDim;if(control.dataset.editing!=='true'){range.value=Number.isFinite(d.brightness)?d.brightness:0;control.querySelector('output').textContent=Number.isFinite(d.brightness)?d.brightness+' %':'—'}range.style.setProperty('--value',range.value+'%');control.querySelector('small').textContent=d.pending?'A confirmar intensidade…':!d.configured?'Por associar':!CORE.canDim(lightReading(id))?'Intensidade indisponível':'';
+ }
  function lampSnapshot(id){const d=lightReading(id),configured=!!lightBinding(id),working=blockingRead()||commandCount>0||lightGroupBusy||groupBusy;
-  return {configured,state:d?.online&&!d.error&&typeof d.on==='boolean'?{on:d.on,checkedAt:d.fetchedAt}:null,busy:working,ready:configured&&!working&&!lightTargets.has(id)&&!dirty()&&!!key&&!!config.server&&CORE.canLightControl(d),error:!configured?'':(!CORE.canLightControl(d)?lightCaption(id):(/não|erro|falh|indispon|demor|atualize/i.test(lightMessages.get(id)||'')?lightMessages.get(id):''))};
+  return {configured,brightness:CORE.canLightControl(d)?d.brightness:null,canDim:configured&&!working&&!lightTargets.has(id)&&!dirty()&&!!key&&!!config.server&&CORE.canDim(d),pending:lightTargets.has(id),state:d?.online&&!d.error&&typeof d.on==='boolean'?{on:d.on,checkedAt:d.fetchedAt}:null,busy:working,ready:configured&&!working&&!lightTargets.has(id)&&!dirty()&&!!key&&!!config.server&&CORE.canLightControl(d),error:!configured?'':(!CORE.canLightControl(d)?lightCaption(id):(/não|erro|falh|indispon|demor|atualize/i.test(lightMessages.get(id)||'')?lightMessages.get(id):''))};
  }
  function activitySnapshot(){
-  const count=CORE.deviceIds(config).length,now=Date.now(),bad=new Set();
-  const add=(b,r,valid)=>{if(b&&(!r?.online||r.error||r.missing||r.errors?.length||!valid))bad.add(b.deviceId)};
+  const allIds=CORE.deviceIds(config),count=allIds.length,now=Date.now(),bad=new Set(),stale=new Set(),pending=new Set(),scope=popupIds();
+  const add=(b,r,valid,maxAge=45000)=>{if(!b)return;const condition=CasaCloudActivityCore.readingCondition(r,valid,now,maxAge);if(condition==='unavailable')bad.add(b.deviceId);else if(condition==='stale')stale.add(b.deviceId);else if(condition==='pending')pending.add(b.deviceId)};
   for(const [id,b]of Object.entries(config.bindings))add(b,reading(id),CORE.canControl(reading(id),'open',now));
   for(const [id,b]of Object.entries(config.lightBindings||{}))add(b,lightReading(id),CORE.canLightControl(lightReading(id),now));
-  for(const [id,b]of Object.entries(config.sensorBindings||{})){const r=sensorReading(id);add(b,r,r?.hasSensor&&Number.isFinite(r.fetchedAt)&&now>=r.fetchedAt&&now-r.fetchedAt<=120000&&(Number.isFinite(r.temperature)||Number.isFinite(r.humidity)))}
+  for(const [id,b]of Object.entries(config.sensorBindings||{})){const r=sensorReading(id);add(b,r,r?.hasSensor&&Number.isFinite(r.fetchedAt)&&now>=r.fetchedAt&&now-r.fetchedAt<=120000&&(Number.isFinite(r.temperature)||Number.isFinite(r.humidity)),120000)}
   for(const [b,r]of [[config.fan,fanReading],[config.heater,heaterReading],[config.dehumidifier,dehumidifierReading]])add(b,r,AL.fresh(r,now));
   for(const role of AL.ROLES)add(config.alarm?.[role],alarmReadings[role],AL.fresh(alarmReadings[role],now));
   for(const [id,b]of Object.entries({...config.mediaBindings,...config.officeBindings,...config.kitchenBindings}))add(b,mediaReadings[id],MC.state(b,mediaReadings[id],now).canControl);
@@ -455,11 +488,13 @@
   for(const [id,b]of Object.entries(config.windowBindings||{}))add(b,windowReadings[id],typeof CasaDoorCore.state(windowReadings[id],now)==='boolean');
   add(config.door,doorReading,typeof CasaDoorCore.state(doorReading,now)==='boolean');add(config.cellarDoor,cellarDoorReading,typeof CasaDoorCore.state(cellarDoorReading,now)==='boolean');
   add(CasaEnergyCore.binding(config),energyReading,Number.isFinite(CasaEnergyCore.state(config,energyReading,now).powerKW));
+  for(const id of bad){stale.delete(id);pending.delete(id)}for(const id of pending)stale.delete(id);
+  const focusProblems=scope!==null&&scope.some(id=>bad.has(id)||stale.has(id)||pending.has(id));
   const confirming=targets.size+lightTargets.size+mediaTargets.size+[evTarget,alarmTarget,fanTarget,heaterTarget,dehumidifierTarget].filter(v=>v!==null).length;
-  return CasaCloudActivityCore.state({configured:!!key&&!!config.server&&count>0,dirty:dirty(),count,activity:{...activity},session:transport.stats(config.server),sending:commandCount>0||groupBusy||lightGroupBusy,confirming,busy:blockingRead(),background:refreshing,lastFetched,unavailable:Math.min(count,bad.size)},now);
+  return CasaCloudActivityCore.state({configured:!!key&&!!config.server&&count>0,dirty:dirty(),count,activity:{...activity},session:transport.stats(config.server),sending:commandCount>0||groupBusy||lightGroupBusy,confirming,busy:blockingRead(),background:refreshing,lastFetched,unavailable:Math.min(count,bad.size),staleDevices:stale.size,pendingDevices:pending.size,focused:scope!==null,focusProblems,pausedDevices:scope===null?0:allIds.filter(id=>!scope.includes(id)).length},now);
  }
  function connectionSnapshot(){const waitSeconds=Math.max(0,Math.ceil(((transport.stats(config.server).retryAt||0)-Date.now())/1000));return {paused:waitSeconds>0,waitSeconds,recovering:deferredReads.size>0}}
- window.CasaShelly={consumptionSnapshot,connectionSnapshot,commandKitchen,kitchenEnsureFresh,refreshEquipment,activitySnapshot,dehumidifierSnapshot,dehumidifierEnsureFresh,commandDehumidifier,heaterSnapshot,heaterEnsureFresh,commandHeater,hasUnsavedChanges:dirty,windowSnapshot,windowEnsureFresh,commandOffice,officeEnsureFresh,mediaSnapshot,mediaEnsureFresh,commandMedia,inspectDoorSensor,inspectDoorGateway,sensorMarkup,sensorCaption,fanSnapshot,fanEnsureFresh,commandFan,alarmSnapshot,alarmEnsureFresh,commandAlarm,energySnapshot,energyEnsureFresh,doorSnapshot,doorEnsureFresh,evSnapshot,commandEV,evEnsureFresh,lampSnapshot,isBusy:()=>busy||commandCount>0||lightGroupBusy||groupBusy||alarmTarget!==null||fanTarget!==null||heaterTarget!==null||dehumidifierTarget!==null||mediaTargets.size>0,sensorBinding,sensorReading,lightBinding,lightReading,lightCaption,lightValue,commandLight,commandAllLights,binding,reading,roomCaption:caption,decorateRoom,reapply,refresh,command,commandAll,ensureFresh,ensureBlindFresh};
+ window.CasaShelly={brightnessControl,focusPopup,consumptionSnapshot,connectionSnapshot,commandKitchen,kitchenEnsureFresh,refreshEquipment,activitySnapshot,dehumidifierSnapshot,dehumidifierEnsureFresh,commandDehumidifier,heaterSnapshot,heaterEnsureFresh,commandHeater,hasUnsavedChanges:dirty,windowSnapshot,windowEnsureFresh,commandOffice,officeEnsureFresh,mediaSnapshot,mediaEnsureFresh,commandMedia,inspectDoorSensor,inspectDoorGateway,sensorMarkup,sensorCaption,fanSnapshot,fanEnsureFresh,commandFan,alarmSnapshot,alarmEnsureFresh,commandAlarm,energySnapshot,energyEnsureFresh,doorSnapshot,doorEnsureFresh,evSnapshot,commandEV,evEnsureFresh,lampSnapshot,isBusy:()=>busy||commandCount>0||lightGroupBusy||groupBusy||alarmTarget!==null||fanTarget!==null||heaterTarget!==null||dehumidifierTarget!==null||mediaTargets.size>0,sensorBinding,sensorReading,lightBinding,lightReading,lightCaption,lightValue,commandLight,commandAllLights,binding,reading,roomCaption:caption,decorateRoom,reapply,refresh,command,commandAll,ensureFresh,ensureBlindFresh};
  fill();summary();reapply();render();
  if(key&&config.server&&CORE.deviceIds(config).length)refresh({quiet:true});
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){nextRefreshAt=0;schedulePoll()}});
@@ -467,8 +502,14 @@
  function automaticRefresh(){
   if(document.visibilityState!=='visible'||!key||!config.server||busy||commandCount||lightGroupBusy||groupBusy||dirty())return;
   const retryAt=transport.stats(config.server).retryAt||0;if(Date.now()<retryAt)return;
+  const scope=popupIds();if(scope!==null){
+   const recovery=[...deferredReads].filter(id=>scope.includes(id));
+   if(recovery.length){for(const id of recovery)deferredReads.delete(id);refresh({quiet:true,ids:recovery,force:true,priority:true});return}
+   if(scope.length&&Date.now()>=nextFocusRefreshAt){nextFocusRefreshAt=Date.now()+15000;refresh({quiet:true,ids:scope,priority:true})}return;
+  }
   if(deferredReads.size){const ids=[...deferredReads].filter(id=>CORE.deviceIds(config).includes(id));deferredReads.clear();refresh({quiet:true,ids,force:true,priority:true});return}
   if(Date.now()>=nextRefreshAt&&CORE.deviceIds(config).length)refresh({quiet:true});
  }
+ document.addEventListener('close',()=>queueMicrotask(focusPopup),true);
  setInterval(automaticRefresh,1000);
 })();
