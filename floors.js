@@ -3,7 +3,6 @@
  const house=document.getElementById('house-view');house.classList.add('floor-scene');
  const cave=document.createElement('main');cave.id='basement-view';cave.className='floor-scene basement-view';cave.hidden=true;cave.setAttribute('aria-label','Piso menos um · cave e estacionamento');cave.tabIndex=-1;
  cave.innerHTML=`<div class="basement-plan">
-  <div class="basement-heading"><span>PISO −1</span><h1>Cave e estacionamento</h1></div>
   <div class="basement-layout">
    <div class="cellar-shell"><div class="cellar-outline">
     <div class="cellar-room" aria-hidden="true"></div>
@@ -29,10 +28,11 @@
   document.getElementById('basement-dialog-info').innerHTML='<p>Dados do veículo e do carregamento ainda não associados.</p>';showPopup('basement-dialog');
  });
  document.querySelector('.tap-hint')?.remove();
- const floorDots=document.createElement('nav');floorDots.className='floor-dots';floorDots.setAttribute('aria-label','Escolher piso');floorDots.innerHTML='<button type="button" data-floor="0" aria-label="Casa, piso zero" title="Casa · Piso 0"><span aria-hidden="true"></span></button><button type="button" data-floor="-1" aria-label="Cave, piso menos um" title="Cave · Piso −1"><span aria-hidden="true"></span></button>';document.body.append(floorDots);
+ const floorDots=document.createElement('nav');floorDots.className='floor-dots';floorDots.setAttribute('aria-label','Escolher piso');floorDots.innerHTML='<button type="button" data-floor="0" aria-label="Casa, piso um" title="Casa · Piso 1"><span aria-hidden="true"></span></button><button type="button" data-floor="-1" aria-label="Cave, piso menos um" title="Cave · Piso −1"><span aria-hidden="true"></span></button>';document.body.append(floorDots);
  floorDots.querySelectorAll('button').forEach(button=>button.addEventListener('click',()=>setFloor(Number(button.dataset.floor))));
+ const floorIndicator=document.createElement('span');floorIndicator.className='floor-indicator';floorIndicator.setAttribute('role','status');floorIndicator.setAttribute('aria-live','polite');document.querySelector('.bottom-dock').append(floorIndicator);
  let floor=0,lockedUntil=0,suppressClickUntil=0,touch=null,wheel=0,wheelAt=0;
- function hint(){floorDots.querySelectorAll('button').forEach(button=>{if(Number(button.dataset.floor)===floor)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')})}
+ function hint(){floorIndicator.textContent=floor===-1?'Piso −1':'Piso 1';floorDots.querySelectorAll('button').forEach(button=>{if(Number(button.dataset.floor)===floor)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')})}
  function setFloor(next){
   if(next===floor||![-1,0].includes(next))return;
   floor=next;house.hidden=next===-1;cave.hidden=next===0;document.body.dataset.floor=String(next);hint();window.dispatchEvent(new Event('floorchange'));

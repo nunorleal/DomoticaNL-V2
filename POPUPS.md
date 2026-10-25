@@ -13,3 +13,7 @@ Todos os popups podem fechar pelo X ou por toque/clique na área exterior, inclu
 ## Atualizar — 2.06
 
 Todos os botões de atualização manual passam a círculos com o mesmo símbolo de duas setas, incluindo sensores, janelas, cave, meteorologia e consulta geral Shelly. O nome da ação mantém-se no título e na acessibilidade; os listeners e as condições de disponibilidade não mudam.
+
+## Ordem dos elementos — 2.09
+
+Por indicação posterior, os controlos e botões ficam acima, e os cartões de consumo fecham todos os popups. A regra aplica-se também aos estores, candeeiros, aparelhos móveis, cozinha e painéis de multimédia/secretária. Apenas é alterada a ordem dos elementos existentes.

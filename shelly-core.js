@@ -4,6 +4,8 @@
  const ROOM_IDS=['master','bedroom2','living','kitchen'],LIGHT_ROOM_IDS=['master','bedroom2','living'],SENSOR_ROOM_IDS=['living','master','cellar','balcony'];
  const SUPPLIED_LIGHT_IDS={master:'98cdac1df7e9',bedroom2:'98cdac1f18fa',living:'98cdac2d2eb6'};
  function balconySensorBindings(previous={}){const old=previous.balcony,same=old?.deviceId==='10521c0752cc';return {...previous,balcony:same?{...old}:{deviceId:'10521c0752cc',temperatureChannel:0,humidityChannel:0}}}
+ const REPLACED_TEMPERATURE_IDS={balcony:'XB211299192082120',cellar:'XB211299197137945'};
+ function replacedTemperatureBindings(previous={},ids=REPLACED_TEMPERATURE_IDS){const next={...previous};for(const role of ['balcony','cellar']){const deviceId=statusDeviceId(ids[role]),old=previous[role],same=old&&String(old.deviceId).toUpperCase()===deviceId.toUpperCase();next[role]=same?{...old,deviceId,type:'environment'}:{deviceId,temperatureChannel:0,humidityChannel:0,type:'environment'}}return next}
  function suppliedLightBindings(previous={}){return Object.fromEntries(Object.entries(SUPPLIED_LIGHT_IDS).map(([id,deviceId])=>{const old=previous[id],same=old&&String(old.deviceId).toLowerCase()===deviceId;return [id,{deviceId,channel:same?old.channel:0,type:same?old.type:'switch'}]}))}
  function server(value){let u;try{u=new URL(value.includes('://')?value:'https://'+value)}catch{throw Error('Indique o servidor Shelly Cloud da sua conta.')}if(u.protocol!=='https:'||!/^shelly-[a-z0-9-]+\.shelly\.cloud$/i.test(u.hostname)||u.port||u.username||u.password||u.search||u.hash||u.pathname!=='/')throw Error('Use apenas o endereço HTTPS do servidor Shelly Cloud, sem caminhos ou parâmetros.');return u.origin}
  function deviceId(value){const id=String(value).trim().toLowerCase().replace(/:/g,'');if(!/^[a-f0-9]{6,32}$/.test(id))throw Error('O ID deve ser o Device ID hexadecimal do Shelly (não o nome nem o endereço IP).');return id}
@@ -26,7 +28,7 @@
     if(!SENSOR_ROOM_IDS.includes(room)||!b||typeof b!=='object')throw Error('Associação de sensor inválida.');
     const temperatureChannel=b.temperatureChannel===undefined?0:b.temperatureChannel,humidityChannel=b.humidityChannel===undefined?0:b.humidityChannel;
     if(![temperatureChannel,humidityChannel].every(n=>Number.isInteger(n)&&n>=0&&n<=255))throw Error('Componente de sensor inválido.');
-    const id=deviceId(b.deviceId),pair=id+':'+temperatureChannel+':'+humidityChannel;
+    const id=statusDeviceId(b.deviceId),pair=id.toLowerCase()+':'+temperatureChannel+':'+humidityChannel;
     if(sensorPairs.has(pair))throw Error('O mesmo sensor não pode estar associado a duas divisões.');
     if(b.type!==undefined&&!['environment','door-window2'].includes(b.type))throw Error('Tipo de sensor inválido.');
     sensorPairs.add(pair);sensorBindings[room]={deviceId:id,temperatureChannel,humidityChannel,...(b.type!==undefined?{type:b.type}:{})};
@@ -113,5 +115,5 @@
   for(const [room,b]of Object.entries(bindings)){if(!ROOM_IDS.includes(room))throw Error('Divisão inválida.');const c=command(b,position),id=c.id+'_'+c.channel;if(used.has(id))throw Error('Estores repetidos.');used.add(id);devices.push({id:c.id,channel:c.channel})}
   if(!devices.length||devices.length>4)throw Error('Selecione entre 1 e 4 estores.');return {devices,position};
  }
- return {balconySensorBindings,SUPPLIED_LIGHT_IDS,suppliedLightBindings,ROOM_IDS,LIGHT_ROOM_IDS,SENSOR_ROOM_IDS,sensorStatus,deviceIds,deviceBatches,server,deviceId,statusDeviceId,config,status,lightCommand,lightStatus,resolvedLightCommand,canLightControl,command,canControl,groupCommand};
+ return {replacedTemperatureBindings,balconySensorBindings,SUPPLIED_LIGHT_IDS,suppliedLightBindings,ROOM_IDS,LIGHT_ROOM_IDS,SENSOR_ROOM_IDS,sensorStatus,deviceIds,deviceBatches,server,deviceId,statusDeviceId,config,status,lightCommand,lightStatus,resolvedLightCommand,canLightControl,command,canControl,groupCommand};
 });
