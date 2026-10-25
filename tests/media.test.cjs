@@ -67,3 +67,15 @@ test('TV regeneration is only an estimate between 2 and 10 W inclusive with live
  for(const bad of [{...r,on:false},{...r,online:false},{...r,error:true},{...r,missing:true},{...r,fetchedAt:-50000},{...r,meter:{...r.meter,error:true}}])assert.equal(M.tvRegenerating(M.state(binding,bad,101,4)),false);
  assert.equal(M.tvRegenerating(M.state(null,r,101,4)),false);
 });
+
+test('screen usage excludes regeneration, standby and unconfirmed measurements',()=>{
+ const ready={configured:true,on:true,stale:false,powerWatts:25};
+ for(const id of ['tv','monitor']){assert.equal(M.screenWorking(id,ready),true);for(const patch of [{configured:false},{on:false},{on:null},{stale:true},{powerWatts:null},{powerWatts:NaN},{powerWatts:Infinity},{powerWatts:0}])assert.equal(M.screenWorking(id,{...ready,...patch}),false)}
+ for(const powerWatts of [2,6,10])assert.equal(M.screenWorking('tv',{...ready,powerWatts}),false);
+ assert.equal(M.screenWorking('tv',{...ready,powerWatts:10.1}),true);assert.equal(M.screenWorking('monitor',{...ready,powerWatts:2}),false);assert.equal(M.screenWorking('monitor',{...ready,powerWatts:2.1}),true);assert.equal(M.screenWorking('soundbar',ready),false);
+});
+
+test('screen reflections stay visible in daylight, darkness and electric-light renders',()=>{
+ assert.equal(M.reflectionStrength(0,0),.6);assert.equal(M.reflectionStrength(1,0),.85);assert.equal(M.reflectionStrength(0,1),1);assert.ok(M.reflectionStrength(0,.45)>.9);assert.equal(M.reflectionStrength(1,1),1);
+ for(const args of [[NaN,Infinity],[-1,-1],[2,2]]){const value=M.reflectionStrength(...args);assert.ok(Number.isFinite(value)&&value>=.6&&value<=1)}
+});

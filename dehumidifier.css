@@ -11,4 +11,4 @@
 .dehumidifier-links>*{flex:1}
 /* Confirmed ON: trace the transparent sprite silhouette, independent of hover/focus. */
 .dehumidifier-render{position:absolute;inset:0;display:block;pointer-events:none}
-.dehumidifier-object[data-power=on] .dehumidifier-render{filter:drop-shadow(1px 0 0 #23eb86) drop-shadow(-1px 0 0 #23eb86) drop-shadow(0 1px 0 #23eb86) drop-shadow(0 -1px 0 #23eb86) drop-shadow(0 0 4px #14d873b3)}
+.dehumidifier-object[data-power=on] .dehumidifier-render{filter:var(--device-on-filter)}

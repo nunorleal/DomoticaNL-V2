@@ -16,6 +16,7 @@
  house.after(cave);
  const dialog=document.createElement('dialog');dialog.id='basement-dialog';dialog.className='popup';dialog.setAttribute('aria-labelledby','basement-dialog-title');dialog.innerHTML='<button class="popup-close" aria-label="Fechar piso menos um" data-close="basement-dialog">'+icon('x')+'</button><span class="eyebrow">PISO −1</span><h2 id="basement-dialog-title"></h2><p id="basement-dialog-text" class="popup-subtitle"></p><div class="basement-info" id="basement-dialog-info"></div>';document.body.append(dialog);dialog.querySelector('[data-close]').addEventListener('click',()=>dialog.close());
  document.getElementById('open-cellar').addEventListener('click',()=>{
+  if(window.CasaRoomDevices){CasaRoomDevices.openCellar();return}
   document.getElementById('basement-dialog-title').textContent='Cave';document.getElementById('basement-dialog-text').textContent='Divisão no piso −1 · entrada em baixo';
   const info=document.getElementById('basement-dialog-info');info.innerHTML='<div id="cellar-temperature-detail"></div><p class="cellar-door-status" role="status"></p><div class="backup-actions"><button class="secondary-action cellar-data-refresh" type="button">Atualizar dados</button><button class="secondary-action cellar-door-settings" type="button">Sensor da porta</button><button class="secondary-action cellar-temperature-settings" type="button">Sensor de temperatura</button></div>';
   window.CasaPopupUI?.refresh(info.querySelector('.cellar-data-refresh'),'Atualizar dados da cave');
@@ -24,6 +25,7 @@
  });
  document.getElementById('open-car').addEventListener('click',()=>{
   if(window.CasaEV){window.CasaEV.open();return}
+  delete dialog.dataset.roomDeviceOverview;dialog.classList.remove('room-overview');document.getElementById('basement-dialog-text').hidden=false;
   document.getElementById('basement-dialog-title').textContent='Veículo elétrico';document.getElementById('basement-dialog-text').textContent='Estacionamento junto à cave';
   document.getElementById('basement-dialog-info').innerHTML='<p>Dados do veículo e do carregamento ainda não associados.</p>';showPopup('basement-dialog');
  });

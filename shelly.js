@@ -80,7 +80,7 @@
  const stateName=s=>({open:'Aberto',closed:'Fechado',opening:'A abrir',closing:'A fechar',stop:'Parado',stopped:'Parado',close:'A fechar',calibrating:'A calibrar'})[s]||s||'Não disponível';
  function caption(id){const d=reading(id);if(!d)return 'Shelly Cloud · por consultar';if(d.error)return Number.isFinite(d.position)?'Última leitura · '+Math.round(d.position)+'% · atualização pendente':'Shelly Cloud · consulta indisponível';if(d.missing)return 'ID não encontrado nesta conta · verifique o ID e o servidor';if(!d.online)return 'Shelly Cloud · offline (dados guardados)';if(!d.hasCover)return 'Canal de estore não encontrado';return `${stateName(d.state)}${d.position===null?' · posição desconhecida':''} · Cloud${Date.now()-(d.fetchedAt||0)>120000?' · dados desatualizados':''}`}
  function feedback(text,error=false){lastMessage=text;lastError=error;$('shelly-feedback').textContent=text;$('shelly-feedback').classList.toggle('error',error);const p=document.querySelector('.shelly-room-feedback');if(p){p.textContent=text;p.classList.toggle('error',error)}}
- function fill(){window.CasaWindows.fill(config.windowBindings);window.CasaMediaForm.fill(config.mediaBindings,config.officeBindings,config.kitchenBindings);
+ function fill(){window.CasaShellyRooms?.restore();window.CasaWindows.fill(config.windowBindings);window.CasaMediaForm.fill(config.mediaBindings,config.officeBindings,config.kitchenBindings);
   window.CasaAlarmForm.fill(config.alarm);window.CasaFanForm.fill(config.fan);window.CasaHeaterForm.fill(config.heater);window.CasaDehumidifierForm.fill(config.dehumidifier);
   window.CasaEnergyForm.fill(config.homeEnergy);
   window.CasaDoor.fill(config.door);window.CasaDoor.fill(config.cellarDoor,'cellar-door');
@@ -92,7 +92,7 @@
 
   $('shelly-sensor-mappings').innerHTML=CORE.SENSOR_ROOM_IDS.map(id=>{const r=id==='cellar'?{name:'Cave'}:rooms.find(r=>r.id===id),b=sensorBinding(id);return `<fieldset class="shelly-mapping"><legend>${escapeHTML(r.name)}</legend><label for="shelly-sensor-id-${id}">Device ID do sensor</label><input id="shelly-sensor-id-${id}" type="text" autocomplete="off" spellcheck="false" maxlength="48" placeholder="Ex.: aabbcc112233 ou XB…" value="${escapeHTML(b?.deviceId||'')}">${id==='cellar'?`<label for="shelly-sensor-type-cellar">Tipo de sensor</label><select id="shelly-sensor-type-cellar"><option value="door-window2"${b?.type==='door-window2'?' selected':''}>Shelly Door Window 2 · temperatura</option><option value="environment"${b?.type!=='door-window2'?' selected':''}>Sensor de temperatura e humidade</option></select>`:''}<details class="shelly-help"><summary>Componentes do sensor (avançado)</summary><p class="settings-explanation">Nos H&amp;T habituais ambos são 0. Altere apenas se o dispositivo usar outros IDs de componente.</p><div class="shelly-light-options"><div><label for="shelly-sensor-temperature-${id}">Temperatura</label><input id="shelly-sensor-temperature-${id}" type="number" min="0" max="255" step="1" value="${b?.temperatureChannel??0}"></div><div><label for="shelly-sensor-humidity-${id}">Humidade</label><input id="shelly-sensor-humidity-${id}" type="number" min="0" max="255" step="1" value="${b?.humidityChannel??0}"></div></div></details><p class="settings-explanation light-mapping-state">${b?'Sensor associado':'Sem associação'}</p></fieldset>`}).join('');
 
-  window.CasaAssociationWarnings?.sync();
+  window.CasaShellyRooms?.sync();window.CasaAssociationWarnings?.sync();
  }
  function dirty(){if(window.CasaWindows.dirty(config.windowBindings))return true;if(window.CasaMediaForm.dirty(config.mediaBindings,config.officeBindings,config.kitchenBindings))return true;if($('shelly-sensor-type-cellar').value!==(sensorBinding('cellar')?.type||'environment'))return true;if(window.CasaFanForm.dirty(config.fan))return true;if(window.CasaHeaterForm.dirty(config.heater))return true;if(window.CasaDehumidifierForm.dirty(config.dehumidifier))return true;if(window.CasaAlarmForm.dirty(config.alarm))return true;if(window.CasaEnergyForm.dirty(config.homeEnergy))return true;if(window.CasaDoor.dirty(config.door)||window.CasaDoor.dirty(config.cellarDoor,'cellar-door'))return true;if(window.CasaEVForm.dirty(config.ev))return true;if($('shelly-server').value.trim()!==config.server||$('shelly-key').value.trim()!==key||$('shelly-remember').checked!==config.rememberKey)return true;return CORE.SENSOR_ROOM_IDS.some(id=>$('shelly-sensor-id-'+id).value.trim().toLowerCase()!==(sensorBinding(id)?.deviceId||'').toLowerCase()||Number($('shelly-sensor-temperature-'+id).value)!==(sensorBinding(id)?.temperatureChannel??0)||Number($('shelly-sensor-humidity-'+id).value)!==(sensorBinding(id)?.humidityChannel??0))||CORE.LIGHT_ROOM_IDS.some(id=>$('shelly-light-id-'+id).value.trim().toLowerCase()!==(lightBinding(id)?.deviceId||'')||Number($('shelly-light-channel-'+id).value)!==(lightBinding(id)?.channel??0)||$('shelly-light-type-'+id).value!==(lightBinding(id)?.type||'switch'))||CORE.ROOM_IDS.some(id=>$('shelly-id-'+id).value.trim().toLowerCase()!==(binding(id)?.deviceId||'')||Number($('shelly-channel-'+id).value)!==(binding(id)?.channel??0))}
  function reapply(){for(const id of CORE.ROOM_IDS){const r=rooms.find(r=>r.id===id);if(!binding(id))continue;stopMotion(id);const d=reading(id);r.blind=Number.isFinite(d?.position)?d.position:0}for(const id of CORE.LIGHT_ROOM_IDS){if(!lightBinding(id))continue;const r=rooms.find(r=>r.id===id),d=lightReading(id);r.light=typeof d?.on==='boolean'?d.on:false}}
@@ -265,10 +265,15 @@
   finally{if(submitted)commandCount--;groupBusy=false;summary();render();schedulePoll()}
  }
  // A popup owns routine reads; accepted commands retain their bounded verification.
+ function roomDeviceBindings(id){
+  const entries=window.CasaRoomDevicesCore?.entries(id,{heaterRoom:window.CasaHeater?.roomId()||'master',dehumidifierRoom:window.CasaDehumidifier?.roomId()||'bath1'});
+  if(!entries)return [lightBinding(id),sensorBinding(id),config.windowBindings?.[id]];
+  return entries.map(e=>e.kind==='light'?lightBinding(e.id):e.kind==='cover'?binding(e.id):e.kind==='sensor'?sensorBinding(e.id):e.kind==='window'?config.windowBindings?.[e.id]:e.kind==='door'?(e.id==='cellar'?config.cellarDoor:config.door):e.kind==='alarm'?config.alarm?.[e.id]:['media','office','kitchen'].includes(e.kind)?mediaBinding(e.id):config[e.kind]).filter(Boolean);
+ }
  function popupIds(){
   const dialog=[...document.querySelectorAll('dialog[open]')].at(-1);if(!dialog)return null;let entries;
   switch(dialog.id){
-   case 'room-dialog':entries=detailView==='light'?[lightBinding(selected)]:detailView==='blind'?[binding(selected)]:[lightBinding(selected),sensorBinding(selected),config.windowBindings?.[selected]];break;
+   case 'room-dialog':entries=detailView==='light'?[lightBinding(selected)]:detailView==='blind'?[binding(selected)]:roomDeviceBindings(selected);break;
    case 'media-dialog':case 'office-dialog':{const role=dialog.id==='media-dialog'?'media':'office',id=dialog.querySelector('[data-'+role+'-device][aria-pressed="true"]')?.dataset[role+'Device'];entries=[id==='living-lamp'?lightBinding('living'):mediaBinding(id)];break}
    case 'kitchen-device-dialog':entries=[mediaBinding(dialog.dataset.device)];break;
    case 'heater-dialog':entries=[config.heater];break;
@@ -277,7 +282,7 @@
    case 'alarm-dialog':entries=AL.ROLES.map(role=>config.alarm?.[role]);break;
    case 'ev-dialog':entries=EV.ROLES.map(role=>config.ev?.[role]);break;
    case 'energy-dialog':entries=[window.CasaEnergyCore.binding(config)];break;
-   case 'basement-dialog':entries=[sensorBinding('cellar'),config.cellarDoor];break;
+   case 'basement-dialog':entries=dialog.dataset?.roomDeviceOverview==='cellar'?roomDeviceBindings('cellar'):[sensorBinding('cellar'),config.cellarDoor];break;
    default:return null;
   }
   return [...new Set(entries.filter(Boolean).map(b=>b.deviceId))].filter(Boolean);
@@ -358,7 +363,7 @@
  function ensureFresh(id){const l=lightReading(id),s=sensorReading(id);if((lightBinding(id)&&(!l?.fetchedAt||Date.now()-l.fetchedAt>30000||l.error))||(sensorBinding(id)&&(!s?.fetchedAt||Date.now()-s.fetchedAt>60000||s.error)))refresh({quiet:true,ids:[lightBinding(id)?.deviceId,sensorBinding(id)?.deviceId]})}
  function ensureBlindFresh(id){const d=reading(id);if(binding(id)&&(!d?.fetchedAt||Date.now()-d.fetchedAt>30000||d.error))return refresh({quiet:true,ids:[binding(id).deviceId]})}
  function refreshEquipment(role,id){
-  const entries=role==='light'?[lightBinding(id)]:role==='blind'?[binding(id)]:role==='cellar'?[sensorBinding('cellar'),config.cellarDoor]:role==='room'?[lightBinding(id),sensorBinding(id),config.windowBindings?.[id]]:role==='media'?[mediaBinding(id)]:role==='ev'?EV.ROLES.map(k=>config.ev?.[k]):role==='alarm'?AL.ROLES.map(k=>config.alarm?.[k]):role==='energy'?[window.CasaEnergyCore.binding(config)]:[config[role]];
+  const entries=role==='light'?[lightBinding(id)]:role==='blind'?[binding(id)]:role==='cellar'?roomDeviceBindings('cellar'):role==='room'?roomDeviceBindings(id):role==='media'?[mediaBinding(id)]:role==='ev'?EV.ROLES.map(k=>config.ev?.[k]):role==='alarm'?AL.ROLES.map(k=>config.alarm?.[k]):role==='energy'?[window.CasaEnergyCore.binding(config)]:[config[role]];
   return refresh({quiet:true,ids:entries.filter(Boolean).map(b=>b.deviceId),force:true,priority:true});
  }
  function energySnapshot(){return {...window.CasaEnergyCore.state(config,energyReading),reading:energyReading?structuredClone(energyReading):null,busy:blockingRead()||commandCount>0||groupBusy||lightGroupBusy}}

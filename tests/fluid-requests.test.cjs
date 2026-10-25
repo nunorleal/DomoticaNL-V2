@@ -75,3 +75,16 @@ test('the multimedia lamp shares the living-room light ID and priority scope, ne
  assert.deepEqual(Array.from(h.ctx.popupIds()),[h.ids[1]]);
  await h.ctx.refresh({quiet:true});assert.deepEqual(h.calls,[[h.ids[1]]]);assert.equal(h.ctx.config.mediaBindings,undefined);
 });
+
+test('a room overview scopes reads to its full inventory, including media and moved appliances',()=>{
+ const h=harness(),c=h.ctx.config,ids=h.ids;h.ctx.window.CasaRoomDevicesCore=require('../room-devices-core.js');h.ctx.window.CasaHeater={roomId:()=> 'living'};
+ c.bindings.living={deviceId:ids[4]};c.windowBindings={living:{deviceId:ids[5]}};c.mediaBindings=Object.fromEntries(['tv','soundbar','playstation','vodafone','unifi'].map((id,i)=>[id,{deviceId:ids[6+i]}]));c.door={deviceId:ids[11]};c.heater={deviceId:ids[12]};
+ h.ctx.detailView='room';h.ctx.selected='living';h.ctx.openDialogs=[{id:'room-dialog'}];
+ assert.deepEqual(Array.from(h.ctx.popupIds()),[ids[1],ids[3],ids[4],ids[5],...ids.slice(6,13)]);assert.ok(!h.ctx.popupIds().includes(ids[0]));
+ h.ctx.detailView='light';assert.deepEqual(Array.from(h.ctx.popupIds()),[ids[1]]);h.ctx.detailView='blind';assert.deepEqual(Array.from(h.ctx.popupIds()),[ids[4]]);
+});
+
+test('cellar overview scopes reads to fan, both alarm roles, temperature and cellar door',()=>{
+ const h=harness(),c=h.ctx.config,ids=h.ids;h.ctx.window.CasaRoomDevicesCore=require('../room-devices-core.js');c.alarm={arm:{deviceId:ids[4]},trigger:{deviceId:ids[5]}};c.sensorBindings.cellar={deviceId:ids[6]};c.cellarDoor={deviceId:ids[7]};h.ctx.openDialogs=[{id:'basement-dialog',dataset:{roomDeviceOverview:'cellar'}}];
+ assert.deepEqual(Array.from(h.ctx.popupIds()),[ids[2],ids[4],ids[5],ids[6],ids[7]]);assert.ok(!h.ctx.popupIds().includes(ids[1]));h.ctx.openDialogs=[{id:'alarm-dialog'}];h.ctx.AL.ROLES=['arm','trigger'];assert.deepEqual(Array.from(h.ctx.popupIds()),[ids[4],ids[5]]);
+});

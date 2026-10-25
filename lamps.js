@@ -14,5 +14,6 @@
   const p=points[room];if(!p)return '';const [x,y]=p.target;
   return `<button type="button" class="lamp-trigger" data-room="${room}" style="left:${x/10.24}%;top:${(y-140)/11.8}%;width:${2*p.radius/10.24}%;height:${2*p.radius/11.8}%" title="Candeeiro · ${name}" aria-label="Abrir controlos do candeeiro de ${name}"></button>`;
  }
- window.CasaLamps={patch,trigger};
+ function halo(room){const p=points[room];if(!p)return '';const [x,y]=p.target;return `<circle class="lamp-on-halo" data-lamp-halo-room="${room}" cx="${x}" cy="${y}" r="${p.radius+1}" aria-hidden="true"/>`}
+ window.CasaLamps={patch,trigger,halo};
 })();
