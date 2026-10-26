@@ -1,0 +1,50 @@
+.floor-scene[hidden]{display:none!important}.floor-scene{touch-action:none}.floor-hint{pointer-events:auto}.floor-hint button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:5px 12px;background:#142e2bb3;color:#d6e5d9;border:1px solid #c0d7cb38;border-radius:22px;font-size:10px;box-shadow:0 3px 12px #07181725}.floor-hint button svg{width:15px;height:15px}.floor-hint{bottom:calc(86px + env(safe-area-inset-bottom))}
+.basement-plan{position:relative;width:min(88vw,calc((100dvh - 230px - env(safe-area-inset-top) - env(safe-area-inset-bottom))*.72));max-height:100%;aspect-ratio:.72;isolation:isolate;user-select:none}
+.basement-layout{position:absolute;top:12%;bottom:8%;left:12%;right:0;display:flex;gap:8%;align-items:center}.cellar-shell{position:relative;height:100%;aspect-ratio:1.5/6;flex-shrink:0;filter:drop-shadow(7px 10px 8px #0005)}
+.cellar-room{position:absolute;inset:0;background:linear-gradient(90deg,#0003,transparent 14%,transparent 80%,#0002),url('assets/cimento-cave.svg?v=1.43') center/180px 180px repeat;filter:brightness(calc(var(--street-brightness)*1.25));box-shadow:inset 0 0 14px #17252a80}
+.cellar-wall{position:absolute;background:linear-gradient(90deg,#d0d0c5,#fbfaf3 30%,#fffef7 65%,#c3c5bd);box-shadow:2px 3px 3px #0005;z-index:2}.cellar-wall-top{left:-6%;right:-6%;top:-1.5%;height:2.2%}.cellar-wall-left{left:-6%;top:-1.5%;bottom:-1.5%;width:8%}.cellar-wall-right{right:-6%;top:-1.5%;bottom:-1.5%;width:8%}.cellar-wall-bottom-left{bottom:-1.5%;left:-6%;width:23%;height:2.2%}.cellar-wall-bottom-right{bottom:-1.5%;right:-6%;width:23%;height:2.2%}
+.cellar-door{position:absolute;width:74%;height:auto;bottom:-1.2%;right:16%;overflow:visible;z-index:1;filter:drop-shadow(1px 2px 2px #0005)}.cellar-door .cellar-door-leaf{fill:url(#cellar-door-wood);stroke:#5f4d36;stroke-width:1}.cellar-door .cellar-door-arc{fill:none;stroke:#d5d9ce80;stroke-width:.8}
+.cellar-pin{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);width:calc(100% - 24px);min-height:54px;padding:11px 13px;border-radius:17px;background:#193839eb;border:1px solid #d4ebe35c;color:#eaf4ed;box-shadow:0 4px 15px #0003;z-index:3}.cellar-pin strong{display:block;font-size:15px;font-weight:500}.cellar-pin span{display:block;font-size:9px;margin-top:6px;color:#b6d1c6;line-height:1.5}.cellar-width{position:absolute;top:-7%;left:50%;transform:translateX(-50%);font-size:11px;color:#d1e1d7;white-space:nowrap}.cellar-length{position:absolute;left:-35%;top:50%;transform:rotate(-90deg);font-size:11px;color:#d1e1d7;white-space:nowrap}
+.parking-space{position:relative;flex:1;min-width:0;height:100%}.parking-outline{position:absolute;inset:6% 2% 6%;border-left:2px solid #d7e2d365;border-right:2px solid #d7e2d365;border-top:2px solid #d7e2d365;border-radius:3px}.parked-car{position:absolute;inset:5% -12% 8%;padding:0;background:none;display:flex;justify-content:center;align-items:center;filter:drop-shadow(5px 10px 7px #05111377)}.parked-car img{width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none}.parked-car:focus-visible{outline:3px solid #8dd6c8;outline-offset:0;border-radius:40%}.parking-caption{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:11px;color:#d8e5db;text-shadow:0 1px 3px #000}
+.basement-caption{position:absolute;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:8px;font-size:10px;color:#afc6b8}.basement-caption-mark{width:5px;height:5px;border-radius:50%;background:#8ab9a1}.basement-info dl{margin:20px 0}.basement-info dl>div{display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--line);font-size:13px}.basement-info dt{color:#7e9785}.basement-info dd{margin:0;font-weight:550}.basement-info>p{font-size:12px;line-height:1.7;color:#7e9785}
+@media(max-width:520px){.basement-plan{width:min(85vw,calc((100dvh - 230px)*.72))}.cellar-pin{width:calc(100% - 16px);padding:10px 5px}.cellar-pin strong{font-size:12px}.cellar-pin span{font-size:8px}.basement-layout{left:12%}}
+@media(prefers-reduced-motion:reduce){.floor-scene{scroll-behavior:auto}}
+
+/* Floors are ordered physically: house above, basement below. */
+.floor-dots{position:fixed;left:calc(3px + env(safe-area-inset-left));top:50%;transform:translateY(-50%);display:flex;flex-direction:column;z-index:4;gap:2px;}
+.floor-dots button{display:grid;place-items:center;width:44px;height:44px;padding:0;background:transparent;border-radius:50%;touch-action:manipulation;}
+.floor-dots button span{display:block;width:11px;height:11px;border-radius:50%;border:1px solid #d5ebe8b3;background:#c0d6d340;box-shadow:0 1px 5px #00151970;transition:background .25s,transform .25s,box-shadow .25s;}
+.floor-dots button[aria-current=page] span{background:#008589;border:2px solid #d0eeea;width:16px;height:16px;box-shadow:0 0 0 4px #00858935,0 2px 7px #00151988;}
+@media(prefers-reduced-motion:reduce){.floor-dots button span{transition:none}}
+
+/* 1.39: widen the cellar to the left; preserve the right wall and car position. */
+.cellar-outline{position:absolute;top:0;bottom:0;right:0;left:-33.333333%;}
+.cellar-outline .cellar-wall-top{left:-4.5%;right:-4.5%;}
+.cellar-outline .cellar-wall-left{left:-4.5%;width:6%;}
+.cellar-outline .cellar-wall-right{right:-4.5%;width:6%;}
+.cellar-outline .cellar-wall-bottom-left{left:-4.5%;width:42.25%;}
+.cellar-outline .cellar-wall-bottom-right{right:-4.5%;width:17.25%;}
+.cellar-outline .cellar-door{width:55.5%;right:12%;}
+#house-view .plan-stage{max-width:calc(100vw - 76px);}
+.basement-plan{max-width:calc(100vw - 88px);}
+.floor-dots{left:env(safe-area-inset-left);gap:0;}
+.floor-dots button:first-child span{transform:translateY(8px);}
+.floor-dots button:last-child span{transform:translateY(-8px);}
+.floor-dots button span{width:5px;height:5px;border:0;background:#718d86;box-shadow:0 0 0 2px #ffffffd9,0 0 6px 3px #ffffff65,0 2px 5px 3px #00151966;}
+.floor-dots button[aria-current=page] span{width:8px;height:8px;border:0;background:#214f43;box-shadow:0 0 0 2px #fff,0 0 7px 3px #ffffff8c,0 2px 5px 3px #00151980;}
+.floor-hint{bottom:calc(99px + env(safe-area-inset-bottom));}
+.floor-hint button{min-height:28px;padding:4px 10px;gap:4px;border:0;border-radius:6px;background:transparent;box-shadow:none;color:#b7cbbeb3;font-size:9px;}
+.floor-hint button svg{width:12px;height:12px;}
+body[data-period=day] .floor-dots button span{background:#718d86;}
+body[data-period=day] .floor-dots button[aria-current=page] span{background:#214f43;}
+body[data-period=day] .floor-hint button{color:#294f40d9;}
+
+/* Dragging keeps each cellar banner inside its own room/parking area. */
+.basement-movable{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+body.basement-banner-dragging .basement-movable{cursor:grabbing}
+.ev-badge.basement-movable{width:100%}
+
+.cellar-pin .cellar-temperature{font-size:13px;font-weight:600;color:#eaf4ed;line-height:1.4}.cellar-temperature small{display:block;font-size:8px;font-weight:400;color:#b6d1c6}.cellar-temperature:empty{display:none}#shelly-sensor-type-cellar{width:100%;min-height:44px;border:1px solid #c9dacb;border-radius:10px;padding:8px;background:#f5f8f1;color:var(--ink);font:inherit;font-size:12px}
+
+/* The floor label follows the fixed dock; no absolute viewport-height assumptions. */
+.bottom-dock .floor-indicator{position:absolute;left:50%;bottom:calc(100% + 14px);transform:translateX(-50%);white-space:nowrap;pointer-events:none;font-size:10px;font-weight:500;line-height:1.4;letter-spacing:2px;text-transform:uppercase;color:var(--banner-text,#eaf4ed);text-shadow:0 1px 4px #001b25,0 1px 7px #001b2580}

@@ -32,7 +32,7 @@
  document.querySelector('.tap-hint')?.remove();
  const floorDots=document.createElement('nav');floorDots.className='floor-dots';floorDots.setAttribute('aria-label','Escolher piso');floorDots.innerHTML='<button type="button" data-floor="0" aria-label="Casa, piso um" title="Casa · Piso 1"><span aria-hidden="true"></span></button><button type="button" data-floor="-1" aria-label="Cave, piso menos um" title="Cave · Piso −1"><span aria-hidden="true"></span></button>';document.body.append(floorDots);
  floorDots.querySelectorAll('button').forEach(button=>button.addEventListener('click',()=>setFloor(Number(button.dataset.floor))));
- const floorIndicator=document.createElement('span');floorIndicator.className='floor-indicator';floorIndicator.setAttribute('role','status');floorIndicator.setAttribute('aria-live','polite');document.querySelector('.bottom-dock').append(floorIndicator);
+ const floorIndicator=document.createElement('span');floorIndicator.className='floor-indicator';floorIndicator.setAttribute('role','status');floorIndicator.setAttribute('aria-live','polite');document.body.append(floorIndicator);
  let floor=0,lockedUntil=0,suppressClickUntil=0,touch=null,wheel=0,wheelAt=0;
  function hint(){floorIndicator.textContent=floor===-1?'Piso −1':'Piso 1';floorDots.querySelectorAll('button').forEach(button=>{if(Number(button.dataset.floor)===floor)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')})}
  function setFloor(next){
@@ -43,7 +43,7 @@
   lockedUntil=performance.now()+800;wheel=0;
  }
  function blocked(){return !!document.querySelector('dialog[open]')||!!document.documentElement.classList.contains('meteo-visible')}
- document.getElementById('home-button').addEventListener('click',()=>setFloor(0));
+ document.getElementById('home-button').addEventListener('click',()=>{setFloor(0);window.CasaPlanZoom?.reset()});
  for(const view of [house,cave]){
   view.addEventListener('wheel',e=>{
    if(blocked()||performance.now()<lockedUntil||e.ctrlKey||Math.abs(e.deltaX)>Math.abs(e.deltaY))return;

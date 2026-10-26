@@ -1,0 +1,26 @@
+/* Header actions replace the dock; only the plan content is magnified. */
+:root{--plan-rail-width:44px;--plan-rail-left:env(safe-area-inset-left);--plan-top:calc(80px + env(safe-area-inset-top));--plan-bottom:calc(26px + env(safe-area-inset-bottom))}
+.topbar{gap:12px}
+.clock-actions{display:flex;align-items:center;gap:14px;margin-left:auto}
+.header-actions{display:flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--banner-border);border-radius:15px;background:var(--banner-glass);color:var(--banner-text);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.header-actions button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:55px;min-height:46px;padding:5px 7px;background:transparent;color:inherit;border-radius:11px;font-size:8px}
+.header-actions button:hover{background:#8dbbdb23}
+.header-actions svg{width:20px;height:20px}
+.brand-home{display:grid;place-items:center;width:41px;height:43px;padding:0;border-radius:13px 13px 13px 4px;background:#426e8c;color:#fff;flex:none}
+#house-view,#basement-view{top:var(--plan-top);bottom:var(--plan-bottom);overflow:hidden}
+#house-view .plan-stage{width:min(calc(100vw - 20px - env(safe-area-inset-left) - env(safe-area-inset-right)),calc((100dvh - var(--plan-top) - var(--plan-bottom))*1024/1180));max-width:100%;max-height:none;flex-shrink:0}
+#basement-view .basement-plan{width:min(calc(100vw - 88px - env(safe-area-inset-left) - env(safe-area-inset-right)),calc((100dvh - var(--plan-top) - var(--plan-bottom))*.72));max-height:none;flex-shrink:0}
+.plan-stage,.basement-plan{transform-origin:center;will-change:transform}
+.floor-indicator{position:fixed;bottom:calc(7px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);pointer-events:none;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--banner-text);text-shadow:0 1px 4px #001b25;z-index:3}
+.floor-dots{left:var(--plan-rail-left);width:var(--plan-rail-width)}
+.toast{bottom:calc(38px + env(safe-area-inset-bottom))}
+@media(max-width:1000px){.brand{font-size:17px;gap:8px}.clock-actions{gap:10px}.topbar{gap:10px}}
+@media(max-width:800px){.brand>div{display:none}}
+@media(max-width:550px){:root{--plan-top:calc(110px + env(safe-area-inset-top))}.topbar{height:var(--plan-top);padding-top:calc(8px + env(safe-area-inset-top));padding-bottom:36px;gap:5px}.brand-home{width:32px;height:38px}.clock-actions{gap:5px}.header-actions button{min-width:40px;padding:4px;min-height:44px;font-size:7px}.header-actions svg{width:18px;height:18px}.home-status{position:absolute;top:calc(76px + env(safe-area-inset-top));left:17px;min-height:28px;padding:4px 8px}.home-status small{display:none}.shelly-activity{top:calc(76px + env(safe-area-inset-top));right:17px}.weather-widget small{max-width:65px}}
+@media(max-height:650px) and (min-width:551px){:root{--plan-top:calc(65px + env(safe-area-inset-top))}.topbar{height:var(--plan-top);padding-top:calc(6px + env(safe-area-inset-top));padding-bottom:6px}.shelly-activity{top:var(--plan-top)}}
+
+/* Keep both status bars above the floor dots, adapting their height to the iPad orientation. */
+.plan-status-rails{position:fixed;left:var(--plan-rail-left);bottom:calc(50% + 56px);z-index:4;display:flex;flex-direction:column;gap:10px;width:var(--plan-rail-width);--status-rail-height:clamp(56px,calc((50dvh - var(--plan-top) - 80px)/2),184px)}
+.plan-status-rails .energy-pin.energy-rail{position:relative;inset:auto;width:100%;height:var(--status-rail-height);padding-top:8px;padding-bottom:8px;gap:5px}
+.plan-status-rails .cloud-activity-rail{height:var(--status-rail-height);flex:none}
+.plan-status-rails .energy-mini-gauge{min-height:12px}

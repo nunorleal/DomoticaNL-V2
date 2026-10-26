@@ -620,3 +620,45 @@ Antes de Shelly.fill,CasaShellyRooms.restore devolve fieldsets às fontes;fillre
 Pedido explícito: TV e secretária em utilização devem manter o contorno verde e receber o realce azul exterior ao passar o rato, coerente com os restantes dispositivos. Em media.css, o hover/focus dos triggers com data-screen-working=true mantém background transparente e acrescenta outline azul de 2px com offset 2px. Contorno verde de 1px e reflexos preservados; sem alterações de comandos ou leituras.
 
 Build Meteo concluído. Verificação na fixture isolada a 820×1180 para ambas as consolas ligadas: hover verdadeiro, fundo transparente, border verde 1px, outline azul 2px exterior com offset 2px; zero comandos. Provas review/hover-exterior-secretaria-2.40.png e review/hover-exterior-tv-2.40.png.
+
+# Cabeçalho, área da planta e zoom — 2.41
+
+Pedido explícito: retirar a barra inferior azul, mover Controlos/Definições para junto do relógio, permitir pinch no iPad até 4× e ajustar a vista ao mudar de piso. O cabeçalho contém agora o banner com Controlos/Cenários/Definições, preservando os IDs/listeners existentes; Casa passa ao ícone no topo. Indicador Piso 1/−1 independente no fundo, sem dock. plan-layout.css usa o espaço livre e as safe areas, adapta o cabeçalho a ecrãs estreitos e mantém os controlos fora da zona ampliada.
+
+plan-zoom-core.js contém apenas geometria (1..4×, âncora entre dedos, limites de deslocação). plan-zoom.js usa Pointer Events com touch-action:none herdado dos pisos: pinch cancela primeiro drags de equipamentos/banners, captura ambos os dedos e suprime o clique final; pan de um dedo quando ampliado, preservando o arrasto dos elementos móveis. A 1× mantém o swipe original; ampliado, um swipe vertical para fora do limite muda de piso. floorchange/resize/Casa repõem ambos os pisos a 1× e centrados. Botões +/ajustar/− acessíveis com alvos 44px, canto inferior esquerdo; pinch de trackpad via ctrl+wheel também suportado. Sem persistência de zoom, mudanças de associações, comandos ou novos pedidos Cloud. Não ampliar a página inteira nem os popups.
+
+pinMaxWidth usa offsetWidth sem transformação, para o zoom não alterar as dimensões lógicas/persistência dos banners. Preservar divisão/posição/recortes de iluminação e a camada branca das paredes.
+
+253 testes aprovados (incluindo âncora/limites, sequências pinch/pan, cancelamento de drag, supressão de clique e reset entre pisos/resize), build Meteo concluído. Fixture isolada: cabeçalho/controlos/definições/cenários operacionais; selecionar secretária a 1,5× abre o mesmo popup; 4× confirmado, mudar para cave repõe ambos a 1×; zero comandos. Verificados 820×1180,1180×820,390×844 sem overflow horizontal do documento. Gesto físico em iPad não disponível neste ambiente; as sequências de Pointer Events são verificadas em testes isolados. Provas review/planta-cabecalho-2.41.png e review/planta-zoom-4x-2.41.png.
+
+# Consumo geral fixo na coluna lateral — 2.42
+
+Pedido explícito: consumo da casa sempre presente em barra vertical por cima dos pontos de piso, com a mesma largura, verde em baixo/vermelho em cima e clique para o popup. energy-pin passa de filho de plan-stage para irmão dos pisos (dentro de casa-app após montagem Meteo), com posição fixed; fica visível nos dois pisos e independente do zoom. Barra, navegação de piso e controlos de zoom partilham largura44px e alinhamento à safe area esquerda. Consumo kW compacto no topo e marcador horizontal na escala vertical. Valor/percentagem/acessibilidade/tooltip continuam a usar o mesmo snapshot; sem associação/erro/stale, escala neutra e marcador oculto, sem inventar zero. Popup e fonte de dados mantidos.
+
+O toggle antigo Mostrar consumo geral da casa foi retirado para cumprir sempre presente. A chave histórica casa-nl-show-energy-banner mantém validação/roundtrip de backups antigos, mas já não oculta esta barra fixa; não apagar preferências nem reescrever backups. Meteo cobre a Casa e mantém o contentor inerte como antes. Nenhum novo pedido Cloud, comando, associação ou temporizador.
+
+253 testes e build Meteo aprovados. Fixture820×1180: barra/pontos/zoom com44px de largura e left0; barra permanece exatamente no mesmo retângulo a4× e no piso−1. Leitura fictícia1,200kW/17%, gradiente to top verde→vermelho; clique desde a cave abre contador geral com os mesmos dados; zero comandos, sem errosJS. Prova review/consumo-vertical-2.42.png.
+
+# Retirar Cenários — 2.43
+
+Pedido explícito: retirar também os Cenários. Removidos botão do cabeçalho, popup e handlers/função de simulação associados; texto das definições atualizado para já não referir cenários. Banner superior fica apenas com Controlos/Definições. Sem alterações a comandos, associações, estados ou preferências dos dispositivos.
+
+Sintaxe app.js e build Meteo aprovados. Fixture820×1180: ambos os botões restantes abrem/fecham os seus popups; sem errosJS. Prova review/cabecalho-sem-cenarios-2.43.png.
+
+# Progresso Shelly na barra lateral — 2.44
+
+Pedido explícito: substituir o indicador/botão horizontal de pedidos Shelly por barra lateral no estilo do consumo, a subir durante a consulta e verde no final. cloud-activity.js agrupa o botão existente e energy-pin em plan-status-rails, acima dos pontos de piso (Shelly por cima do consumo). Largura/alinhamento44px comuns; altura das duas barras adapta-se ao espaço acima dos pontos e à orientação. Popups/IDs/acessos existentes preservados; fora do zoom, ambos os pisos; dentro de casa-app para a mesma proteção inerte/cobertura Meteo.
+
+CasaCloudActivityCore.progress calcula apenas a apresentação: durante loading usa doneDevices/totalDevices; restantes fases usam availableDevices/configuredDevices. Verde cheio exige ready e todos os associados disponíveis; carregamento azul, aviso amarelo, erro vermelho, não configurado neutro. Atualizações de fundo com dados recentes mantêm100% verde. Prioridade de popup e dados em espera nunca simulam prontidão geral. Cliques abrem o mesmo Estado dos pedidos; métricas e leitura de snapshots/timer existentes mantidos, sem novos pedidos Cloud/comandos.
+
+255 testes e build Meteo aprovados, incluindo progresso parcial, prontidão completa, atualização de fundo e estados indisponível/focado/sem configuração. Fixture:53% durante10/19,100% verde após19/19 com0 indisponíveis; popup mantém19/19 e2/2 pedidos.820×1180: barras44×184 emx0, acima dos pontos;1180×820:44×125, sem sobrepor cabeçalho/pontos. Sem comandos. Prova review/shelly-barra-lateral-2.44.png.
+
+# Retirar barra de zoom — 2.45
+
+Pedido explícito: desaparecer a barra de zoom. Retirada a criação dos botões +/1×/− e respetivos estilos/listeners; mantidos pinch até4×, pan, trackpad, reset na mudança de piso/resize e ajuste pelo botão Casa. Testes existentes adaptados para usar gestos em vez dos botões retirados; os5 testes de zoom passam. Build Meteo aprovado. Fixture820×1180 sem barra, barras Shelly/consumo e indicadores de piso intactos; sem errosJS. Prova review/planta-sem-barra-zoom-2.45.png.
+
+# Versão no fundo das Definições — 2.46
+
+Pedido explícito: número da versão também no fundo das Definições, porque o cabeçalho compacto oculta a marca no iPad. Acrescentado footer textual Casa NL · Versão 2.46 após Repor demonstração, com data-app-version e estilo discreto/separador. Em próximas versões atualizar também este texto ao sincronizar index.html. Sem alterações de comportamento/configuração/comunicação.
+
+Build Meteo aprovado. Fixture768×1024 com marca oculta no cabeçalho: footer visível no fim do popup, texto correto, zero comandos. Prova review/versao-definicoes-2.46.png.
