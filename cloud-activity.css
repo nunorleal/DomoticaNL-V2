@@ -13,3 +13,16 @@
 @media(max-width:550px){.shelly-activity{top:calc(69px + env(safe-area-inset-top));right:12px;font-size:9px;min-height:26px}}
 @media(max-height:650px){.shelly-activity{top:calc(59px + env(safe-area-inset-top));font-size:8px;min-height:22px}}
 @media(prefers-reduced-motion:reduce){.cloud-activity-dot{animation:none!important}}
+
+/* Read-only progress rail; all details remain in the existing popup. */
+.shelly-activity.cloud-activity-rail{position:relative;inset:auto;display:flex;flex-direction:column;align-items:center;gap:5px;width:100%;min-height:0;margin:0;padding:8px 4px;border-radius:14px;font-size:8px;--cloud-fill:#a6d9ff}
+.cloud-rail-heading{font-size:8px;line-height:1.2}
+.cloud-activity-rail strong{font-size:10px;font-weight:400;line-height:1.2;font-variant-numeric:tabular-nums}
+.cloud-rail-track{position:relative;display:block;flex:1;min-height:12px;width:14px;border-radius:8px;background:#9bb0bf33;overflow:hidden}
+.cloud-rail-track i{position:absolute;inset:auto 0 0;height:var(--cloud-progress,0%);border-radius:inherit;background:var(--cloud-fill);transition:height .35s ease,background .25s ease}
+.cloud-activity-rail[data-state=ready]{--cloud-fill:#6ee6a6}
+.cloud-activity-rail[data-state=warning]{--cloud-fill:#f0ce7c}
+.cloud-activity-rail[data-state=error]{--cloud-fill:#ff9b8a}
+.cloud-activity-rail[data-state=muted]{--cloud-fill:#a8becd}
+.cloud-activity-rail:hover,.cloud-activity-rail:focus-visible{outline:2px solid var(--plan-highlight-outline);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.cloud-rail-track i{transition:none}}

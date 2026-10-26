@@ -28,3 +28,14 @@ test('focused popup explains paused fleet updates instead of reporting stale dev
 test('without a popup, data awaiting refresh remains distinct from unavailable devices',()=>{
  assert.equal(C.state(input({staleDevices:5}),100001).label,'5 com dados antigos');assert.equal(C.state(input({pendingDevices:5}),100001).label,'5 por consultar');assert.equal(C.state(input({unavailable:5}),100001).label,'5 indisponíveis');
 });
+
+test('vertical progress fills from the actual cycle and turns green only when the whole fleet is ready',()=>{
+ const v=input();v.activity={...v.activity,running:true,doneDevices:10};const loading=C.progress(C.state(v,100001));assert.equal(loading.percent,43);assert.equal(loading.tone,'working');assert.equal(loading.complete,false);
+ const ready=C.progress(C.state(input(),100001));assert.deepEqual(ready,{percent:100,complete:true,tone:'ready'});
+ const background=input({background:true});background.activity.running=true;background.activity.doneDevices=0;assert.deepEqual(C.progress(C.state(background,100001)),ready);
+});
+test('unavailable, paused and unconfigured devices never produce a fully green status bar',()=>{
+ const unavailable=C.progress(C.state(input({unavailable:2}),100001));assert.equal(unavailable.percent,91);assert.equal(unavailable.complete,false);assert.equal(unavailable.tone,'warning');
+ const focused=C.progress(C.state(input({focused:true,pausedDevices:22}),100001));assert.equal(focused.complete,false);assert.equal(focused.tone,'working');
+ const none=C.progress(C.state(input({configured:false,count:0}),100001));assert.equal(none.percent,0);assert.equal(none.complete,false);
+});

@@ -1,0 +1,24 @@
+/* Appliances directly on the cellar floor, retaining the existing drag targets and popup IDs. */
+.cellar-outline .fan-pin,.cellar-outline .alarm-pin{
+ display:grid;place-items:center;aspect-ratio:1;min-height:44px;min-width:44px;
+ padding:0;border:0;border-radius:50%;background:transparent;box-shadow:none;
+ backdrop-filter:none;-webkit-backdrop-filter:none;filter:none;
+}
+.cellar-outline .fan-pin{width:clamp(44px,26%,58px)}
+.cellar-outline .alarm-pin{width:clamp(44px,25%,56px)}
+.cellar-outline .fan-pin>span:not(.fan-symbol),.cellar-outline .fan-pin>strong,
+.cellar-outline .alarm-pin>span:not(.alarm-symbol),.cellar-outline .alarm-pin>strong{display:none}
+.cellar-outline .fan-pin .fan-symbol,.cellar-outline .alarm-pin .alarm-symbol{width:100%;height:100%;filter:drop-shadow(1px 2px 2px #06142166)}
+.cellar-outline .fan-pin svg,.cellar-outline .alarm-pin svg{overflow:visible}
+.cellar-outline .fan-pin[data-fan-state],.cellar-outline .alarm-pin[data-alarm-state]{border:0;box-shadow:none;background:transparent}
+.cellar-outline .fan-pin[data-fan-state=on] .fan-symbol{filter:drop-shadow(1px 0 0 #23eb86) drop-shadow(-1px 0 0 #23eb86) drop-shadow(0 1px 0 #23eb86) drop-shadow(0 -1px 0 #23eb86) drop-shadow(0 0 4px #14d873b3)}
+.cellar-outline .alarm-pin[data-alarm-state=armed]{--alarm-color:#23eb86}
+.cellar-outline .alarm-pin[data-alarm-state=sounding]{--alarm-color:#ff7768}
+.cellar-outline .alarm-pin:not([data-alarm-state=armed]) .alarm-shield-mark{display:none}
+.cellar-outline .alarm-pin .alarm-shield{fill:#53778a}
+.cellar-outline .alarm-pin .alarm-halo-base{opacity:.55}
+.cellar-outline .alarm-pin[data-alarm-state=armed] .alarm-symbol{filter:drop-shadow(0 0 3px #14d873b3)}
+.cellar-outline .alarm-pin[data-alarm-state=sounding] .alarm-symbol{filter:drop-shadow(0 0 4px #ff7768b3)}
+.cellar-outline .fan-pin:hover,.cellar-outline .alarm-pin:hover{background:#8abddd18;filter:none;outline:1px solid #bddff1;outline-offset:3px}
+.cellar-outline .fan-pin:focus-visible,.cellar-outline .alarm-pin:focus-visible{outline:3px solid #bddff1;outline-offset:3px}
+.cellar-outline .alarm-pin[data-alarm-state=disarmed] .alarm-halo-base{opacity:0}

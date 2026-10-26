@@ -100,7 +100,7 @@ function drawRoomLighting(){
 
 const roomPolygonCache=new Map();
 function roomPolygons(id){if(!roomPolygonCache.has(id))roomPolygonCache.set(id,BannerGeometry.polygons(lightingZones[id]+' '+(doorThresholdZones[id]||'')));return roomPolygonCache.get(id)}
-function pinMaxWidth(r){const b=BannerGeometry.bounds(roomPolygons(r.id)),stage=document.getElementById('plan-stage').getBoundingClientRect();return Math.max(28,Math.min(220,(b.maxX-b.minX-12)*stage.width/1024))}
+function pinMaxWidth(r){const b=BannerGeometry.bounds(roomPolygons(r.id)),stage=document.getElementById('plan-stage');return Math.max(28,Math.min(220,(b.maxX-b.minX-12)*stage.offsetWidth/1024))}
 function blindLastReading(r){if(!isCloudRoom(r.id))return '';const d=window.CasaShelly.reading(r.id);return Number.isFinite(d?.position)&&(!d.online||d.error||!Number.isFinite(d.fetchedAt)||Date.now()-d.fetchedAt>120000)?'<small class="blind-last-reading">Última leitura</small>':''}
 function blindBanner(r){return `<button class="blind-pin ${r.blind===0?'is-closed':''}" data-room="${r.id}" style="--x:${r.bx}%;--y:${r.by}%" aria-label="${escapeHTML(blindAria(r))}"><span class="blind-pin-icon">${icon('shutter')}</span><span class="blind-pin-copy"><span class="blind-pin-name">${escapeHTML(r.name)}</span><strong><span data-position="${r.id}">${positionLabel(r)}</span>%</strong>${blindLastReading(r)}</span></button>`}
 function updateBlindBannerVisibility(){document.getElementById('hotspots').classList.toggle('blind-banners-hidden',!showBlindBanners);document.getElementById('toggle-blind-labels').setAttribute('aria-checked',String(showBlindBanners))}
@@ -164,15 +164,11 @@ document.getElementById('all-close').addEventListener('click',()=>all(false));
 document.getElementById('toggle-labels').addEventListener('click',()=>{labels=!labels;drawPlan();try{localStorage.setItem('casa-nl-show-banners',String(labels))}catch{}});
 document.getElementById('toggle-sensor-readings').addEventListener('click',()=>{showSensorReadings=!showSensorReadings;drawPlan();try{localStorage.setItem('casa-nl-show-sensor-readings',JSON.stringify(showSensorReadings))}catch{}});
 document.getElementById('toggle-blind-labels').addEventListener('click',()=>{showBlindBanners=!showBlindBanners;updateBlindBannerVisibility();try{localStorage.setItem('casa-nl-show-blind-banners',JSON.stringify(showBlindBanners))}catch{}});
-function scene(mode){rooms.forEach(r=>{if(!isCloudLight(r.id))r.light=mode==='morning'?r.id==='kitchen':mode==='night'?r.id==='hall':false;if('blind'in r)move(r,mode==='morning'?100:0)});render();notify(({night:'Boa noite',morning:'Bom dia',away:'Sair de casa'})[mode]+' ativado · simulação; equipamentos Cloud preservados')}
-document.getElementById('night-scene').addEventListener('click',()=>scene('night'));
-document.querySelectorAll('[data-scene]').forEach(b=>b.addEventListener('click',()=>scene(b.dataset.scene)));
 document.getElementById('settings').addEventListener('click',()=>showPopup('settings-dialog'));
 document.getElementById('close-settings').addEventListener('click',()=>document.getElementById('settings-dialog').close());
 document.getElementById('reset').addEventListener('click',()=>{for(const id of [...motions.keys()])stopMotion(id);rooms=structuredClone(defaults);restoreRoomLayout();window.CasaShelly?.reapply();selected='living';setMode('lights');document.getElementById('settings-dialog').close();notify('Demonstração reposta')});
 document.getElementById('open-controls').addEventListener('click',()=>showPopup('controls-dialog'));
 document.getElementById('open-overview').addEventListener('click',()=>showPopup('controls-dialog'));
-document.getElementById('open-scenes').addEventListener('click',()=>showPopup('scenes-dialog'));
 document.getElementById('home-button').addEventListener('click',()=>document.querySelectorAll('dialog[open]').forEach(d=>d.close()));
 document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>document.getElementById(b.dataset.close).close()));
 window.CasaDialogDismiss.install(document);

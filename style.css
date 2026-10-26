@@ -127,3 +127,6 @@ body:before{background:linear-gradient(var(--street-shade-top),var(--street-shad
 
 /* One screen-pixel contour shared by every powered object on the plan. */
 :root{--device-on-width:1px;--device-on-color:#23eb86;--device-on-glow:#14d873b3;--device-on-filter:drop-shadow(var(--device-on-width) 0 0 var(--device-on-color)) drop-shadow(calc(-1 * var(--device-on-width)) 0 0 var(--device-on-color)) drop-shadow(0 var(--device-on-width) 0 var(--device-on-color)) drop-shadow(0 calc(-1 * var(--device-on-width)) 0 var(--device-on-color)) drop-shadow(0 0 4px var(--device-on-glow))}
+
+/* Version remains visible in Settings even when the compact header hides the brand. */
+#settings-dialog .settings-version{margin:24px 0 0;padding-top:16px;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:11px;line-height:1.5}

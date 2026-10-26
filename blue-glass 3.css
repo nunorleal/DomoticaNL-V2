@@ -1,0 +1,87 @@
+/* Casa NL: translucent blue banners. Geometry and device state colours stay in their owning stylesheets. */
+:root{
+  --banner-glass:linear-gradient(110deg,rgba(69,105,129,.86),rgba(35,62,83,.86) 60%,rgba(43,52,64,.88));
+  --banner-border:rgba(197,222,241,.38);
+  --banner-text:#f4f8fc;
+  --banner-muted:#d0e1ee;
+  --plan-highlight-bg:#75acd842;
+  --plan-highlight-border:#c5def1;
+  --plan-highlight-outline:#426e8c;
+  --plan-highlight-glow:#75acd833;
+}
+.room-pin,.room-pin.is-off,.blind-pin,.energy-pin,.cellar-pin,.ev-badge,.alarm-pin,.fan-pin,
+.home-status,.bottom-dock,.media-device-banner,.office-image-heading{
+  background:var(--banner-glass);
+  color:var(--banner-text);
+  border-color:var(--banner-border);
+  backdrop-filter:blur(12px) saturate(120%);
+  -webkit-backdrop-filter:blur(12px) saturate(120%);
+}
+.room-pin-sensor-values,.room-pin.is-off .room-pin-sensor-values,
+.room-pin-sensor-status,.cellar-pin span,.home-status small,
+.ev-badge-status,.ev-badge-values small,.ev-badge-values>span,
+.media-device-banner small,.office-image-heading p{color:var(--banner-muted)}
+.blind-pin-icon{background:rgba(101,155,190,.28);border-color:#d9ebf6;box-shadow:0 0 0 1px #a4c8df80;color:#f4faff}
+.status-icon{color:#b3d4eb}
+.brand>span{background:#426e8c}
+.dock-button{color:#c0d6e6}
+.dock-button.active{background:rgba(141,187,219,.23);color:#f4faff}
+.dock-divider{background:#bdd8ec36}
+.energy-pin{border-left-color:var(--energy-color)}
+[data-fan-state=on].fan-pin{border-color:#8bdeb3}
+[data-fan-state=unknown].fan-pin{border-color:#d6b969}
+.ev-charging .ev-badge{border-color:#80d6b9b3}
+.media-device-banner[data-power=on] small{color:#6ee6a6}
+.media-device-banner[data-power=unknown] small{color:#e1c886}
+.media-device-banner[aria-pressed=true]{outline-color:#bedff7}
+.room-pin.dragging,.cellar-pin.dragging{outline-color:#bedff7}
+.toast{background:var(--banner-glass);border:1px solid var(--banner-border);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+
+/* Blue typography and neutral controls on light menu surfaces. State colours remain independent. */
+:root{--ink:#233f56;--muted:#637d92;--teal:#426e8c;--pale:#e6eef5;--line:#dce5ed}
+.popup{border-color:#d5e1ec}
+.popup-close{background:#e9eff5;color:#637f95}
+.eyebrow,.detail-eyebrow,.popup-subtitle,.detail-subtitle,
+.detail-row p,.position-value>span,.range-labels,.selected-device-note,.simulation-note,
+.card-heading>span,.device-copy small,.light-state-value,
+.scene-button small,.settings-explanation,.weather-credit,
+.sensor-metrics span,.sensor-caption,.shelly-equipment-group>summary small,
+.shelly-result p,.shelly-result small,.shelly-result dt{color:#637d92}
+.device-item{border-bottom-color:#dce5ed}
+.device-icon,.scene-button>span:first-child{background:#e8eff5;color:#6a88a0}
+.mode-tabs{background:#e9eff5}
+.mode-tabs button{color:#637d92}
+.mode-tabs button[aria-selected=true]{color:#426e8c;box-shadow:0 2px 6px #233f5620}
+.primary-action{background:#426e8c;color:#fff}
+.secondary-action{background:#e5edf4;color:#3e6582}
+.scene-button>span:last-child{color:#6a88a0}
+.popup .settings-status,.shelly-help,.shelly-room-info,
+#shelly-form>label:not(.shelly-remember),.shelly-mapping label{color:#4f6d85}
+.settings-row[role=checkbox] .row-check{border-color:#6a88a0}
+.settings-row[role=checkbox][aria-checked=true] .row-check{background:#426e8c;border-color:#426e8c;color:white}
+.shelly-remember input{accent-color:#426e8c}
+.switch{background:#bfcfdd}
+.blind-controls button{border-color:#d5e1ec;background:#f0f4f8}
+.sensor-metrics>div,.ev-metrics>div,.alarm-metrics>div{background:#e8eff5}
+.shelly-equipment-group{background:#f5f8fb;border-color:#d5e1ec}
+.shelly-equipment-group>summary::after{border-color:#6a88a0}
+.shelly-equipment-group[open]>summary{border-bottom-color:#dce5ed}
+.shelly-mapping,#shelly-form input:not([type=checkbox]),.shelly-light-options select,
+.environment-settings select{border-color:#cbdbe8;background:#f5f8fb}
+/* Keep confirmation, fault, power and alarm indicators in their semantic colours. */
+
+/* Single power controls: green only for a confirmed active output. */
+.popup .shelly-power-toggle,.popup .media-utility .media-power-toggle,.popup .shelly-light-power{
+ display:inline-flex;align-items:center;justify-content:center;flex:0 0 48px;
+ width:48px;min-width:48px;height:48px;min-height:48px;padding:12px;
+ border:1px solid #94a5b480;border-radius:50%;background:#8b9dad15;color:#718497;
+ box-shadow:none;transition:background .15s,color .15s;
+}
+.popup .shelly-power-toggle svg,.popup .shelly-light-power svg{width:24px;height:24px}
+.popup .shelly-light-power:after{display:none}
+.popup .shelly-power-toggle[data-power=on],.popup .media-utility .media-power-toggle[data-power=on],.popup .shelly-light-power[aria-checked=true]{background:#0ca966;border-color:#079254;color:white}
+.popup .shelly-power-toggle[data-power=unknown],.popup .media-utility .media-power-toggle[data-power=unknown]{background:#eee8d880;color:#9a8652;border-color:#cabc98}
+.popup .shelly-power-toggle:disabled{cursor:default;opacity:.55}
+.popup .shelly-power-toggle[data-power=on]:disabled{opacity:.75}
+.popup .shelly-power-toggle:focus-visible,.popup .shelly-light-power:focus-visible{outline:3px solid #87b8d8;outline-offset:3px}
+.ev-actions .shelly-power-toggle,.alarm-actions .shelly-power-toggle{flex-grow:0}

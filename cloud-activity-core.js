@@ -26,5 +26,10 @@
   else if(v.unavailable){phase='unavailable';label=v.unavailable+' '+(v.unavailable===1?'indisponível':'indisponíveis');tone='warning'}
   return {phase,label,tone,ready:phase==='ready'||phase==='background',availableDevices:Math.max(0,v.count-v.unavailable-(v.staleDevices||0)-(v.pendingDevices||0)),configuredDevices:v.count,doneDevices:a.doneDevices,totalDevices:a.totalDevices||v.count,doneRequests:a.doneRequests,totalRequests:a.totalRequests,unavailable:v.unavailable,staleDevices:v.staleDevices||0,pendingDevices:v.pendingDevices||0,pausedDevices:v.pausedDevices||0,focused:!!v.focused,confirming:v.confirming,lastFetched:v.lastFetched,session:{...s}};
  }
- return {state,readingCondition};
+ function progress(d){
+  const total=d.configuredDevices||0,complete=total>0&&d.ready&&d.availableDevices===total;
+  const ratio=complete?1:d.phase==='loading'?(d.totalDevices?d.doneDevices/d.totalDevices:0):(total?d.availableDevices/total:0);
+  return {percent:Math.round(Math.max(0,Math.min(1,ratio))*100),complete,tone:complete?'ready':d.tone==='ready'?'working':d.tone};
+ }
+ return {state,readingCondition,progress};
 });
