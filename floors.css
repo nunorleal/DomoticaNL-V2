@@ -48,3 +48,16 @@ body.basement-banner-dragging .basement-movable{cursor:grabbing}
 
 /* The floor label follows the fixed dock; no absolute viewport-height assumptions. */
 .bottom-dock .floor-indicator{position:absolute;left:50%;bottom:calc(100% + 14px);transform:translateX(-50%);white-space:nowrap;pointer-events:none;font-size:10px;font-weight:500;line-height:1.4;letter-spacing:2px;text-transform:uppercase;color:var(--banner-text,#eaf4ed);text-shadow:0 1px 4px #001b25,0 1px 7px #001b2580}
+
+/* Stacked floor planes, with independent 44px targets and the existing floor navigation. */
+.floor-layers button{position:relative;border-radius:8px}
+.floor-layers button:first-child{z-index:2}
+.floor-layers button:last-child{z-index:1}
+.floor-layers svg{display:block;width:44px;height:44px;overflow:visible;pointer-events:none;fill:none;stroke:none}
+.floor-layers button:first-child svg{transform:translateY(14px)}
+.floor-layers button:last-child svg{transform:translateY(-10px)}
+.floor-layers path{fill:#36596ac9;stroke:#c8e1ec;stroke-width:1.6;stroke-linejoin:round;transition:fill .2s ease,stroke .2s ease;filter:drop-shadow(0 2px 3px #001b2566)}
+.floor-layers button[aria-current=page] path{fill:#6c9cb2e8;stroke:#f0faff;filter:drop-shadow(0 0 3px #a3d5eb77)}
+.floor-layers button:hover path,.floor-layers button:focus-visible path{fill:#89b7cdd9;stroke:#fff}
+.floor-layers button:focus-visible{outline:2px solid var(--plan-highlight-border);outline-offset:-2px}
+@media(prefers-reduced-motion:reduce){.floor-layers path{transition:none}}

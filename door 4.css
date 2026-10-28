@@ -1,0 +1,8 @@
+body.entrance-is-open .entrance-door-patch{display:none}
+:is(#shelly-door-group,#shelly-cellar-door-group) select{width:100%;min-height:44px;padding:10px;border:1px solid #c9dacb;border-radius:10px;background:#f5f8f1;font:inherit;font-size:12px;color:var(--ink)}
+:is(#shelly-door-group,#shelly-cellar-door-group) .primary-action{margin-top:18px}
+.entrance-door-patch{width:76px;height:89px;stroke:none;fill:none}
+
+.cellar-door-open{display:none}.cellar-door-closed{display:block}body.cellar-door-is-open .cellar-door-open{display:block}body.cellar-door-is-open .cellar-door-closed{display:none}
+
+.door-gateway-check{border-top:1px solid #c9dacb;margin:24px 0;padding-top:18px}.door-gateway-check h3{font-size:15px}.door-gateway-check button{margin:14px 0}.door-gateway-check #door-gateway-result{font-size:12px;line-height:1.7;overflow-wrap:anywhere}

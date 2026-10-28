@@ -662,3 +662,17 @@ Pedido explícito: desaparecer a barra de zoom. Retirada a criação dos botões
 Pedido explícito: número da versão também no fundo das Definições, porque o cabeçalho compacto oculta a marca no iPad. Acrescentado footer textual Casa NL · Versão 2.46 após Repor demonstração, com data-app-version e estilo discreto/separador. Em próximas versões atualizar também este texto ao sincronizar index.html. Sem alterações de comportamento/configuração/comunicação.
 
 Build Meteo aprovado. Fixture768×1024 com marca oculta no cabeçalho: footer visível no fim do popup, texto correto, zero comandos. Prova review/versao-definicoes-2.46.png.
+
+# Regeneração da TV e desvanecimento da iluminação — 2.47
+
+Pedido explícito: regeneração TV entre5 e50W, e cortes de iluminação mais suaves no tempo e nos bordos (utilizador confirmou Ambos). MediaCore centraliza TV_REGEN_MIN=5/TV_REGEN_MAX=50: regeneração inclusiva nesse intervalo apenas com leitura atual/relé ligado; activityThreshold e screenWorking TV passam a>50W, preservando monitor>2W e máquinas>10W. Tooltip/aria do indicador atualizado. Fixture tvregen aceita valor numérico fictício e mediaactive usa85,5W na TV para continuar a representar utilização real segundo a nova regra.
+
+Iluminação: drawRoomLighting mantém os nósSVG entre atualizações. Dois campos globais (noturno/elétrico) recebem máscaras alpha partilhadas com paths por divisão e blur4px no grupo das máscaras, para evitar a composição de várias imagens parcialmente transparentes nas junções. Stroke branco16px dos paths expande a máscara sob a suavização, evitando linhas claras finas nas bordas de pavimento; clip exterior continua limitado à união dos polígonos de chão/vãos existentes. Clips individuais preservados para reflexos, sprites e outras dependências. Paredes brancas permanecem na camada white-wall-overlay acima de tudo, opacidade1. Patches dos candeeiros/portas/janelas e efeitos existentes preservados. Opacidade das máscaras e patches noturnos/elétricos transita em1,8s ease-in-out; respeitar prefers-reduced-motion. Modelo de luz diurna/abertura proporcional e luz elétrica inalterado; apenas apresentação, sem interpolar estados/percentagens Shelly nem alterar comandos/polling.
+
+257 testes e build Meteo aprovados. Cobertura5/50W inclusivos,50,001W utilização, valores inválidos/offline/stale, threshold das máquinas preservado; iluminação mantém nós para permitir fade, endpoints0/.5/1, clip do chão e paredes acima. Fixture820×1180:50W mostra Regeneração estimada com tvActivity=off e screenWorking=false. Fecho simulado Gui100→0: target máscara1, computado inicialmente0 e depois1 com duração1,8s; WC/corredor seguem Gui, master/sala/cozinha mantêm0; paredes1; zero comandos e errosJS. Provas review/tv-regeneracao-50w-2.47.png e review/iluminacao-desvanecer-2.47.png.
+
+# Pisos em camadas — 2.48
+
+Pedido explícito: usar símbolo de layers da referência em vez dos pontos de piso. floor-dots recebe classe floor-layers e SVGs vetoriais com planos em losango sobrepostos, um por cada piso existente (Casa/Piso1 e Cave/−1). Mantidos IDs de piso, aria-label/title, aria-current=page, listeners, hit targets44×44 independentes e navegação/swipe/reset de zoom. Ativo em azul claro com contorno branco; hover/foco realçados; sem novos pisos ou ícones raster.
+
+Dois testes de floors-core e build Meteo aprovados. Fixture820×1180: clique em Cave seleciona−1/aria-current correto, clique Casa regressa1; dois alvos44×44, novo símbolo visível sob a barra de consumo. Prova review/pisos-camadas-2.48.png.

@@ -26,5 +26,5 @@ test('all three kitchen appliances work strictly above 10 W, independent of rela
   for(const bad of [{...reading,online:false},{...reading,error:true},{...reading,meter:{...reading.meter,power:null}},{...reading,meter:{...reading.meter,hasMeter:false}},{...reading,fetchedAt:50000}])assert.equal(M.state(bindings[id],bad,100001,threshold).activity,null);
   assert.equal(M.state(bindings[id],reading,100001,threshold).on,true);
  }
- assert.equal(M.activityThreshold('tv'),4);assert.equal(M.activityThreshold('boiler'),10);
+ assert.equal(M.activityThreshold('tv'),50);assert.equal(M.activityThreshold('boiler'),10);
 });
