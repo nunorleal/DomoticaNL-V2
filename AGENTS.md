@@ -676,3 +676,11 @@ Iluminação: drawRoomLighting mantém os nósSVG entre atualizações. Dois cam
 Pedido explícito: usar símbolo de layers da referência em vez dos pontos de piso. floor-dots recebe classe floor-layers e SVGs vetoriais com planos em losango sobrepostos, um por cada piso existente (Casa/Piso1 e Cave/−1). Mantidos IDs de piso, aria-label/title, aria-current=page, listeners, hit targets44×44 independentes e navegação/swipe/reset de zoom. Ativo em azul claro com contorno branco; hover/foco realçados; sem novos pisos ou ícones raster.
 
 Dois testes de floors-core e build Meteo aprovados. Fixture820×1180: clique em Cave seleciona−1/aria-current correto, clique Casa regressa1; dois alvos44×44, novo símbolo visível sob a barra de consumo. Prova review/pisos-camadas-2.48.png.
+
+# Nome das exportações — 2.49
+
+Na nova raiz DomoticaNL V2 (conteúdo anteriormente em dist), exportar JSON com o padrão T2-NL-AAAA-MM-DD_HH-mm-ss.json, usando data e hora locais. Preservar conteúdo, validação, importação e regras de inclusão da chave Cloud.
+
+# Limpeza da nova raiz — 2026-10-28
+
+Retiradas cópias numeradas, bundles Meteo antigos (mantendo app-2.49), ficheiros da câmara já sem referências e .DS_Store. Arquivo ZIP recuperável guardado fora da pasta do projeto, com manifesto SHA-256 e integridade verificada antes da remoção. Manter fontes, testes, documentação e provas review. Sem alteração funcional nem incremento de versão.

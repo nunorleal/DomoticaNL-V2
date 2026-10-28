@@ -12,7 +12,9 @@
    const env=CasaEnvironment.getState();localStorage.setItem('casa-nl-environment-v1',JSON.stringify({city:env.city,mode:env.mode}));localStorage.setItem('casa-nl-show-banners',JSON.stringify(labels));localStorage.setItem('casa-nl-show-blind-banners',JSON.stringify(showBlindBanners));
    const version=document.querySelector('[data-app-version]').textContent.replace(/^Versão\s*/,'').trim();
    const backup=CasaBackup.create(localStorage,version),blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-   a.href=url;a.download=`casa-nl-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);status('Cópia de segurança exportada. '+CasaBackup.describe(backup)+'. A chave Cloud só é incluída se escolheu guardá-la.');
+   const now=new Date(),pad=value=>String(value).padStart(2,'0');
+   const date=[now.getFullYear(),pad(now.getMonth()+1),pad(now.getDate())].join('-'),time=[now.getHours(),now.getMinutes(),now.getSeconds()].map(pad).join('-');
+   a.href=url;a.download=`T2-NL-${date}_${time}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);status('Cópia de segurança exportada. '+CasaBackup.describe(backup)+'. A chave Cloud só é incluída se escolheu guardá-la.');
   }catch(e){status(e.message||'Não foi possível exportar os dados.',true)}
  });
  $('import-data').addEventListener('click',()=>{clear();$('backup-file').click()});
