@@ -1,0 +1,6 @@
+.shelly-room-section{margin:26px 0 0;padding-top:8px;border-top:1px solid #a6c4d444}
+#shelly-form .shelly-room-heading{margin:10px 0 14px;font-size:18px;font-weight:500;color:#294f6b}
+.shelly-room-section>.shelly-equipment-group{margin-top:10px}
+.shelly-room-mapping>.shelly-equipment-content>.shelly-mapping{margin:0;padding:0;border:0}
+.shelly-room-mapping>.shelly-equipment-content>.shelly-mapping>legend{display:none}
+#shelly-form details[hidden],#shelly-form section[hidden]{display:none}

@@ -130,3 +130,8 @@ body:before{background:linear-gradient(var(--street-shade-top),var(--street-shad
 
 /* Version remains visible in Settings even when the compact header hides the brand. */
 #settings-dialog .settings-version{margin:24px 0 0;padding-top:16px;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:11px;line-height:1.5}
+
+/* Feather the shared lighting fields, keeping the permanent white walls above them. */
+.room-lighting .room-light-mask-zone{fill:#fff;stroke:#fff;stroke-width:16px;stroke-linejoin:round;transition:opacity 1.8s ease-in-out}
+.room-night-render,.room-electric-render{transition:opacity 1.8s ease-in-out}
+@media(prefers-reduced-motion:reduce){.room-lighting .room-light-mask-zone,.room-night-render,.room-electric-render{transition:none}}

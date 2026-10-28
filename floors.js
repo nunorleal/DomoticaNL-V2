@@ -30,7 +30,7 @@
   document.getElementById('basement-dialog-info').innerHTML='<p>Dados do veículo e do carregamento ainda não associados.</p>';showPopup('basement-dialog');
  });
  document.querySelector('.tap-hint')?.remove();
- const floorDots=document.createElement('nav');floorDots.className='floor-dots';floorDots.setAttribute('aria-label','Escolher piso');floorDots.innerHTML='<button type="button" data-floor="0" aria-label="Casa, piso um" title="Casa · Piso 1"><span aria-hidden="true"></span></button><button type="button" data-floor="-1" aria-label="Cave, piso menos um" title="Cave · Piso −1"><span aria-hidden="true"></span></button>';document.body.append(floorDots);
+ const floorDots=document.createElement('nav');floorDots.className='floor-dots floor-layers';floorDots.setAttribute('aria-label','Escolher piso');floorDots.innerHTML='<button type="button" data-floor="0" aria-label="Casa, piso um" title="Casa · Piso 1"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M22 4 42 16 22 28 2 16Z"/></svg></button><button type="button" data-floor="-1" aria-label="Cave, piso menos um" title="Cave · Piso −1"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M22 4 42 16 22 28 2 16Z"/></svg></button>';document.body.append(floorDots);
  floorDots.querySelectorAll('button').forEach(button=>button.addEventListener('click',()=>setFloor(Number(button.dataset.floor))));
  const floorIndicator=document.createElement('span');floorIndicator.className='floor-indicator';floorIndicator.setAttribute('role','status');floorIndicator.setAttribute('aria-live','polite');document.body.append(floorIndicator);
  let floor=0,lockedUntil=0,suppressClickUntil=0,touch=null,wheel=0,wheelAt=0;
