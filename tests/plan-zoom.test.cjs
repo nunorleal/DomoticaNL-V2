@@ -12,10 +12,10 @@ test('pan bounds keep the enlarged plan in the viewport and center an axis that 
  assert.deepEqual(C.constrain({scale:2,x:10000,y:-10000},base,viewport),{scale:2,x:300,y:-300});
  assert.deepEqual(C.constrain({scale:1.1,x:100,y:100},base,viewport),{scale:1.1,x:0,y:0});
 });
-function harness(){
+function harness(offset={}){
  let blocked=false,floor=0,now=1000;const calls=[],listeners=new Map(),docEvents=new Map();
  const target={cancelled:[],closest:()=>null,dispatchEvent(e){this.cancelled.push(e.pointerId)},hasPointerCapture:()=>false};
- function scene(hidden){const events=new Map(),content={offsetWidth:700,offsetHeight:800,style:{}};return {hidden,dataset:{},content,events,querySelector:()=>content,getBoundingClientRect:()=>({left:0,top:0,width:800,height:1000}),setPointerCapture:()=>{},hasPointerCapture:()=>false,releasePointerCapture:()=>{},addEventListener:(type,fn)=>events.set(type,fn)}}
+ function scene(hidden){const events=new Map(),content={offsetWidth:700,offsetHeight:800,offsetLeft:offset.x,offsetTop:offset.y,style:{}};return {hidden,dataset:{},content,events,querySelector:()=>content,getBoundingClientRect:()=>({left:0,top:0,width:800,height:1000}),setPointerCapture:()=>{},hasPointerCapture:()=>false,releasePointerCapture:()=>{},addEventListener:(type,fn)=>events.set(type,fn)}}
  const scenes=[scene(false),scene(true)];
  const window={addEventListener:(type,fn)=>listeners.set(type,fn)},document={querySelectorAll:()=>scenes,querySelector:()=>blocked?{}:null,documentElement:{classList:{contains:()=>false}},addEventListener:(type,fn)=>docEvents.set(type,fn)};
  const ctx={CasaPlanZoomCore:C,CasaFloorsCore:require('../floors-core.js'),CasaFloors:{current:()=>floor,show(next){if(next===floor)return;floor=next;calls.push(next);scenes[0].hidden=next===-1;scenes[1].hidden=next===0;listeners.get('floorchange')()}},document,window,performance:{now:()=>now},PointerEvent:class{constructor(type,fields){this.type=type;Object.assign(this,fields)}}};
@@ -40,4 +40,8 @@ test('zoom gestures respect modal blocking and reset on resize without a toolbar
  const h=harness();h.setBlocked(true);h.zoom(1.5);h.event('pointerdown',1,300,400);h.event('pointerdown',2,400,400);assert.equal(h.window.CasaPlanZoom.state().scale,1);
  h.setBlocked(false);h.zoom(1.5);assert.equal(h.window.CasaPlanZoom.state().scale,1.5);h.window.CasaPlanZoom.reset();assert.equal(h.window.CasaPlanZoom.state().scale,1);
  h.zoom(1.5);h.resize();assert.equal(h.window.CasaPlanZoom.state().scale,1);
+});
+
+test('an asymmetrically fitted canvas preserves the pointer anchor during zoom',()=>{
+ const h=harness({x:10,y:110});h.zoom(2);const state=h.window.CasaPlanZoom.state();assert.equal(state.scale,2);assert.equal(state.x,-40);assert.equal(state.y,10);h.resize();assert.equal(h.window.CasaPlanZoom.state().scale,1);
 });
