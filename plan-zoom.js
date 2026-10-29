@@ -3,7 +3,7 @@
  const C=CasaPlanZoomCore,scenes=[...document.querySelectorAll('.floor-scene')].map(view=>({view,content:view.querySelector('.plan-stage,.basement-plan'),state:{scale:1,x:0,y:0}}));
  const active=()=>scenes.find(s=>!s.view.hidden),blocked=()=>!!document.querySelector('dialog[open]')||document.documentElement.classList.contains('meteo-visible');
  let suppressUntil=0,cancelling=false;
- function geometry(s){const r=s.view.getBoundingClientRect();return {base:{width:s.content.offsetWidth,height:s.content.offsetHeight},viewport:{width:r.width,height:r.height},center:{x:r.left+r.width/2,y:r.top+r.height/2}}}
+ function geometry(s){const r=s.view.getBoundingClientRect();return {base:{width:s.content.offsetWidth,height:s.content.offsetHeight},viewport:{width:r.width,height:r.height},center:{x:r.left+(Number.isFinite(s.content.offsetLeft)?s.content.offsetLeft:(r.width-s.content.offsetWidth)/2)+s.content.offsetWidth/2,y:r.top+(Number.isFinite(s.content.offsetTop)?s.content.offsetTop:(r.height-s.content.offsetHeight)/2)+s.content.offsetHeight/2}}}
  function paint(s){s.content.style.transform=`translate(${s.state.x}px,${s.state.y}px) scale(${s.state.scale})`;s.view.dataset.planScale=String(s.state.scale)}
  function reset(){for(const s of scenes){s.clear?.();s.state={scale:1,x:0,y:0};paint(s)}}
 

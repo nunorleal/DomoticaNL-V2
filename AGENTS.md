@@ -684,3 +684,27 @@ Na nova raiz DomoticaNL V2 (conteúdo anteriormente em dist), exportar JSON com 
 # Limpeza da nova raiz — 2026-10-28
 
 Retiradas cópias numeradas, bundles Meteo antigos (mantendo app-2.49), ficheiros da câmara já sem referências e .DS_Store. Arquivo ZIP recuperável guardado fora da pasta do projeto, com manifesto SHA-256 e integridade verificada antes da remoção. Manter fontes, testes, documentação e provas review. Sem alteração funcional nem incremento de versão.
+
+# Coluna lateral Casa Condados — 2.50
+
+Apresentação adaptada na nova raiz DomoticaNL V2: esfera Shelly, resumo vertical confirmado, contador e dois planos de piso. Ver RESUMO-CASA.md. Nunca copiar configuração da referência. houseSnapshot é estritamente leitura dos mapas existentes, com estados antigos/pendentes distintos de offline e deduplicação física. Atualização visual partilha ciclo cloud-activity; sem pedidos/timers Cloud adicionais. Preservar fila/confirmadores/IDs e sinais individuais.
+
+Verificação2.50:219 testes aprovados e build Meteo concluído;88 referências locais sem ficheiros em falta. Fixture em origem limpa,820×1180,375×812,1280×800 e667×375: sem overflow horizontal nem sobreposição da coluna com cabeçalho/planta; em667×375 coluna termina em351px. Resumo com2 janelas abertas/3 luzes/1 ventoinha offline; navegação Sala/ventoinha, dois pisos e popup energia verificados. Abrir Estado dos pedidos manteve5/5 consultas e0 comandos. Cenário saudável100% verde/0 indisponíveis; sem errosJS. Prova review/coluna-lateral-2.50-ipad.jpg.
+
+# Encaixe justo da planta — 2.51
+
+Reduzir gutter lateral para4px e dimensionar o canvas pelos limites visíveis do clip existente (x8.79%..95.12%, y.85%..93.73%), centrando a casa visível sem modificar imagem, polígonos, estados ou coordenadas dos equipamentos. A geometria de zoom usa o centro real do canvas agora assimétrico, preservando pinch4×/reset. Cave aproveita toda a largura disponível. Sem alteração Shelly.
+
+Verificação2.51:220 testes aprovados e build Meteo concluído. Fixture634×922: folga4px e canvas660px (cerca de19,6% maior que antes);375×812: folga4px/sem overflow;820×1180: folga4px e casa inteira. Banners dos estores contidos no limite direito; seleção Cave/Casa repõe1×, teste novo confirma âncora do zoom com canvas deslocado. Zero comandos. Prova review/planta-encaixe-justo-2.51.jpg.
+
+# Coluna alinhada com a planta — 2.52
+
+Pedido: folga10px (antes4px) e topo da esfera alinhado com a aresta visível superior da planta. Fórmulas CSS partilham a largura de encaixe com a coluna, respeitando resize/rotação e safe areas. Cave usa topo visível da parede; em ecrãs baixos limitar deslocação para manter todos os indicadores acessíveis. Sem polling, alterações de configuração ou comandos.
+
+Verificação2.52:220 testes e build Meteo aprovados. Fixture634×922: folga10px, topo visível142.097px/esfera142.102px;375×812: folga10px, topo237.109px em ambos e coluna termina676px. Seleção Cave/Casa sem comandos. Prova review/coluna-alinhada-2.52.jpg.
+
+# Símbolos proporcionais à coluna — 2.53
+
+Aumentar ícones do resumo até64% da largura (32px na coluna50px) e contagens13px; grelha de três linhas distribui a altura sem mudar dimensões exteriores. Símbolos adaptam-se à altura disponível em ecrãs baixos. Escala energética42% da coluna, marcador70%, potência12px. Esfera, largura da coluna, alinhamento ao topo e folga10px preservados. Apenas CSS/apresentação; sem alterações de estados/configuração/pedidos.
+
+Verificação2.53:220 testes e build Meteo aprovados. Fixture634×922: coluna50px preservada, ícones32px, contagens13px e escala21px;375×812: ícones23px sem overflow;667×375: ícones16px/contagens10px, cápsula96px sem overflow interno e coluna termina341px. Zero comandos. Prova review/simbolos-laterais-2.53.jpg.
