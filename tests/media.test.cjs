@@ -29,13 +29,13 @@ test('TV and PS5 activity follows measured zero/positive watts, independently of
  assert.equal(M.state(bindings.tv,r,50000).activity,null);assert.equal(M.state(bindings.tv,{...r,error:true},101).activity,null);assert.equal(M.state(bindings.tv,{...r,meter:{...r.meter,power:null}},101).activity,null);
 });
 
-test('TV usage starts above fifty watts, excluding standby and regeneration; PS5 retains its zero-watt rule',()=>{
- const tv=M.activityThreshold('tv');assert.equal(tv,50);assert.equal(M.activityThreshold('playstation'),0);
- for(const power of [0,.1,.5,4.99,5,25,50])assert.equal(M.activityFromPower(power,tv),false);
- for(const power of [50.001,60,120])assert.equal(M.activityFromPower(power,tv),true);
+test('TV usage starts above forty watts, excluding standby and regeneration; PS5 retains its zero-watt rule',()=>{
+ const tv=M.activityThreshold('tv');assert.equal(tv,40);assert.equal(M.activityThreshold('playstation'),0);
+ for(const power of [0,.1,.5,4.99,5,25,40])assert.equal(M.activityFromPower(power,tv),false);
+ for(const power of [40.001,45,50,60,120])assert.equal(M.activityFromPower(power,tv),true);
  assert.equal(M.activityFromPower(.1,M.activityThreshold('playstation')),true);assert.equal(M.activityFromPower(null,tv),null);
- const r={online:true,hasOutput:true,on:true,errors:[],fetchedAt:100,meter:{online:true,hasMeter:true,power:50,energyKWh:1,errors:[]}};
- assert.equal(M.state(bindings.tv,r,101,tv).activity,false);assert.equal(M.state(bindings.tv,{...r,meter:{...r.meter,power:50.01}},101,tv).activity,true);assert.equal(M.state(bindings.tv,r,50000,tv).activity,null);
+ const r={online:true,hasOutput:true,on:true,errors:[],fetchedAt:100,meter:{online:true,hasMeter:true,power:40,energyKWh:1,errors:[]}};
+ assert.equal(M.state(bindings.tv,r,101,tv).activity,false);assert.equal(M.state(bindings.tv,{...r,meter:{...r.meter,power:40.01}},101,tv).activity,true);assert.equal(M.state(bindings.tv,r,50000,tv).activity,null);
  const fs=require('node:fs'),vm=require('node:vm'),src=fs.readFileSync(require.resolve('../shelly.js'),'utf8'),start=src.indexOf(' function mediaBinding('),end=src.indexOf(' function mediaEnsureFresh(',start),context={MC:M,config:{mediaBindings:bindings,server:'test'},mediaReadings:{tv:{...r,fetchedAt:Date.now()}},blockingRead:()=>false,busy:false,commandCount:0,groupBusy:false,lightGroupBusy:false,mediaTargets:new Map(),dirty:()=>false,key:'FAKE',mediaMessages:new Map()};vm.createContext(context);vm.runInContext(src.slice(start,end),context);assert.equal(context.mediaSnapshot('tv').activity,false);
 });
 
@@ -60,10 +60,10 @@ test('office commands preserve explicit ID, exact channel and Boolean state, nev
 test('Gui association fills all four supplied IDs, channel zero, and preserves existing edited associations',()=>{const expected={monitor:{deviceId:'441db8',channel:0},apollo:{deviceId:'e43ad8',channel:0},terramaster:{deviceId:'e9df12',channel:0},blackdrive:{deviceId:'bb8ac4',channel:0}};assert.deepEqual(M.associateOffice({}),expected);assert.deepEqual(M.associateOffice(undefined),expected);const edited={deviceId:'abcdef',channel:3};assert.deepEqual(M.associateOffice({monitor:edited}),{...expected,monitor:edited});assert.deepEqual(C.config({...base,officeBindings:M.associateOffice({})}).officeBindings,expected)});
 
 
-test('TV regeneration is only an estimate between 5 and 50 W inclusive with live, powered readings',()=>{
+test('TV regeneration is only an estimate between 5 and 40 W inclusive with live, powered readings',()=>{
  const r={online:true,hasOutput:true,on:true,errors:[],fetchedAt:100,meter:{online:true,hasMeter:true,power:6,energyKWh:1,errors:[]}},binding={deviceId:'deadbeef0011',channel:0};
- for(const power of [5,6,25,50])assert.equal(M.tvRegenerating(M.state(binding,{...r,meter:{...r.meter,power}},101,4)),true);
- for(const power of [0,2,4.999,50.001,80,null,NaN])assert.equal(M.tvRegenerating(M.state(binding,{...r,meter:{...r.meter,power}},101,4)),false);
+ for(const power of [5,6,25,40])assert.equal(M.tvRegenerating(M.state(binding,{...r,meter:{...r.meter,power}},101,4)),true);
+ for(const power of [0,2,4.999,40.001,45,50,80,null,NaN])assert.equal(M.tvRegenerating(M.state(binding,{...r,meter:{...r.meter,power}},101,4)),false);
  for(const bad of [{...r,on:false},{...r,online:false},{...r,error:true},{...r,missing:true},{...r,fetchedAt:-50000},{...r,meter:{...r.meter,error:true}}])assert.equal(M.tvRegenerating(M.state(binding,bad,101,4)),false);
  assert.equal(M.tvRegenerating(M.state(null,r,101,4)),false);
 });
@@ -71,8 +71,8 @@ test('TV regeneration is only an estimate between 5 and 50 W inclusive with live
 test('screen usage excludes regeneration, standby and unconfirmed measurements',()=>{
  const ready={configured:true,on:true,stale:false,powerWatts:85};
  for(const id of ['tv','monitor']){assert.equal(M.screenWorking(id,ready),true);for(const patch of [{configured:false},{on:false},{on:null},{stale:true},{powerWatts:null},{powerWatts:NaN},{powerWatts:Infinity},{powerWatts:0}])assert.equal(M.screenWorking(id,{...ready,...patch}),false)}
- for(const powerWatts of [0,2,4.999,5,25,50])assert.equal(M.screenWorking('tv',{...ready,powerWatts}),false);
- assert.equal(M.screenWorking('tv',{...ready,powerWatts:50.1}),true);assert.equal(M.screenWorking('monitor',{...ready,powerWatts:2}),false);assert.equal(M.screenWorking('monitor',{...ready,powerWatts:2.1}),true);assert.equal(M.screenWorking('soundbar',ready),false);
+ for(const powerWatts of [0,2,4.999,5,25,40])assert.equal(M.screenWorking('tv',{...ready,powerWatts}),false);
+ assert.equal(M.screenWorking('tv',{...ready,powerWatts:40.1}),true);assert.equal(M.screenWorking('monitor',{...ready,powerWatts:2}),false);assert.equal(M.screenWorking('monitor',{...ready,powerWatts:2.1}),true);assert.equal(M.screenWorking('soundbar',ready),false);
 });
 
 test('screen reflections stay visible in daylight, darkness and electric-light renders',()=>{

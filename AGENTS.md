@@ -724,3 +724,9 @@ Verificação2.54:233 testes aprovados, build Meteo atualizado e89 referências 
 Aproximar os dois planos existentes com margem superior−10px no segundo botão; passo visual passa de24px para14px. Manter ordem, z-index, SVGs, cores, aria-current e seleção de pisos. Atualizar altura calculada do conjunto de48px para38px para manter alinhamento e contenção em ecrãs baixos. Apenas apresentação; sem alterações Shelly, configurações ou plantas.
 
 Verificação2.55: build Meteo e2 testes de pisos aprovados. Fixture634×922: distância entre os topos dos botões14px (antes24px), mantendo altura24px; clique Cave/Casa seleciona o piso correto e aria-current correspondente. Zero comandos. Prova review/layers-sobrepostas-2.55.jpg.
+
+# Intervalo de regeneração da TV — 2.56
+
+Pedido do utilizador: regeneração estimada da TV da sala entre5 e40W, inclusive. TV_REGEN_MAX passa a40; utilização/realce/reflexo da TV começam acima40W. Textos acessíveis e tooltip atualizados. Preservar exigência de leituras atuais, válidas e alimentação confirmada, bem como os limiares dos restantes equipamentos. Sem comandos, alterações de configuração ou polling novos.
+
+Verificação2.56:14 testes de multimédia aprovados e build Meteo concluído. Cobertos limites5/40W inclusivos,40,001W já em utilização e45/50W fora da regeneração; valores inválidos, offline e antigos continuam excluídos. Apenas dados fictícios, sem comandos.
