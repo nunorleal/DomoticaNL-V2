@@ -730,3 +730,7 @@ Verificação2.55: build Meteo e2 testes de pisos aprovados. Fixture634×922: di
 Pedido do utilizador: regeneração estimada da TV da sala entre5 e40W, inclusive. TV_REGEN_MAX passa a40; utilização/realce/reflexo da TV começam acima40W. Textos acessíveis e tooltip atualizados. Preservar exigência de leituras atuais, válidas e alimentação confirmada, bem como os limiares dos restantes equipamentos. Sem comandos, alterações de configuração ou polling novos.
 
 Verificação2.56:14 testes de multimédia aprovados e build Meteo concluído. Cobertos limites5/40W inclusivos,40,001W já em utilização e45/50W fora da regeneração; valores inválidos, offline e antigos continuam excluídos. Apenas dados fictícios, sem comandos.
+
+# Correção do intervalo de regeneração da TV — 2.57
+
+Intervalo pedido:5–35W inclusivos, substituindo5–40W. TV_REGEN_MAX=35; utilização e efeitos da TV apenas acima35W. Tooltip e texto acessível atualizados; restantes equipamentos, guardas de leitura e comandos preservados.
