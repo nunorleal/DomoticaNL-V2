@@ -69,3 +69,15 @@ body.window-master-open .window-closed-master,body.window-bedroom2-open .window-
 /* Keep the active green edge; hover/focus adds the same outer blue outline as other plan devices. */
 .media-console-trigger[data-screen-working=true]:hover,.media-console-trigger[data-screen-working=true]:focus-visible,.office-desk-trigger[data-screen-working=true]:hover,.office-desk-trigger[data-screen-working=true]:focus-visible{background:transparent;outline:2px solid var(--plan-highlight-outline);outline-offset:2px}
 .media-console-trigger[data-screen-working=true]:hover>svg,.media-console-trigger[data-screen-working=true]:focus-visible>svg,.office-desk-trigger[data-screen-working=true]:hover>.office-desk-icon,.office-desk-trigger[data-screen-working=true]:focus-visible>.office-desk-icon{color:#e8f6ff;background:#295573e6}
+
+/* Animated RGB screen spill; existing measured activity still controls visibility. */
+.tv-floor-reflection stop,.office-floor-reflection stop{animation:screen-floor-rgb 14s ease-in-out infinite;animation-play-state:paused}
+.tv-floor-reflection stop:nth-child(2){animation-delay:-2s}
+.tv-floor-reflection stop:nth-child(3){animation-delay:-4s}
+.office-floor-reflection stop{animation-duration:17s;animation-delay:-5s}
+.office-floor-reflection stop:nth-child(2){animation-delay:-8s}
+.office-floor-reflection stop:nth-child(3){animation-delay:-11s}
+body:not([data-floor="-1"]) .tv-floor-reflection[data-working=true] stop,body:not([data-floor="-1"]) .office-floor-reflection[data-working=true] stop{animation-play-state:running}
+.meteo-visible .tv-floor-reflection stop,.meteo-visible .office-floor-reflection stop{animation-play-state:paused!important}
+@keyframes screen-floor-rgb{0%,100%{stop-color:#ff315e}33.333%{stop-color:#25f487}66.667%{stop-color:#386bff}}
+@media(prefers-reduced-motion:reduce){.tv-floor-reflection stop,.office-floor-reflection stop{animation:none}}
