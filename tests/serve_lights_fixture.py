@@ -30,6 +30,55 @@ if(sensorTestParams.has('balcony')){cloud.sensorBindings={...cloud.sensorBinding
 if(sensorTestParams.has('kitchen')){cloud.kitchenBindings=Object.fromEntries(['dishwasher','washer','boiler'].map((id,i)=>[id,{deviceId:'deadbeefca0'+i,channel:0}]));localStorage.setItem('casa-nl-shelly-cloud-v1',JSON.stringify(cloud));}
 if(sensorTestParams.has('blutemps')){cloud.sensorBindings={...cloud.sensorBindings,balcony:{deviceId:'XB123456701',temperatureChannel:0,humidityChannel:0,type:'environment'},cellar:{deviceId:'XB123456702',temperatureChannel:0,humidityChannel:0,type:'environment'}};localStorage.setItem('casa-nl-shelly-cloud-v1',JSON.stringify(cloud));}
 if(sensorTestParams.has('historyproof')){const now=Date.now(),day=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')},hours=[],days=[];for(let h=0;h<new Date(now).getHours();h++)hours.push([Math.floor(new Date(new Date(now).setHours(h,0,0,0)).getTime()/3600000),h<7?.002:h<10?.42:h<17?.015:.24,3500]);for(let i=60;i>=0;i--)days.push([day(now-i*86400000),i===0?hours.reduce((n,r)=>n+r[1],0):.03+(i%7)*.012,7200]);const entries={};for(const id of ['deadbeefab01','deadbeefab02','deadbeefca00','deadbeefca01','deadbeefca02','deadbeefff00','deadbeefff01','deadbeefff02','deadbeefff03','deadbeefff04','deadbeefee00','deadbeefee01','deadbeefee02','deadbeefee03'])entries[JSON.stringify([cloud.server,id,'auto',0])]={first:now-60*86400000,last:[now-600000,0],hours,days};localStorage.setItem('casa-nl-consumption-history-v1',JSON.stringify({schemaVersion:1,entries}));}
+
+const fixtureOfflineProof=sensorTestParams.has('offlineproof');
+let fixtureOfflineMode=sensorTestParams.get('offlineproof')||'none',fixtureOffset=0,fixtureScope=fixtureOfflineMode==='all'?'all':'heater';
+const fixtureRealNow=Date.now.bind(Date);
+if(fixtureOfflineProof){
+ Date.now=()=>fixtureRealNow()+fixtureOffset;
+ localStorage.setItem('casa-nl-screensaver-v1',JSON.stringify({seconds:0}));
+ document.addEventListener('DOMContentLoaded',()=>{
+  const panel=document.createElement('aside');panel.id='fixture-offline-controls';panel.style='position:fixed;bottom:48px;right:8px;z-index:9200;max-width:calc(100vw - 16px);padding:12px;background:#17384eee;border:1px solid #d1e4ed;color:white;border-radius:12px;font:12px system-ui;display:flex;flex-direction:column;gap:8px;box-shadow:0 4px 14px #0005';
+  const heading=document.createElement('strong');heading.textContent='TESTE · estado dos dispositivos fictícios';panel.append(heading);
+  const scopeLabel=document.createElement('label');scopeLabel.htmlFor='fixture-offline-scope';scopeLabel.textContent='Equipamentos fictícios a colocar offline';
+  const scope=document.createElement('select');scope.id='fixture-offline-scope';scope.style='min-height:36px;background:white;color:#17384e;border:0;border-radius:6px;padding:5px;font:inherit';
+  for(const [value,label]of [['heater','Termoventilador'],['dehumidifier','Desumidificador'],['lights','Candeeiros'],['media','Multimédia'],['tv','Televisão'],['router','Router Vodafone'],['office','Secretária'],['monitor','Monitor'],['apollo','Apollo'],['terramaster','TerraMaster'],['blackdrive','Disco'],['kitchen','Cozinha'],['dishwasher','Máquina de lavar loiça'],['washer','Máquina de lavar roupa'],['boiler','Caldeira'],['fan','Ventoinha'],['alarm','Alarme'],['alarm-arm','Alarme · armação'],['alarm-trigger','Alarme · disparo'],['ev','Carregamento'],['energy','Contador geral'],['sensors','Sensores'],['windows','Janelas'],['blinds','Estores'],['door','Portas'],['all','Todos os equipamentos']]){const option=document.createElement('option');option.value=value;option.textContent=label;scope.append(option)}
+  if([...scope.options].some(o=>o.value===fixtureOfflineMode))scope.value=fixtureOfflineMode;
+  fixtureScope=scope.value;
+  const state=document.createElement('p');state.id='fixture-offline-state';state.style='margin:0;font-size:11px;line-height:1.4';
+  function status(){const params=sensorTestParams.get('offlineproof'),value=fixtureOfflineMode==='none'?'Online':fixtureOfflineMode==='unknown'?'Estado desconhecido':fixtureOfflineMode==='error'?'Falha de consulta':fixtureOfflineMode==='hold'?'Sem resposta · dados antigos':fixtureOfflineMode==='missing'?'ID não encontrado':'Offline · '+scope.options[scope.selectedIndex].textContent;const text=value+(fixtureOffset?' · relógio fictício +3 min':'');if(state.textContent!==text)state.textContent=text;state.dataset.mode=fixtureOfflineMode}
+  function refresh(mode){fixtureOfflineMode=mode;status();window.CasaShelly?.refresh({quiet:true,priority:true,force:true})}
+  scope.addEventListener('change',()=>{fixtureScope=scope.value;fixtureOfflineMode=fixtureScope;status();window.CasaShelly?.refresh({quiet:true,priority:true,force:true})});
+  const actions=document.createElement('div');actions.style='display:flex;gap:6px;flex-wrap:wrap;max-width:300px';
+  function button(id,label,onClick){const b=document.createElement('button');b.type='button';b.id=id;b.style='font:11px system-ui;min-height:32px;padding:5px 8px;color:white;background:#426e8c;border:1px solid #a8cbdf;border-radius:7px';b.textContent=label;b.addEventListener('click',onClick);actions.append(b);return b}
+  button('fixture-offline-apply','Simular offline',()=>refresh(fixtureScope));
+  button('fixture-offline-recover','Recuperar dispositivos fictícios',()=>refresh('none'));
+  button('fixture-offline-unknown','Simular estado desconhecido',()=>refresh('unknown'));
+  button('fixture-offline-error','Simular falha de consulta',()=>refresh('error'));
+  button('fixture-offline-missing','Simular ID em falta',()=>refresh('missing'));
+  button('fixture-offline-age','Envelhecer leituras fictícias 3 min',()=>{fixtureOfflineMode='hold';fixtureOffset+=180000;status()});
+  button('fixture-offline-hide','Ocultar controlos Offline',()=>{panel.hidden=true;panel.style.display='none'});
+  panel.append(scopeLabel,scope,state,actions);document.body.append(panel);status();
+  const log=document.getElementById('fixture-request-log');if(!log){const trace=document.createElement('pre');trace.id='fixture-request-log';trace.hidden=true;document.body.append(trace)}
+ });
+}
+function fixtureOfflineIds(mode){
+ if(mode==='all')return null;
+ const props={heater:cloud.heater,dehumidifier:cloud.dehumidifier,fan:cloud.fan,door:cloud.door,cellarDoor:cloud.cellarDoor};
+ const object=(x)=>x?Object.values(x).map(b=>b?.deviceId).filter(Boolean):[];
+ const groups={lights:object(cloud.lightBindings),sensors:object(cloud.sensorBindings),blinds:object(cloud.bindings),windows:object(cloud.windowBindings),media:object(cloud.mediaBindings),office:object(cloud.officeBindings),kitchen:object(cloud.kitchenBindings),alarm:object(cloud.alarm),ev:object(cloud.ev)};
+ const energy=cloud.homeEnergy?.source==='custom'?cloud.homeEnergy?.deviceId:cloud.ev?.meter?.deviceId||cloud.ev?.relay?.deviceId;
+ if(mode==='energy')return new Set([energy].filter(Boolean).map(s=>s.toLowerCase()));
+ if(['tv','soundbar','playstation','vodafone','unifi'].includes(mode))return new Set([cloud.mediaBindings?.[mode]?.deviceId].filter(Boolean).map(s=>s.toLowerCase()));
+ if(['monitor','apollo','terramaster','blackdrive'].includes(mode))return new Set([cloud.officeBindings?.[mode]?.deviceId].filter(Boolean).map(s=>s.toLowerCase()));
+ if(['washer','boiler','dishwasher'].includes(mode))return new Set([cloud.kitchenBindings?.[mode]?.deviceId].filter(Boolean).map(s=>s.toLowerCase()));
+ if(mode==='router')return new Set([cloud.mediaBindings?.vodafone?.deviceId].filter(Boolean).map(s=>s.toLowerCase()));
+ if(mode==='alarm-arm'||mode==='alarm-trigger')return new Set([cloud.alarm?.[mode.slice(6)]?.deviceId].filter(Boolean).map(s=>s.toLowerCase()));
+ if(mode==='door')return new Set([cloud.door?.deviceId,cloud.cellarDoor?.deviceId].filter(Boolean).map(s=>s.toLowerCase()));
+ if(mode in props)return new Set([props[mode]?.deviceId].filter(Boolean).map(s=>s.toLowerCase()));
+ return new Set((groups[mode]||[]).map(s=>s.toLowerCase()));
+}
+
 const states={deadbeef1111:false,deadbeef2222:false,deadbeef3333:false},types={deadbeef1111:'switch',deadbeef2222:'light',deadbeef3333:'switch'},channels={deadbeef1111:0,deadbeef2222:1,deadbeef3333:0},commands=[];
 if(sensorTestParams.has('alarm')){const m=sensorTestParams.get('alarm');states.deadbeefaa01=['armed','sounding','partial','offline','armoffline'].includes(m);states.deadbeefaa02=['sounding','disarmed-trigger'].includes(m);types.deadbeefaa01=types.deadbeefaa02='switch';channels.deadbeefaa01=1;channels.deadbeefaa02=0;}
 states.deadbeefbb01=sensorTestParams.get('fan')==='on';types.deadbeefbb01='switch';channels.deadbeefbb01=0;
@@ -81,6 +130,19 @@ const native=window.fetch.bind(window),params=new URLSearchParams(location.searc
   else if(!(params.has('alarmhold')&&data.id==='deadbeefaa01')&&!(params.has('mediahold')&&/^deadbeefff0/.test(data.id))){states[data.id]=data.on;if(data.brightness!==undefined)brightnessLevels[data.id]=data.brightness;}
  }else throw Error('Forbidden Cloud route in isolated test');
  if(url.pathname==='/v2/devices/api/get'){cloudStatusCount++;if(cloudPaused||params.has('cloud429')||params.has('cloud429once')&&cloudStatusCount===1){status=429;result={}}}
+
+ if(fixtureOfflineProof&&url.pathname==='/v2/devices/api/get'){
+  if(fixtureOfflineMode==='error'){status=503;result={error:'FIXTURE_READ_FAILURE'}}
+  else if(fixtureOfflineMode==='missing'){result=[];status=200}
+  else if(fixtureOfflineMode==='unknown'){result=(Array.isArray(result)?result:[]).map(device=>({...device,online:1,status:{}}));status=200}
+  else if(fixtureOfflineMode==='hold'){
+   await new Promise((resolve,reject)=>{const signal=options.signal;const stop=()=>reject(Object.assign(Error('Fixture offline read held'),{name:'AbortError'}));if(signal?.aborted){stop();return}if(signal)signal.addEventListener('abort',stop,{once:true})});
+  }else if(fixtureOfflineMode!=='none'){
+   const offlineIds=fixtureOfflineIds(fixtureOfflineMode);
+   result=(Array.isArray(result)?result:[]).map(device=>offlineIds===null||offlineIds.has(device.id.toLowerCase())?{...device,online:0}:device);
+  }
+ }
+
  if(delay)await new Promise((resolve,reject)=>{const timer=setTimeout(resolve,6000),cancel=()=>{clearTimeout(timer);reject(Object.assign(Error('Fixture read preempted'),{name:'AbortError'}))};if(options.signal?.aborted)cancel();else options.signal?.addEventListener('abort',cancel,{once:true})});
  return new Response(JSON.stringify(result),{status,headers:{'Content-Type':'application/json',...(cloudPaused?{'Retry-After':'10'}:{})}});
 };
