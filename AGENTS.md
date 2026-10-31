@@ -718,3 +718,9 @@ Apresentação na planta, objetos portáteis, candeeiros, janelas/estores, senso
 Sem transporte novo, consulta, timer de polling, actuador, configuração, localStorage ou credenciais novos. Reutilizar o ciclo visual cloud-activity de1s, eventos e requestAnimationFrame coalescido. Gráficos, imagens, plantas, IDs e filas existentes inalterados. Testar só com IDs/chave fictícios e fixture que interceta todos os pedidos.
 
 Verificação2.54:233 testes aprovados, build Meteo atualizado e89 referências locais sem recursos em falta. Fixture isolada com dispositivos fictícios: etiqueta/contorno do termoventilador, recuperação online, falha parcial de router, seleção individual no popup, todos os tipos de equipamento, inventário e sinais da cave verificados. Estados desconhecidos, falha de consulta e leituras envelhecidas3min removem o destaque Offline; sem inferir estados de alimentação. Em375×812 a etiqueta do contador cabe nos36px da coluna e não há overflow horizontal;820×1180 mantém apresentação da planta. Zero comandos na fixture, sem errosJS na captura final. Prova review/offline-termoventilador-2.54.jpg.
+
+# Layers mais sobrepostas — 2.55
+
+Aproximar os dois planos existentes com margem superior−10px no segundo botão; passo visual passa de24px para14px. Manter ordem, z-index, SVGs, cores, aria-current e seleção de pisos. Atualizar altura calculada do conjunto de48px para38px para manter alinhamento e contenção em ecrãs baixos. Apenas apresentação; sem alterações Shelly, configurações ou plantas.
+
+Verificação2.55: build Meteo e2 testes de pisos aprovados. Fixture634×922: distância entre os topos dos botões14px (antes24px), mantendo altura24px; clique Cave/Casa seleciona o piso correto e aria-current correspondente. Zero comandos. Prova review/layers-sobrepostas-2.55.jpg.
