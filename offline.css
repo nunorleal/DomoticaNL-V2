@@ -1,0 +1,76 @@
+/* One visual rule for reported offline: burgundy badge and one red contour. */
+:root{--device-offline-width:1px;--device-offline-color:#fa465f;--device-offline-glow:#f12e57bf;--device-offline-filter:drop-shadow(1px 0 0 #fa465f) drop-shadow(-1px 0 0 #fa465f) drop-shadow(0 1px 0 #fa465f) drop-shadow(0 -1px 0 #fa465f) drop-shadow(0 0 5px #f12e57bf)}
+.shelly-offline-mark{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;gap:3px;padding:2px 6px;margin:0 0 0 7px;min-height:20px;box-sizing:border-box;max-width:none;width:max-content;max-height:none;border:1px solid #f3a5b2;border-radius:9px;background:#8c2337;color:#fff;font-size:11px;font-weight:650;line-height:1.2;letter-spacing:0;text-transform:none;text-shadow:none;vertical-align:middle;white-space:nowrap;overflow:visible;pointer-events:none;word-break:normal}
+.shelly-offline-mark>span{display:block;white-space:nowrap;color:inherit;font-size:inherit;font-weight:inherit;line-height:inherit;letter-spacing:0;text-transform:none;overflow:visible;width:auto;height:auto;max-height:none}
+.shelly-offline-mark svg{display:block;width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;pointer-events:none}
+.shelly-offline-mark .offline-text{padding:0;margin:0}
+.shelly-offline-mark[hidden]{display:none!important}
+.shelly-offline-mark.offline-plan-mark{position:absolute;right:-6px;top:-19px;left:auto;bottom:auto;z-index:8;gap:2px;margin:0;padding:2px 5px;min-height:18px;font-size:9px;line-height:1.3;border-radius:8px;filter:none;transform:none}
+.shelly-offline-mark.offline-plan-mark svg{width:12px;height:12px}
+.offline-anchor{position:relative}
+.heater-object[data-shelly-offline=true] .heater-render,.dehumidifier-object[data-shelly-offline=true] .dehumidifier-render,.heater-preview[data-shelly-offline=true],.dehumidifier-preview[data-shelly-offline=true]{filter:var(--device-offline-filter)}
+.heater-object[data-shelly-offline=true]:not(:hover):not(:focus-visible),.dehumidifier-object[data-shelly-offline=true]:not(:hover):not(:focus-visible){border-color:transparent;box-shadow:none;background:transparent}
+[data-shelly-offline=true]:is(.media-console-trigger,.office-desk-trigger,.kitchen-appliance-trigger,.blind-window-trigger,.media-device-hit,.door-contact-offline){border:var(--device-offline-width) solid var(--device-offline-color);border-radius:8px;box-shadow:0 0 6px var(--device-offline-glow);background:transparent}
+[data-shelly-offline=true]:is(.media-device-banner,.room-pin,.blind-pin,.ev-badge,.energy-rail,.device-item,.room-device-row){border-color:var(--device-offline-color);box-shadow:0 0 6px var(--device-offline-glow)}
+.media-device-dot[data-shelly-offline=true]{background:var(--device-offline-color);border-color:#ffe3e9;box-shadow:0 0 5px var(--device-offline-glow)}
+.media-device-banner[data-shelly-offline=true]>small{color:#ffdbe3}
+.media-device-banner[data-shelly-offline=true][data-power=on] small{color:#ffdbe3}
+.media-device-hit[data-shelly-offline=true]{background:transparent}
+.lamp-trigger[data-shelly-offline=true]{border-color:transparent;box-shadow:none;background:transparent}
+.lamp-trigger[data-shelly-offline=true]:hover,.lamp-trigger[data-shelly-offline=true]:focus-visible{border-color:var(--plan-highlight-border);box-shadow:0 0 8px var(--plan-highlight-glow)}
+.lamp-on-halo[data-shelly-offline=true]{fill:none;stroke:var(--device-offline-color)!important;stroke-width:var(--device-offline-width);vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 5px var(--device-offline-glow));opacity:1!important}
+.cellar-outline .fan-pin[data-shelly-offline=true] .fan-symbol,.cellar-outline .alarm-pin[data-shelly-offline=true] .alarm-symbol,.cellar-outline .fan-pin[data-shelly-offline=true][data-fan-state=on] .fan-symbol,.cellar-outline .alarm-pin[data-shelly-offline=true][data-alarm-state=armed] .alarm-symbol{filter:var(--device-offline-filter)}
+.cellar-outline .alarm-pin[data-shelly-offline=true] .alarm-halo-base,.cellar-outline .alarm-pin[data-shelly-offline=true] .alarm-halo-flow{opacity:0!important;stroke:none;animation:none}
+.cellar-outline .fan-pin>.shelly-offline-mark,.cellar-outline .alarm-pin>.shelly-offline-mark{display:inline-flex!important}
+.cellar-outline .fan-pin>.shelly-offline-mark>span,.cellar-outline .alarm-pin>.shelly-offline-mark>span{display:block!important}
+.cellar-outline .fan-pin[data-shelly-offline=true],.cellar-outline .alarm-pin[data-shelly-offline=true]{border:0;box-shadow:none}
+.cellar-outline .fan-pin[data-shelly-offline=true]:hover,.cellar-outline .alarm-pin[data-shelly-offline=true]:hover{outline:2px solid var(--plan-highlight-outline);outline-offset:2px}
+.cellar-door[data-shelly-offline=true]{filter:var(--device-offline-filter)}
+.shelly-offline-svg{pointer-events:none}
+.door-contact-offline,.door-contact-offline{position:absolute;z-index:3;border:1px solid transparent;border-radius:8px;pointer-events:none}
+.door-contact-offline[hidden]{display:none}
+.door-contact-offline[data-shelly-offline=true]{box-shadow:0 0 5px var(--device-offline-glow)}
+.room-device-row[data-shelly-offline=true]{position:relative;border:var(--device-offline-width) solid var(--device-offline-color);border-radius:12px;padding-left:8px;padding-right:8px}
+.room-device-row>.shelly-offline-mark{position:static;min-height:20px;max-width:none;font-size:10px;margin:0;align-self:center;flex-shrink:0}
+.room-device-description[data-shelly-offline=true] small{color:#a52339}
+.room-device-row>.room-device-description{min-width:0}
+.room-device-description>strong,.room-device-description>small{overflow-wrap:anywhere}
+.popup .eyebrow>.shelly-offline-mark,.popup .detail-eyebrow>.shelly-offline-mark{margin-left:8px;font-size:10px;min-height:19px}
+#room-dialog .sensor-room-info>h3>.shelly-offline-mark{font-size:10px}
+#room-dialog .sensor-room-info>h3{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+#basement-dialog .sensor-metrics [data-shelly-offline=true]{color:#a52339}
+#shelly-form summary>.shelly-offline-mark{margin-left:8px}
+.shelly-result[data-shelly-offline=true]{border-color:#fa465f}
+.plan-status-rails .energy-rail[data-shelly-offline=true]{padding-top:7px;gap:4px}
+.plan-status-rails .energy-rail>.shelly-offline-mark{position:static;order:-1;align-self:center;right:auto;top:auto;padding:1px 3px;margin:0;min-height:16px;gap:2px;max-width:calc(100% - 2px);border-radius:6px;font-size:8px;line-height:1.2}
+.plan-status-rails .energy-rail>.shelly-offline-mark svg{width:10px;height:10px}
+.plan-status-rails .energy-rail[data-shelly-offline=true] .energy-mini-gauge{background:#82959c}
+.plan-status-rails .energy-rail[data-shelly-offline=true] .energy-mini-gauge i{display:none}
+.ev-post[data-shelly-offline=true]{filter:var(--device-offline-filter)}
+.ev-post[data-shelly-offline=true] svg{filter:none}
+.ev-post[data-shelly-offline=true] .ev-post-led{fill:var(--device-offline-color);filter:drop-shadow(0 0 3px var(--device-offline-glow))}
+.ev-post[data-shelly-offline=true] .ev-post-bolt{fill:#ffb5c4}
+.parking-space[data-shelly-offline=true] .ev-cable-flow{stroke:#8d9ba0;animation:none}
+.parking-space[data-shelly-offline=true] .ev-cable-connected{opacity:.4}
+.ev-badge[data-shelly-offline=true]{--banner-text:#fff1f4;color:#fff1f4;box-shadow:0 0 7px #f12e5766}
+.ev-badge[data-shelly-offline=true] .ev-badge-status{color:#ffdbe3}
+.media-device-hit>.shelly-offline-mark{z-index:6;right:0;top:-19px;max-width:none}
+.media-device-hit[data-media-hit=living-lamp]>.shelly-offline-mark{right:-6px;top:-21px}
+.media-device-hit[data-media-hit=playstation]>.shelly-offline-mark,.media-device-hit[data-media-hit=vodafone]>.shelly-offline-mark,.media-device-hit[data-media-hit=unifi]>.shelly-offline-mark{font-size:8px;right:-2px;top:-18px;min-height:16px;padding:1px 4px}
+.media-device-hit[data-media-hit=playstation]>.shelly-offline-mark svg,.media-device-hit[data-media-hit=vodafone]>.shelly-offline-mark svg,.media-device-hit[data-media-hit=unifi]>.shelly-offline-mark svg{width:10px;height:10px}
+.offline-plan-mark .offline-symbol{visibility:visible!important}
+.console-icons-hidden [data-shelly-offline=true]>.shelly-offline-mark svg{visibility:visible!important}
+.door-contact-offline>.shelly-offline-mark{top:-19px;right:0}
+.blind-pin>.shelly-offline-mark{top:-17px;right:0}
+.room-pin>.shelly-offline-mark{right:0;top:-18px}
+.blind-window-trigger>.shelly-offline-mark{top:-18px;right:0}
+.shelly-offline-mark,.shelly-offline-mark>span{user-select:none;-webkit-user-select:none}
+/* Keep a trace visible alongside the blue hover/focus outline. */
+[data-shelly-offline=true]:is(.media-console-trigger,.office-desk-trigger,.kitchen-appliance-trigger,.blind-window-trigger,.media-device-hit):hover,[data-shelly-offline=true]:is(.media-console-trigger,.office-desk-trigger,.kitchen-appliance-trigger,.blind-window-trigger,.media-device-hit):focus-visible{border-color:var(--device-offline-color);background:transparent;outline:2px solid var(--plan-highlight-outline);outline-offset:2px;box-shadow:0 0 6px var(--device-offline-glow)}
+@media(max-width:550px){.shelly-offline-mark.offline-plan-mark{font-size:8px;top:-18px;min-height:16px;padding:1px 4px;gap:2px}.shelly-offline-mark.offline-plan-mark svg{width:11px;height:11px}.popup .eyebrow>.shelly-offline-mark,.popup .detail-eyebrow>.shelly-offline-mark{font-size:9px;margin-left:6px;min-height:18px}.room-device-row>.shelly-offline-mark{font-size:9px;min-height:18px;padding:2px 4px}}
+@media(max-height:600px){.plan-status-rails .energy-rail>.shelly-offline-mark{font-size:7px;min-height:13px;padding:1px 2px;gap:1px}.plan-status-rails .energy-rail>.shelly-offline-mark svg{width:8px;height:8px}.plan-status-rails .energy-rail[data-shelly-offline=true]{padding-top:4px;gap:2px}}
+@media(prefers-reduced-motion:reduce){.shelly-offline-mark,.shelly-offline-svg{animation:none!important;transition:none!important}}
+/* Cellar captions have their own block-span rules; keep the badge a single white row. */
+#open-cellar .shelly-offline-mark{display:inline-flex;width:max-content;color:#fff;gap:3px;margin-top:4px}
+#open-cellar .shelly-offline-mark>span{color:#fff;width:auto;font-size:inherit}
+@media(max-width:550px){.plan-status-rails .energy-rail>.shelly-offline-mark{flex-direction:column;gap:1px;padding:1px;max-width:none;font-size:7px;line-height:1.2}.plan-status-rails .energy-rail>.shelly-offline-mark svg{width:8px;height:8px}}
