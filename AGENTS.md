@@ -734,3 +734,9 @@ Verificação2.56:14 testes de multimédia aprovados e build Meteo concluído. C
 # Correção do intervalo de regeneração da TV — 2.57
 
 Intervalo pedido:5–35W inclusivos, substituindo5–40W. TV_REGEN_MAX=35; utilização e efeitos da TV apenas acima35W. Tooltip e texto acessível atualizados; restantes equipamentos, guardas de leitura e comandos preservados.
+
+# Feixes RGB dinâmicos — 2.58
+
+Reflexos no chão da TV e monitor alternam suavemente entre vermelho, verde e azul por animação CSS dos stops SVG existentes. Fases diferentes por stop e ciclos14s/17s dão variação independente. Preservar geometria, suavização, clip das divisões, intensidade diurna/elétrica e paredes brancas. Animação pausada quando equipamento não está em utilização, na cave e na MeteoNL; reduced-motion mantém luz estática. As guardas screenWorking existentes (TV acima35W, monitor acima2W, estado atual confirmado) controlam a visibilidade. Sem novas consultas, timers JS, comandos ou configurações.
+
+Verificação2.58:14 testes de multimédia e build Meteo aprovados. Fixture820×1180 com TV85,5W e monitor25W: ambos working=true, cores computadas variam ao longo do tempo e animação running; cave pausa os10 stops e regressar à Casa retoma. Feixes visíveis com iluminação elétrica e diurna, mantendo clips e paredes. Zero comandos e errosJS. Prova review/feixes-rgb-2.58.jpg.
