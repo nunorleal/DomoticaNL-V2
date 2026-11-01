@@ -758,3 +758,49 @@ Verificação2.60:238 testes aprovados e build Meteo concluído. Novos testes co
 Utilizador confirmou que Casa Leal corresponde à T2/DomoticaNL V2 e que o endereço UniFi fornecido abre as quatro câmaras após autenticação. Adicionar ligação Câmaras no cabeçalho, entre Controlos e Definições, com ícone SVG e dimensões dos botões existentes. Usar exatamente o URL HTTPS fornecido, com os quatro IDs no parâmetro cameras; target _blank, noopener/noreferrer e no-referrer. Não inventar esquemas nativos, iframe, partilhas temporárias, streaming incorporado ou comandos. Sem pedidos antes do clique, credenciais novas, alterações de rede, IDs Shelly ou restante lógica. Não guardar imagens das câmaras no projeto.
 
 Verificação2.61: build Meteo e4 testes PWA aprovados. Destino HTTPS UniFi com4 IDs distintos, target _blank e rel/referrer corretos. Fixture820×1180 e375×812: novo acesso no cabeçalho, sem overflow horizontal; no telefone alvo40×44px. Clique abre nova página UniFi autenticada e apresenta quatro elementos de câmara; sem guardar capturas de vídeo. T2 permanece na página original, zero comandos Shelly e errosJS. Captura apenas da planta fictícia: review/botao-camaras-2.61.jpg.
+
+# Câmara Tapo na garagem — 2.62
+
+Adicionar símbolo SVG Tapo C100 no canto superior direito do estacionamento, com alvo44×44 e hover/foco azul. Clique abre popup identificado, fecha por X/exterior/Escape segundo comportamento global. Utilizador usa apenas app Tapo: a imagem ainda não está associada à Casa Leal; não inventar IP/URL/scheme, login, vídeo ou estados online/offline. Não acrescentar à vista UniFi de4 câmaras enquanto não estiver associada ao Protect. Sem pedidos, comandos, timers ou credenciais novos; símbolo não interfere com carro/carregador nem dispositivos Shelly.
+
+Verificação2.62:5 testes de pisos/fecho de diálogos e build Meteo aprovados. Fixture820×1180: símbolo visível acima do carro, popup identificado e fecho por X/exterior verificados.375×812: alvo44×44, popup totalmente contido e sem overflow horizontal. Zero comandos e errosJS. Apenas dispositivos fictícios; nenhuma ligação à câmara real. Prova review/tapo-garagem-2.62.jpg.
+
+# Remoção da Tapo da garagem — 2.63
+
+A pedido do utilizador, retirar símbolo, popup informativo, listeners e estilos exclusivos da Tapo C100 na garagem. Manter acesso Câmaras UniFi, carro, carregador, equipamentos, configurações e comunicação existentes. Nenhuma ligação à câmara foi configurada.
+
+# Lua realista MeteoNL — 2.64
+
+Substituir crescente genérico noturno (céu limpo/parcial) por textura lunar NASA local e terminador/fração SunCalc1.9.0 calculados na data atual ou hora da previsão. Sem polling, serviços ou alterações Shelly. Reutilizar relógio React; norte para cima ou inversão sul. Manter nuvens, restantes estados meteorológicos e filtro vermelho. Descrição acessível/title com fase e percentagem aproximadas; textura fixa não simula libração/inclinação local/eclipses. Créditos e licença distribuídos em meteo/assets/MOON-CREDITS.md.
+
+Verificação2.64:22 testes Meteo/lua aprovados, incluindo comparação com fases primárias USNO e área/lado iluminado nos extremos e quartos. Build aprovado. Navegador isolado: textura e fases nas horas, fundo preto/vermelho preservado e zero errosJS; nenhum equipamento real consultado ou acionado. Provas review/meteo-lua-2.64.jpg e review/meteo-lua-vermelha-2.64.jpg.
+
+# Nuvens e chuva sobre a lua — 2.65
+
+Manter Lua astronómica nos estados noturnos nublados/chuva/trovoada/neve/nevoeiro, desenhada antes das camadas de tempo. Nuvem deslocada para baixo deixa disco parcialmente visível; deslocamento suave e chuva em gotas com fases desencontradas. Sem animação no disco lunar. Animações respeitam preferências de movimento/efeitos e reduced-motion; filtro vermelho mantém-se. Sem consultas adicionais nem alterações Shelly.
+
+Verificação2.65:22 testes Meteo/lua e build aprovados. Pré-visualização isolada dos componentes reais com céu limpo, nuvens, chuva e trovoada: lua visível atrás, animações CSS ativas com fases de gotas distintas e zero errosJS. Sem dispositivos ou consultas Cloud. Prova review/meteo-lua-tempo-2.65.jpg.
+
+# Lua ilustrada com fases — 2.66
+
+Utilizador prefere coerência com animações: substituir textura NASA por desenho SVG com gradiente branco/azul, lado escuro discreto e ligeira pulsação de luminosidade. Preservar silhueta/fração/lado/data/hemisfério SunCalc e nuvens/chuva animadas à frente. Respeitar opção Animações, efeitos e reduced-motion. Sem pedidos de imagem lunar nem alterações Shelly.
+
+Verificação2.66: build e22 testes Meteo/lua aprovados; pré-visualização dos componentes reais confirma fases ilustradas coerentes com nuvens/chuva/trovoada, sem textura fotográfica. Prova review/meteo-lua-ilustrada-2.66.jpg.
+
+# Símbolos meteorológicos maiores — 2.67
+
+Aumentar desenho de todos os símbolos WeatherIcon25% em torno do centro do viewBox, conservando dimensões dos slots e grelha responsiva. Abrange lua, sol, nuvens, precipitação e previsões; grupos internos mantêm animações/fases. Sem alterações às restantes funcionalidades ou pedidos.
+
+Verificação2.67: build e diff check aprovados. Meteo isolada723×988: símbolos25% maiores, sem sobrepor temperatura/texto das previsões, sem errosJS. Nenhum dispositivo real. Prova review/meteo-simbolos-maiores-2.67.jpg.
+
+# Lua com aumento de50% — 2.68
+
+Duplicar aumento anterior25% para50% apenas na lua. Wrapper lunar-size1,2 sobre weather-symbol1,25 conserva fases, inversão de hemisfério e animações. Restantes símbolos mantêm125%.
+
+Verificação2.68: build e diff check aprovados; vista Meteo isolada723×988 confirma lua maior sem sobrepor leituras/previsões. Prova review/meteo-lua-maior-2.68.jpg.
+
+# Símbolos com espaço visual uniforme — 2.69
+
+Normalizar os limites do desenho completo de cada WeatherIcon para quadrado63unidades, centrado40,35 no viewBox80×70. Mesmo espaço visual da lua ampliada para sol/nuvens/chuva e combinações noturnas, incluindo extensão da precipitação e movimento. Conservar slots, grelhas, fases e animações; retirar escalas CSS cumulativas anteriores.
+
+Verificação2.69: build e diff check aprovados. Pré-visualização isolada dos componentes reais confirma lua/sol/nuvens/chuva com extensão visual equivalente e centrada. Prova review/meteo-simbolos-uniformes-2.69.jpg.

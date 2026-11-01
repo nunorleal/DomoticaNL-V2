@@ -61,3 +61,5 @@ body.basement-banner-dragging .basement-movable{cursor:grabbing}
 .floor-layers button:hover path,.floor-layers button:focus-visible path{fill:#89b7cdd9;stroke:#fff}
 .floor-layers button:focus-visible{outline:2px solid var(--plan-highlight-border);outline-offset:-2px}
 @media(prefers-reduced-motion:reduce){.floor-layers path{transition:none}}
+
+/* Garage camera marker; no inferred connection or power state. */

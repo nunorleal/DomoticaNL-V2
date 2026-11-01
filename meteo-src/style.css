@@ -1624,3 +1624,18 @@ html.red-night,html.red-night body{background:#000}
 .icon-button>svg{display:block;flex-shrink:0;margin:0;padding:0;pointer-events:none}
 
 .empty button.meteo-refresh-button{appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;justify-content:center;width:48px;min-width:48px;height:48px;padding:11px;border:1px solid #ffffff30;border-radius:50%;line-height:1;background:#ffffff0b}
+
+/* Night weather moves in front of the astronomical moon; the disc stays still. */
+[data-weather-motion="on"] .weather-night .weather-cloud{animation:lunar-cloud-drift 7s ease-in-out infinite}
+[data-weather-motion="on"] .weather-night .weather-rain path{animation:lunar-rain-fall 1.15s linear infinite}
+[data-weather-motion="on"] .weather-night .weather-rain path:nth-child(2){animation-delay:-.75s}
+[data-weather-motion="on"] .weather-night .weather-rain path:nth-child(3){animation-delay:-.35s}
+@keyframes lunar-cloud-drift{0%,100%{transform:translateX(-3px)}50%{transform:translateX(3px)}}
+@keyframes lunar-rain-fall{0%{transform:translate(1px,-3px);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:translate(-2px,4px);opacity:0}}
+@media(prefers-reduced-motion:reduce){.weather-night .weather-cloud,.weather-night .weather-rain path{animation:none!important}}
+
+/* Illustrated moon: gentle light breathing preserves the astronomical silhouette. */
+[data-weather-motion="on"] .lunar-illumination{animation:lunar-light-breathe 6s ease-in-out infinite}
+@keyframes lunar-light-breathe{0%,100%{opacity:.88}50%{opacity:1}}
+
+/* WeatherIcon normalises each complete drawing into the same square, including rain. */
