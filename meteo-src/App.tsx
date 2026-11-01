@@ -275,7 +275,7 @@ export default function App() {
         className={"night-veil " + (night ? "on" : "")}
         style={{ opacity: night ? prefs.dim / 100 : 0 }}
       />
-      <main data-night-palette={red ? "red" : night ? "color" : "day"} className={[night ? "bedside" : "", focus.expanded ? "focus-view" : ""].filter(Boolean).join(" ")} data-focus-view={focus.expanded ? "expanded" : "normal"}>
+      <main data-weather-motion={prefs.animations && prefs.effects > 0 ? "on" : "off"} data-night-palette={red ? "red" : night ? "color" : "day"} className={[night ? "bedside" : "", focus.expanded ? "focus-view" : ""].filter(Boolean).join(" ")} data-focus-view={focus.expanded ? "expanded" : "normal"}>
         <nav className="topbar">
           <div className="brand">
             <span className="wordmark">
@@ -380,6 +380,8 @@ export default function App() {
               <WeatherIcon
                 code={w.current.weather_code}
                 night={!w.current.is_day}
+                time={now}
+                latitude={prefs.city.latitude}
               />
               <div className="weather-reading">
                 <div className="temperature">
@@ -525,6 +527,8 @@ export default function App() {
                   <WeatherIcon
                     code={w!.hourly.weather_code[i]}
                     night={!w!.hourly.is_day[i]}
+                    time={t * 1000}
+                    latitude={prefs.city.latitude}
                   />
                   <strong>{tempText(w!.hourly.temperature_2m[i])}</strong>
                   <small
