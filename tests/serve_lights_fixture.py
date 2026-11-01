@@ -26,6 +26,26 @@ if(sensorTestParams.has('media')){cloud.mediaBindings=Object.fromEntries(['tv','
 if(sensorTestParams.has('office')){cloud.officeBindings=Object.fromEntries(['monitor','apollo','terramaster','blackdrive'].map((id,i)=>[id,{deviceId:'deadbeefee0'+i,channel:0}]));localStorage.setItem('casa-nl-shelly-cloud-v1',JSON.stringify(cloud));}
 if(sensorTestParams.has('windows')){cloud.windowBindings=Object.fromEntries(['master','bedroom2','living','kitchen'].map((id,i)=>[id,{deviceId:'XB9000000000000'+i,source:'blu',component:0}]));localStorage.setItem('casa-nl-shelly-cloud-v1',JSON.stringify(cloud));}
 if(sensorTestParams.has('windowday')){localStorage.setItem('casa-nl-environment-v1',JSON.stringify({mode:'day',city:null}));localStorage.setItem('casa-nl-realistic-v2',JSON.stringify(['master','bedroom2','living','kitchen','bath1','bath2','hall','balcony'].map((id,i)=>({id,light:false,...(i<4?{blind:100}:{})}))));}
+// Bedside UI proof: fake clock and fake master position, never a cover command.
+let fixtureMasterBlindPosition=50;
+if(sensorTestParams.has('meteoholdproof')){
+ localStorage.setItem('casa-nl-meteo-v1',JSON.stringify({night:'auto',nightPalette:'red',redSchedule:'night',start:'23:00',end:'07:00',nightUntilBlindOpen:true,focusSeconds:0}));
+ document.addEventListener('DOMContentLoaded',()=>{
+  const frame=document.querySelector('#meteo-view iframe');
+  frame.addEventListener('load',()=>{
+   const win=frame.contentWindow,doc=frame.contentDocument,clock=win.Date.now.bind(win.Date),start=clock();
+   let advance=sessionStorage.getItem('fixture-meteo-morning')==='true'?7200000:0;
+   win.Date.now=()=>Date.UTC(2026,10,1,6,59,30)+clock()-start+advance;
+   const panel=doc.createElement('aside');panel.id='fixture-meteo-hold';panel.style='position:fixed;bottom:8px;right:8px;z-index:2147483647;display:flex;gap:6px;padding:8px;background:#234557;color:white;border-radius:8px;font-size:12px;flex-wrap:wrap;max-width:95vw';
+   const add=(label,action)=>{const b=doc.createElement('button');b.type='button';b.textContent=label;b.style='padding:8px;background:#426d84;color:white;border-radius:6px';b.onclick=action;panel.append(b)};
+   add('TESTE · Simular manhã',()=>{advance=7200000;sessionStorage.setItem('fixture-meteo-morning','true')});
+   add('TESTE · Estore indisponível',()=>{fixtureOfflineMode='blinds';window.CasaShelly.refresh({quiet:true,force:true,priority:true})});
+   for(const position of [100,50])add('TESTE · Estore '+position+'%',()=>{fixtureMasterBlindPosition=position;fixtureOfflineMode='none';window.CasaShelly.refresh({quiet:true,force:true,priority:true})});
+   add('TESTE · Diagnóstico',()=>{let out=doc.getElementById('fixture-bedside-state');if(!out){out=doc.createElement('pre');out.id='fixture-bedside-state';panel.append(out)}out.textContent=JSON.stringify({held:JSON.parse(win.localStorage.getItem('casa-nl-meteo-bedside-v1')||'null'),blind:window.CasaMeteoBridge.bedroomBlind(),palette:doc.querySelector('main').dataset.nightPalette})});
+   add('TESTE · Ocultar',()=>panel.remove());doc.body.append(panel);
+  });
+ });
+}
 if(sensorTestParams.has('balcony')){cloud.sensorBindings={...cloud.sensorBindings,balcony:{deviceId:'deadbeefcc02',temperatureChannel:0,humidityChannel:0}};localStorage.setItem('casa-nl-shelly-cloud-v1',JSON.stringify(cloud));}
 if(sensorTestParams.has('kitchen')){cloud.kitchenBindings=Object.fromEntries(['dishwasher','washer','boiler'].map((id,i)=>[id,{deviceId:'deadbeefca0'+i,channel:0}]));localStorage.setItem('casa-nl-shelly-cloud-v1',JSON.stringify(cloud));}
 if(sensorTestParams.has('blutemps')){cloud.sensorBindings={...cloud.sensorBindings,balcony:{deviceId:'XB123456701',temperatureChannel:0,humidityChannel:0,type:'environment'},cellar:{deviceId:'XB123456702',temperatureChannel:0,humidityChannel:0,type:'environment'}};localStorage.setItem('casa-nl-shelly-cloud-v1',JSON.stringify(cloud));}
@@ -100,7 +120,7 @@ const native=window.fetch.bind(window),params=new URLSearchParams(location.searc
  if(params.has('wrongchannel'))channels.deadbeef2222=2;
  if(url.pathname==='/v2/devices/api/get')result=data.ids.map(id=>{
   if(id==='XB123456701'||id==='XB123456702')return {id:id.toLowerCase(),online:1,code:'MOCK-BLU-HT',status:{'temperature:0':{tC:id.endsWith('1')?18.4:17.6},'humidity:0':{rh:id.endsWith('1')?64:72},'devicepower:0':{battery:{percent:83}}}};
-  if(/^deadbeefcb0[0-3]$/.test(id)){const i=Number(id.slice(-1));return {id,online:1,status:{'cover:0':{state:'stopped',current_pos:params.has('lightjoinproof')&&i>=2?Math.max(0,Math.min(100,Number(params.get('lightjoinproof'))||0)):[80,50,100,25][i],pos_control:true,apower:0,aenergy:{total:1200},errors:[]}}}};
+  if(/^deadbeefcb0[0-3]$/.test(id)){const i=Number(id.slice(-1));return {id,online:1,status:{'cover:0':{state:'stopped',current_pos:params.has('meteoholdproof')&&i===0?fixtureMasterBlindPosition:params.has('lightjoinproof')&&i>=2?Math.max(0,Math.min(100,Number(params.get('lightjoinproof'))||0)):[80,50,100,25][i],pos_control:true,apower:0,aenergy:{total:1200},errors:[]}}}};
   if(/^deadbeefca0[0-2]$/.test(id))return {id,online:params.get('kitchen')==='offline'?0:1,status:{relays:[{ison:params.get('kitchen')==='unknown'?null:states[id]}],meters:[{power:states[id]?42.5:0,total:600000,is_valid:true}]}};
   if(/^deadbeefff0[0-4]$/.test(id))return {id,online:params.get('media')==='offline'?0:1,status:{relays:[{ison:params.get('media')==='unknown'?null:states[id]}],...(params.has('medianometer')?{}:{meters:[{power:params.has('mediainvalid')?null:params.has('tvregen')&&id==='deadbeefff00'?(Number(params.get('tvregen'))||6):params.has('mediastandby')&&['deadbeefff00','deadbeefff02'].includes(id)?0:states[id]?(id==='deadbeefff00'?85.5:23.5+Number(id.slice(-1))*8):0,total:720000+Number(id.slice(-1))*60000,is_valid:!params.has('mediainvalid')}]})}};
   if(id==='deadbeefdd01'||id==='e465b8b9c64c'){const m=params.get('gateway');return m==='missing'?null:{id,online:m==='offline'?0:1,status:m==='empty'?{}:{'bthomesensor:200':{value:84},'bthomesensor:201':{value:m==='open',last_updated_ts:Date.now()/1000},'bthomesensor:202':{value:28.2}}}}

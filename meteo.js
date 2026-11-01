@@ -27,8 +27,8 @@
    loading.hidden=false;loadTimer=setTimeout(()=>{loadMessage.textContent='Não foi possível carregar a MeteoNL. Volte à casa e atualize a página.'},15000);
    if(location.protocol==='file:'){
     const base=new URL('meteo/',document.baseURI).href.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-    frame.srcdoc=`<!doctype html><html lang="pt"><head><meta charset="utf-8"><base href="${base}"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MeteoNL · Casa NL</title><link rel="stylesheet" href="assets/app-2.59.css?v=2.59-red"></head><body><div id="root"></div><script src="assets/app-2.59.js?v=2.59-red"><\/script></body></html>`;
-   }else frame.src='meteo/index.html?v=2.59';
+    frame.srcdoc=`<!doctype html><html lang="pt"><head><meta charset="utf-8"><base href="${base}"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MeteoNL · Casa NL</title><link rel="stylesheet" href="assets/app-2.61.css?v=2.61-red"></head><body><div id="root"></div><script src="assets/app-2.61.js?v=2.61-red"><\/script></body></html>`;
+   }else frame.src='meteo/index.html?v=2.61';
    loaded=true;
   }
   window.CasaShelly?.ensureFresh('master');window.CasaShelly?.ensureFresh('balcony');frame.focus();
@@ -42,6 +42,7 @@
  function toggleLamp(){return CasaMeteoCore.lampAction(window.CasaShelly,settings)}
  window.CasaMeteoBridge={visible:()=>!host.hidden,preferences:CasaMeteoCore.preferences,ready,open,home:()=>home(),settings,toggleLamp,
   realTemperature:()=>CasaMeteoCore.realTemperature(window.CasaShelly?.sensorBinding('balcony'),window.CasaShelly?.sensorReading('balcony')),
+  bedroomBlind:()=>{const api=window.CasaShelly,row=api?.houseSnapshot().deviceRows.find(r=>r.kind==='cover'&&r.key==='master');return CasaMeteoCore.bedroomBlind(api?.binding('master'),api?.reading('master'),row?.status)},
   lamp:()=>window.CasaShelly?.lampSnapshot('master')||{configured:false,state:null,busy:false,ready:false,error:''},
   city:()=>window.CasaEnvironment?.getState().city,
   setCity:city=>window.CasaEnvironment?.selectCity(city)};
