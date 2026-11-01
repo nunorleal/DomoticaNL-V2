@@ -13,13 +13,22 @@
  function preferences(value){
   if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Preferências MeteoNL inválidas.');
   const choices={redSchedule:['night','custom'],nightPalette:['color','red'],night:['auto','on','off'],temp:['C','F'],wind:['kmh','ms','mph'],demo:['auto','sunny','cold','night','rain','storm','fog','sunset']};
-  const booleans=['seconds','clock12','animations','dynamic'];const result={};
+  const booleans=['seconds','clock12','animations','dynamic','nightUntilBlindOpen'];const result={};
   for(const [k,v]of Object.entries(value)){
    const valid=k==='focusSeconds'?[0,15,30,60,120,300].includes(v):booleans.includes(k)?typeof v==='boolean':choices[k]?choices[k].includes(v):['start','end','redStart','redEnd'].includes(k)?typeof v==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(v):['dim','effects','cold'].includes(k)?Number.isFinite(v)&&v>=(k==='cold'?-30:0)&&v<=(k==='cold'?40:100):false;
    if(!valid)throw Error('Preferências MeteoNL inválidas.');result[k]=v;
   }return result;
  }
  function redActive(p,minutes,night){if(p.nightPalette!=='red')return false;if(p.redSchedule!=='custom')return night;const a=(p.redStart||'23:00').split(':').map(Number),b=(p.redEnd||'07:00').split(':').map(Number),start=a[0]*60+a[1],end=b[0]*60+b[1];return start===end|| (start<end?minutes>=start&&minutes<end:minutes>=start||minutes<end)}
+ function bedroomBlind(binding,reading,health,now=Date.now()){
+  const configured=!!binding,ready=!!(configured&&health==='ready'&&reading?.online&&!reading.error&&!reading.missing&&!reading.errors?.length&&reading.hasCover&&reading.calibrated===true&&Number.isFinite(reading.position)&&reading.position>=0&&reading.position<=100&&Number.isFinite(reading.fetchedAt)&&now>=reading.fetchedAt&&now-reading.fetchedAt<=45000);
+  return {configured,ready,open:ready&&reading.position===100,position:ready?reading.position:null};
+ }
+ function bedsideMode(previous,{enabled=false,night=false,red=false,blindOpen=false}){
+  let holdNight=enabled&&!!(previous?.holdNight||night&&!previous?.baseNight),holdRed=enabled&&!!(previous?.holdRed||red&&!previous?.baseRed);
+  if(blindOpen===true){holdNight=false;holdRed=false}
+  return {baseNight:night,baseRed:red,holdNight,holdRed,night:night||red||holdNight||holdRed,red:red||holdRed};
+ }
  function realTemperature(binding,reading,now=Date.now()){const configured=!!binding,value=reading?.temperature,temperature=configured&&typeof value==='number'&&Number.isFinite(value)&&value>=-100&&value<=150?value:null,fresh=temperature!==null&&reading.online&&!reading.error&&Number.isFinite(reading.fetchedAt)&&now>=reading.fetchedAt&&now-reading.fetchedAt<=120000;return {configured,temperature,status:!configured?'unconfigured':!reading?'pending':temperature===null?'unavailable':fresh?'current':'last'}}
  async function lampAction(s,settings){
   if(!s)return;
@@ -29,5 +38,5 @@
   if(!lamp.ready||!lamp.state){await s.refresh({quiet:true});return}
   await s.commandLight('master',!lamp.state.on);
  }
- return {idle,preferences,lampAction,screensaver,realTemperature,redActive};
+ return {idle,preferences,lampAction,screensaver,realTemperature,redActive,bedroomBlind,bedsideMode};
 });

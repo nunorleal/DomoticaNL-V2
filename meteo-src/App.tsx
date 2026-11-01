@@ -1,5 +1,6 @@
 import { bridge, openCasaSettings } from "./bridge";
 import { RealTemperature } from "./RealTemperature";
+import { useBedsideMode } from "./useBedsideMode";
 import { useShellyLamp } from "./useShellyLamp";
 import { assetUrl } from "./assets";
 import { APP_VERSION } from "./app-info";
@@ -199,8 +200,8 @@ export default function App() {
     prefs.night === "on" ||
     (prefs.night === "auto" &&
       isNightSchedule(localMinutes, prefs.start, prefs.end));
-  const red = redActive(prefs, localMinutes, scheduledNight);
-  const night = scheduledNight || red;
+  const scheduledRed = redActive(prefs, localMinutes, scheduledNight);
+  const { red, night } = useBedsideMode(prefs, scheduledNight, scheduledRed, tz);
   useEffect(() => {
     document.documentElement.classList.toggle("red-night", red);
     return () => document.documentElement.classList.remove("red-night");

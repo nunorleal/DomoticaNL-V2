@@ -33,7 +33,7 @@ test('unknown, stale or busy lamps never actuate; missing binding opens central 
 });
 test('Meteo preferences roundtrip with Casa backup; invalid imports preserve prior data',()=>{
  const B=require('../backup-core.js'),ids=['master','bedroom2','living','kitchen','bath1','bath2','hall','balcony'];
- const data={'casa-nl-realistic-v2':ids.map((id,i)=>({id,light:false,...(i<4?{blind:0}:{})})),'casa-nl-room-layout-v1':Object.fromEntries(ids.map(id=>[id,{name:null,lx:50,ly:50}])),'casa-nl-show-banners':true,'casa-nl-environment-v1':{mode:'auto',city:null},'casa-nl-meteo-v1':{seconds:true,temp:'F',night:'auto',focusSeconds:60,nightPalette:'red',redSchedule:'custom',redStart:'22:30',redEnd:'07:15'},'casa-nl-screensaver-v1':{seconds:300}};
+ const data={'casa-nl-realistic-v2':ids.map((id,i)=>({id,light:false,...(i<4?{blind:0}:{})})),'casa-nl-room-layout-v1':Object.fromEntries(ids.map(id=>[id,{name:null,lx:50,ly:50}])),'casa-nl-show-banners':true,'casa-nl-environment-v1':{mode:'auto',city:null},'casa-nl-meteo-v1':{seconds:true,temp:'F',night:'auto',focusSeconds:60,nightUntilBlindOpen:true,nightPalette:'red',redSchedule:'custom',redStart:'22:30',redEnd:'07:15'},'casa-nl-screensaver-v1':{seconds:300}};
  const m=new Map(Object.entries(data).map(([k,v])=>[k,JSON.stringify(v)])),storage={get length(){return m.size},key:i=>[...m.keys()][i],getItem:k=>m.get(k),setItem:(k,v)=>m.set(k,v),removeItem:k=>m.delete(k)};
  const backup=B.parse(JSON.stringify(B.create(storage,'1.33')));B.restore(storage,backup);assert.deepEqual(JSON.parse(storage.getItem('casa-nl-meteo-v1')),data['casa-nl-meteo-v1']);
  assert.deepEqual(JSON.parse(storage.getItem('casa-nl-screensaver-v1')),{seconds:300});
@@ -64,3 +64,39 @@ test('night palette accepts red or existing color and rejects malformed preferen
 
 test('red hours handle midnight, daytime, boundaries and legacy night activation',()=>{const {redActive}=require('../meteo-core.js'),p={nightPalette:'red',redSchedule:'custom',redStart:'22:30',redEnd:'07:15'};for(const n of [0,434,1350,1439])assert.equal(redActive(p,n,false),true);for(const n of [435,900,1349])assert.equal(redActive(p,n,true),false);assert.equal(redActive({...p,redStart:'09:00',redEnd:'11:00'},600,false),true);assert.equal(redActive({...p,redStart:'09:00',redEnd:'11:00'},660,true),false);assert.equal(redActive({...p,redStart:'09:00',redEnd:'09:00'},800,false),true);assert.equal(redActive({nightPalette:'red'},800,true),true);assert.equal(redActive({nightPalette:'red'},800,false),false);assert.equal(redActive({...p,nightPalette:'color'},0,true),false)});
 test('red schedule preferences validate before storage or import',()=>{const p={redSchedule:'custom',redStart:'22:30',redEnd:'07:15'};assert.deepEqual(preferences(p),p);for(const bad of [{redSchedule:'on'},{redStart:'24:00'},{redEnd:'07:60'},{redStart:12}])assert.throws(()=>preferences(bad))});
+
+
+test('bedside blind option is optional, boolean and survives validated preferences',()=>{
+ for(const nightUntilBlindOpen of [true,false])assert.deepEqual(preferences({nightUntilBlindOpen}),{nightUntilBlindOpen});
+ for(const v of [1,'true',null,{},[]])assert.throws(()=>preferences({nightUntilBlindOpen:v}));assert.deepEqual(preferences({}),{});
+});
+test('only a current, confirmed calibrated bedroom blind at exactly 100% releases bedside',()=>{
+ const {bedroomBlind}=require('../meteo-core.js'),b={deviceId:'deadbeef0001'},r={online:true,hasCover:true,calibrated:true,position:100,fetchedAt:1000,errors:[]};
+ assert.equal(bedroomBlind(b,r,'ready',1001).open,true);
+ for(const position of [0,50,99,99.9,null,NaN,101])assert.equal(bedroomBlind(b,{...r,position},'ready',1001).open,false);
+ for(const patch of [{online:false},{calibrated:false},{hasCover:false},{error:true},{missing:true},{errors:['fault']},{fetchedAt:1002},{fetchedAt:-50000}])assert.equal(bedroomBlind(b,{...r,...patch},'ready',1001).open,false);
+ for(const health of ['pending','stale','error','offline','unavailable',undefined])assert.equal(bedroomBlind(b,r,health,1001).open,false);
+ assert.equal(bedroomBlind(null,r,'ready',1001).open,false);
+});
+test('red/night survive the scheduled end, reload and unknown readings until full opening',()=>{
+ const {bedsideMode}=require('../meteo-core.js'),tick=(p,night,red,blindOpen=false)=>bedsideMode(p,{enabled:true,night,red,blindOpen});
+ let s=tick(null,true,true);assert.equal(s.night,true);assert.equal(s.red,true);
+ s=tick(JSON.parse(JSON.stringify(s)),false,false);assert.equal(s.night,true);assert.equal(s.red,true);
+ s=tick(s,false,false);assert.equal(s.red,true);
+ s=tick(s,false,false,true);assert.equal(s.night,false);assert.equal(s.red,false);
+ s=tick(s,false,false);assert.equal(s.night,false);
+ s=tick(s,true,true);assert.equal(s.red,true); // next scheduled period arms again
+});
+test('independent red and night schedules retain their own presentation without inventing red',()=>{
+ const {bedsideMode}=require('../meteo-core.js');
+ let color=bedsideMode(null,{enabled:true,night:true,red:false});color=bedsideMode(color,{enabled:true});assert.equal(color.night,true);assert.equal(color.red,false);
+ let red=bedsideMode(null,{enabled:true,night:false,red:true});red=bedsideMode(red,{enabled:true});assert.equal(red.night,true);assert.equal(red.red,true);
+ assert.equal(bedsideMode(red,{enabled:false}).night,false);
+});
+test('opening during the schedule releases its hold; later closing does not rearm that period',()=>{
+ const {bedsideMode}=require('../meteo-core.js');let s=bedsideMode(null,{enabled:true,night:true});
+ s=bedsideMode(s,{enabled:true,night:true,blindOpen:true});assert.equal(s.night,true);assert.equal(s.holdNight,false);
+ s=bedsideMode(s,{enabled:true,night:true,blindOpen:false});assert.equal(s.holdNight,false);
+ s=bedsideMode(s,{enabled:true,night:false});assert.equal(s.night,false);
+ assert.equal(bedsideMode(null,{enabled:true,night:false}).night,false); // enabling in daylight does not create a night period
+});

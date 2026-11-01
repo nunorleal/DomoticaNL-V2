@@ -1,5 +1,5 @@
 import { install as installDismiss } from "../dialog-dismiss.js";
-import { openCasaSettings } from "./bridge";
+import { bridge, openCasaSettings } from "./bridge";
 import { fetchJson } from "./network";
 import { useEffect, useRef, useState } from "react";
 import { X, Search, MapPin, Check } from "lucide-react";
@@ -14,6 +14,7 @@ export function Settings({
   onChange: (s: Prefs) => void;
   onClose: () => void;
 }) {
+  const blind = bridge?.bedroomBlind?.();
   const [query, setQuery] = useState(""),
     [results, setResults] = useState<City[]>([]),
     [searchState, setSearchState] = useState("");
@@ -262,6 +263,12 @@ export function Settings({
               />
             </label>
           </div>
+          <label>
+            Manter modo noturno até o estore do quarto abrir a 100%
+            <input type="checkbox" checked={value.nightUntilBlindOpen} onChange={e => set("nightUntilBlindOpen", e.target.checked)} />
+          </label>
+          {value.nightUntilBlindOpen && <p role="status">{!blind?.configured ? "Associe o estore do quarto principal nas definições da Casa NL para permitir a saída automática." : !blind.ready ? "A aguardar uma leitura atual do estore; dados antigos ou indisponíveis não libertam o modo." : `Estore do quarto principal: ${blind.position}%.`}</p>}
+          <p>Aplica-se ao vermelho e ao modo noturno. O horário ativa o modo; a saída espera uma leitura atual do estore do quarto principal totalmente aberto. Depois de sair, fechar o estore não volta a ativar o modo.</p>
           <label>
             Escurecimento · {value.dim}%
             <input
