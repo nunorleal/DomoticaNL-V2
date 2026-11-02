@@ -12,5 +12,6 @@
  function journey(from,to){const path=route(from,to).map(id=>({...nodes[id],id})),length=path.slice(1).reduce((n,b,i)=>n+distance(path[i],b),0);return {path,length,duration:Math.min(26000,Math.max(9000,length/35*1000))}}
  function sample(j,elapsed){const progress=Math.min(1,Math.max(0,elapsed/j.duration));let left=j.length*progress;for(let i=1;i<j.path.length;i++){const a=j.path[i-1],b=j.path[i],d=distance(a,b);if(left<=d||i===j.path.length-1){const t=d?Math.min(1,left/d):1;return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,angle:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI+90,room:t<.5?a.room:b.room,walking:progress<1}}left-=d}return {...j.path[0],angle:0,walking:false}}
  function next(room,random=Math.random){const options=neighbours[room];return options[Math.min(options.length-1,Math.max(0,Math.floor(random()*options.length)))]}
- return {CYCLE,nodes,edges,anchors,neighbours,route,journey,sample,next};
+ function shade(opacity,electric=0){const dark=Math.max(0,Math.min(1,Number.isFinite(opacity)?opacity/.86:1)),lit=Math.max(0,Math.min(1,Number.isFinite(electric)?electric:0));return 1-.78*dark*(1-lit)}
+ return {CYCLE,nodes,edges,anchors,neighbours,route,journey,sample,next,shade};
 });

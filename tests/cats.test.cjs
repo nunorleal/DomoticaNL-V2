@@ -4,3 +4,8 @@ test('routes and cat footprint avoid furniture and solid interior walls',()=>{co
 [522,170,724,408],[325,169,418,367],[190,470,848,490],[219,593,480,613],[399,613,418,784],[475,613,480,784],[193,784,848,806],[250,965,484,1088],[554,894,738,1058],[249,1155,748,1220],[555,510,735,565]];for(const [a,b]of C.edges){const j=C.journey(a,b);for(let t=0;t<=j.duration;t+=40){const s=C.sample(j,t);for(const [x1,y1,x2,y2]of blocked)assert(!(s.x>x1-12&&s.x<x2+12&&s.y>y1-12&&s.y<y2+12),`${a}→${b} at ${s.x},${s.y}`);assert(s.x>=130&&s.x<=800&&s.y>=400&&s.y<=1130)}}});
 test('random choices stay in connected rooms; invalid waypoints fail closed',()=>{for(const room of Object.keys(C.anchors))for(const n of [0,.5,.999,1])assert(C.neighbours[room].includes(C.next(room,()=>n)));assert.throws(()=>C.route('balcony','master'));assert.throws(()=>C.route('basement','hall'))});
 test('journey sampling clamps negative and late times without overshooting',()=>{const j=C.journey('hall','master');assert.equal(C.sample(j,-500).x,C.nodes.hall.x);assert.equal(C.sample(j,999999).x,C.nodes.master.x);assert.equal(C.sample(j,999999).walking,false)});
+
+test('cat brightness follows room darkness and electric light, including closed blinds by day',()=>{
+ assert.equal(C.shade(0,0),1);assert.ok(Math.abs(C.shade(.86,0)-.22)<1e-8);assert.equal(C.shade(.86,1),1);
+ assert.ok(C.shade(.4,0)<C.shade(.2,0));assert.ok(C.shade(.86,.6)>C.shade(.86,0));assert.equal(C.shade(-1,0),1);assert.ok(C.shade(2,0)>=.21);assert.ok(Number.isFinite(C.shade(undefined,undefined)));
+});

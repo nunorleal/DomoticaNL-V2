@@ -866,3 +866,40 @@ Verificação:249 testes locais aprovados, incluindo rotas/obstáculos/amostrage
 # Check dos gatos na lista comum — 2.78
 
 Vasco e Zeca na planta usa settings-row/row-check igual aos restantes checks, imediatamente após Mostrar ícones da TV e secretária. Retirar estado textual Visíveis/Ocultos e posição isolada no ambiente. Preservar preferência, animação, percursos e backups. Utilizador aprovou replicação adaptada na Casa Condados. MeteoNL mantém2.76. Verificação:249 testes aprovados e fixture confirma caixa28px, estado marcado/desmarcado e ocultação real da camada; captura review/vasco-zeca-check-2.78.jpg.
+
+# Barras discretas dos estores — 2.79
+
+Replicar leitura visual da Casa Condados só na Domótica NL: barras verticais centradas nas quatro janelas (geometria blindWindowZones), cheias com0% aberto e vazias com100%; preenchimento1-position/100. Novo blind-bar-core.js valida posição numérica0..100; associado sem leitura válida fica desconhecido e nunca usa demonstração guardada. Posição offline/erro/antiga120s fica âmbar/tracejada como última leitura, sem promover estado real. Demonstração só para estores sem associação.
+
+Usar SVG room-hit-zones já existente, pointer-events:none; preservar cliques/hover das janelas, banners, percentagens, slider e comandos. drawPlan e updatePositions atualizam barras a partir de CasaShelly.reading existente, sem consultas, timers, IDs, configurações ou comandos adicionais. Meteo mantém2.76. Verificação:252 testes aprovados, limites0/25/50/100, ausente/inválido/offline/antigo; fixture só fictícia confirma80/50/100/25 correspondem20/50/0/75% cheios, zero comandos. Captura review/estores-barras-2.79.jpg.
+
+# Estores visíveis e caixilharia alinhada — 2.80
+
+Corrigir a apresentação discreta demais de2.79: largura18unidades, preenchimento95% e padrão local de lâminas para distinguir fecho de vidro. Corrigir alturas das janelas Gui/sala/cozinha para283/213/133 e manter principal285, sem pintar sobre encontros de paredes. Mesma regra0% aberto cheio/100% vazio e qualidade last/unknown mantidas.
+
+CasaWindows.patch inclui agora frameRects com recorte canónico da planta diurna x835..861, nos mesmos limites em day/night/electric; nos últimos dois muda só filtro de luminosidade/cor. Não misturar caixilharias desalinhadas dos renders gerados. Recorte independente dos inserts das folhas/contactos, que mantêm regras existentes; paredes brancas acima. Não editar imagens base, dispositivos, IDs ou transporte. Correção específica T2: Casa Condados usa outra arquitetura/render. Meteo2.76 preservada.
+
+Verificação:253 testes aprovados, incluindo identidade da geometria e fonte canónica dos três modos. Fixture fictícia confirma lâminas visíveis em0/50/80%, modo noturno e frames com x/y/w/h idênticos, zero errosJS e zero comandos. Provas review/estores-janelas-dia-2.80.jpg e review/estores-janelas-noite-2.80.jpg.
+
+# Vista de consumo por divisão — 2.80
+
+Botão raio entre contador e pisos ativa modo temporário de leitura, aria-pressed e Escape. Apenas somar medições atuais online/válidas das saídas associadas à divisão, deduplicadas por identidade; excluir contador geral, sensores, demonstração, histórico e totalMeter EV. Incompletos mostram +? e Medição parcial; ausentes não são zero. Ocultar outros banners por CSS, fechar/bloquear popups e adiar protetor Meteo enquanto ativo; preferências/posições e campos não são reescritos. Desativar restaura a apresentação anterior. Sem comandos, novas consultas, credenciais, persistência do modo ou mistura de associações entre casas. Addon independente room-power-core/view/adapter/css, antes de Meteo.
+
+# Eixo comum da informação meteorológica — MeteoNL2.77
+
+Corrigir o alinhamento que text-align sozinho não resolve na temperatura display:flex: weather-reading passa a coluna flex com align-items:center; temperatura usa justify-content:center. Centrar temperatura principal, Real, condição, sensação e máximas/mínimas entre si; horários solares permanecem no eixo relógio/ecrã. Mesma alteração nas duas MeteoNL, incluindo foco e modo vermelho; sem alterar pontes, sensores, animações ou horários. Builds2.77 de ambas aprovados e referências HTTP/srcdoc/package sincronizadas. Na fixture isolada22°C/Real20,7°C, centros temperatura/condição/Real738,99px e relógio/solar640px em ambas. Prova review/meteo-eixo-centrado-2.77.jpg. Sem dispositivos reais.
+
+Verificação da vista: 259 testes da aplicação aprovados; seis testes específicos repetidos após ajuste final. Fixture fictícia confirma banners por piso, botão entre contador e layers, bloqueio de popups e reposição por clique/Escape; telefone375px verificado. Nenhum comando real nem consulta adicional por esta vista. Prova review/room-power.png.
+
+# Gatos e iluminação local — 2.82
+
+Cada gato continua único. Condados distribui Vasco/Zeca independentemente pelos pisos3/4: juntos num piso ou separados; mantém atribuição entre visitas rápidas e pode redistribuir ao entrar num piso após2–5min, sem teletransporte em cena. Não acrescentar gatos na garagem nem percursos de escadas. Escurecimento usa a mesma opacidade noturna/diurna e mistura elétrica da planta, na zona que contém a posição atual; transição suave existente, também com estores fechados de dia. Atualizações da planta renovam o brilho mesmo em movimento reduzido. T2 aplica só a iluminação, preservando o único piso habitável dos gatos. Sem rede, comandos ou alterações de dispositivos.
+
+Verificação: testes fictícios de distribuição/unicidade, percursos sem obstáculos e brilho da iluminação aprovados. Fixture Condados confirma Vasco/Zeca no mesmo piso, outro piso vazio e regresso sem duplicados; brilho diurno diferente em zonas claras/escuras e redução ao selecionar noite. T2 preserva os dois gatos no piso habitável com nova leitura contínua da iluminação. Nenhum equipamento real acionado.
+
+# Lista de consumos e escala — 2.83
+
+Banners da vista raio mostram exclusivamente W/kW e indicação +? quando parcial; nome/qualidade só em título e nome acessível. Agora são botões: popup exclusivo room-power-dialog é a exceção permitida ao bloqueio dos restantes diálogos nesta vista. Lista apenas medidores positivos, atuais e deduplicados da divisão; reter linhas já apresentadas até fechar para voltar a ligar depois de0W, sem inventar leituras antigas. Atualização da lista lê cache, sem novo transporte ou consultas. Controlos usam on/off booleano reportado e APIs individuais existentes, guardas de frescura/configuração/pendente/fila; sem inferir alimentação dos watts, otimismo, retry ou comandos ao abrir. Estores, sensores de disparo e medidores sem atuação continuam só leitura. Escape fecha primeiro a lista; novo Escape sai da vista. Slider escala a dimensão visível usada na contenção dos banners.
+T2 acrescenta ajuste Tamanho dos banners de consumo nas Definições,60..160%, em casa-nl-room-power-scale-v1, validado e incluído no backup genérico. Não copiar associações da outra casa. Consumos de washer/boiler pertencem à varanda.
+
+Verificação: 262 testes aprovados. Fixtures fictícias confirmam abrir por toque/teclado, desligar/confirmar0W/manter linha/voltar a ligar, escala100→160%, popup compacto em375px e bloqueio de outros popups. Sem equipamentos reais. Prova review/domotica-consumos-lista-2.83.png.

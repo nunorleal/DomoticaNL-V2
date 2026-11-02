@@ -10,7 +10,8 @@
  let savedDialogs=[],lastFocus=null,loaded=false;
  const screensaverKey='casa-nl-screensaver-v1';let screensaver={seconds:30};
  try{screensaver=CasaMeteoCore.screensaver(JSON.parse(localStorage.getItem(screensaverKey)))}catch{}
- const idle=CasaMeteoCore.idle({delay:screensaver.seconds*1000,onIdle:open,blocked:()=>document.hidden||!!window.CasaShelly?.isBusy()});
+ const idle=CasaMeteoCore.idle({delay:screensaver.seconds*1000,onIdle:open,blocked:()=>document.body.classList.contains('room-power-mode')||document.hidden||!!window.CasaShelly?.isBusy()});
+ window.addEventListener('roompowerviewchange',()=>idle.activity());
  const screenSelect=document.getElementById('screensaver-delay'),screenStatus=document.getElementById('screensaver-status');
  function screenMessage(){screenStatus.textContent=screensaver.seconds===0?'Desativado. Pode continuar a abrir a MeteoNL pelo símbolo da meteorologia.':`A MeteoNL abre após ${screenSelect.selectedOptions[0].textContent.toLowerCase()} sem interação. Guardado automaticamente.`}
  screenSelect.value=String(screensaver.seconds);screenMessage();
@@ -27,8 +28,8 @@
    loading.hidden=false;loadTimer=setTimeout(()=>{loadMessage.textContent='Não foi possível carregar a MeteoNL. Volte à casa e atualize a página.'},15000);
    if(location.protocol==='file:'){
     const base=new URL('meteo/',document.baseURI).href.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-    frame.srcdoc=`<!doctype html><html lang="pt"><head><meta charset="utf-8"><base href="${base}"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MeteoNL · Casa NL</title><link rel="stylesheet" href="assets/app-2.76.css?v=2.76-red"></head><body><div id="root"></div><script src="assets/app-2.76.js?v=2.76-red"><\/script></body></html>`;
-   }else frame.src='meteo/index.html?v=2.76';
+    frame.srcdoc=`<!doctype html><html lang="pt"><head><meta charset="utf-8"><base href="${base}"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MeteoNL · Casa NL</title><link rel="stylesheet" href="assets/app-2.77.css?v=2.77-red"></head><body><div id="root"></div><script src="assets/app-2.77.js?v=2.77-red"><\/script></body></html>`;
+   }else frame.src='meteo/index.html?v=2.77';
    loaded=true;
   }
   window.CasaShelly?.ensureFresh('master');window.CasaShelly?.ensureFresh('balcony');frame.focus();

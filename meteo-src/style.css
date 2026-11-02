@@ -1665,6 +1665,7 @@ html.red-night,html.red-night body{background:#000}
 .red-night .hero .current-summary>.current-weather-symbol>.weather-icon{filter:grayscale(1) brightness(1.4)}
 
 /* Centre readings beneath the forecast temperature; solar times stay on the clock axis. */
-.hero .weather-reading{text-align:center}
+.hero .weather-reading{display:flex;flex-direction:column;align-items:center;text-align:center}
+.hero .weather-reading .temperature{justify-content:center}
 .hero .weather-reading .real-temperature{justify-content:center}
 .hero .sun-times{justify-content:center;margin-left:auto;margin-right:auto}
