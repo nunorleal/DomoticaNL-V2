@@ -9,7 +9,8 @@
   const current=node.getAttribute('aria-label'),previous=aria.get(node),base=previous&&current===previous.full?previous.base:current;
   if(d.offline&&base){const full=base+' · '+d.text;if(current!==full)node.setAttribute('aria-label',full);aria.set(node,{base,full})}
   else if(!d.offline){if(previous&&current===previous.full&&current!==previous.base)node.setAttribute('aria-label',previous.base||'');aria.delete(node)}
-  if(options.contourOnly)return;
+  node.classList.toggle('offline-symbol-alert',d.offline&&options.symbolOnly===true);
+  if(options.contourOnly){if(options.symbolOnly)for(const badge of [...node.children].filter(e=>e.classList.contains('shelly-offline-mark')))badge.remove();return}
   let badge=[...node.children].find(e=>e.classList.contains('shelly-offline-mark'));
   if(d.offline){
    if(!badge){badge=document.createElement('span');badge.className='shelly-offline-mark'+(options.plan?' offline-plan-mark':'');badge.id='shelly-offline-'+(++serial);badge.innerHTML=wifi+'<span class="offline-text">Offline</span>';node.append(badge)}
@@ -62,7 +63,7 @@
   for(const id of ['master','bedroom2','living','kitchen','bath1','bath2','hall','balcony']){
    const values=group(pick('sensor',id),pick('light',id));batch('.room-pin[data-room="'+id+'"]',values);
   }
-  for(const id of CasaMediaCore.KITCHEN_IDS)single('#open-kitchen-'+id,'kitchen',id);
+  for(const id of CasaMediaCore.KITCHEN_IDS)mark($('open-kitchen-'+id),pick('kitchen',id),{contourOnly:true,symbolOnly:true});
   const slotKinds=['media','office'];
   for(const kind of slotKinds){
    const deviceAttr='data-'+kind+'-device',dotAttr='data-'+kind+'-dot',hitAttr='data-'+kind+'-hit',scope='#'+kind+'-dialog';

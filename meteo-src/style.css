@@ -1639,3 +1639,32 @@ html.red-night,html.red-night body{background:#000}
 @keyframes lunar-light-breathe{0%,100%{opacity:.88}50%{opacity:1}}
 
 /* WeatherIcon normalises each complete drawing into the same square, including rain. */
+
+/* Morning action stays above the focus-view dismissal overlay and respects safe areas. */
+.morning-blind-visible .brand{visibility:hidden}
+.morning-blind-control{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:40;width:clamp(142px,20vw,190px);color:#fff}
+.morning-blind-button{width:100%;min-height:86px;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 12px;background:#000;border:2px solid currentColor;border-radius:20px;color:inherit;cursor:pointer;touch-action:manipulation}
+.morning-blind-button span{display:flex;flex-direction:column;gap:5px;text-align:left}
+.morning-blind-button strong{font-size:16px}.morning-blind-button small{font-size:12px}
+.morning-blind-button:focus-visible{outline:3px solid currentColor;outline-offset:4px}
+.morning-blind-button:disabled{opacity:.55;cursor:default}
+.morning-blind-control p{font-size:12px;line-height:1.4;background:#000;padding:8px;border-radius:8px}
+
+@media(max-width:480px){
+ .morning-blind-control{width:154px}
+ .morning-blind-button{gap:6px;padding:12px 10px}
+ .morning-blind-button svg{width:24px;flex-shrink:0}
+ .morning-blind-button strong{font-size:14px;white-space:nowrap}
+ .morning-blind-button small{font-size:11px;white-space:nowrap}
+ .morning-blind-visible .hero{padding-top:58px}
+}
+
+/* Current artwork fills the temperature-to-high/low block; forecasts keep their sizes. */
+.hero .current-summary>.current-weather-symbol{width:min(var(--weather-reading-height,160px),42vw);height:var(--weather-reading-height,160px);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.hero .current-summary>.current-weather-symbol>.weather-icon{width:100%;height:100%;filter:drop-shadow(0 5px 12px #09253f30)}
+.red-night .hero .current-summary>.current-weather-symbol>.weather-icon{filter:grayscale(1) brightness(1.4)}
+
+/* Centre readings beneath the forecast temperature; solar times stay on the clock axis. */
+.hero .weather-reading{text-align:center}
+.hero .weather-reading .real-temperature{justify-content:center}
+.hero .sun-times{justify-content:center;margin-left:auto;margin-right:auto}

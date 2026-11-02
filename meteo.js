@@ -27,8 +27,8 @@
    loading.hidden=false;loadTimer=setTimeout(()=>{loadMessage.textContent='Não foi possível carregar a MeteoNL. Volte à casa e atualize a página.'},15000);
    if(location.protocol==='file:'){
     const base=new URL('meteo/',document.baseURI).href.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-    frame.srcdoc=`<!doctype html><html lang="pt"><head><meta charset="utf-8"><base href="${base}"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MeteoNL · Casa NL</title><link rel="stylesheet" href="assets/app-2.69.css?v=2.69-red"></head><body><div id="root"></div><script src="assets/app-2.69.js?v=2.69-red"><\/script></body></html>`;
-   }else frame.src='meteo/index.html?v=2.69';
+    frame.srcdoc=`<!doctype html><html lang="pt"><head><meta charset="utf-8"><base href="${base}"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MeteoNL · Casa NL</title><link rel="stylesheet" href="assets/app-2.76.css?v=2.76-red"></head><body><div id="root"></div><script src="assets/app-2.76.js?v=2.76-red"><\/script></body></html>`;
+   }else frame.src='meteo/index.html?v=2.76';
    loaded=true;
   }
   window.CasaShelly?.ensureFresh('master');window.CasaShelly?.ensureFresh('balcony');frame.focus();
@@ -40,9 +40,14 @@
  }
  function settings(){home(false);document.getElementById('open-shelly').click()}
  function toggleLamp(){return CasaMeteoCore.lampAction(window.CasaShelly,settings)}
- window.CasaMeteoBridge={visible:()=>!host.hidden,preferences:CasaMeteoCore.preferences,ready,open,home:()=>home(),settings,toggleLamp,
+ async function openMorningBlind({sunrise,sunset}={}){
+  const context=()=>({red:!host.hidden&&!document.hidden&&frame.contentDocument?.querySelector('main')?.dataset.nightPalette==='red',now:Date.now(),sunrise,sunset});
+  return CasaMeteoCore.morningBlindAction(window.CasaShelly,()=>window.CasaMeteoBridge.bedroomBlind(),context);
+ }
+ window.CasaMeteoBridge={visible:()=>!host.hidden,preferences:CasaMeteoCore.preferences,ready,open,home:()=>home(),settings,toggleLamp,openMorningBlind,
   realTemperature:()=>CasaMeteoCore.realTemperature(window.CasaShelly?.sensorBinding('balcony'),window.CasaShelly?.sensorReading('balcony')),
   bedroomBlind:()=>{const api=window.CasaShelly,row=api?.houseSnapshot().deviceRows.find(r=>r.kind==='cover'&&r.key==='master');return CasaMeteoCore.bedroomBlind(api?.binding('master'),api?.reading('master'),row?.status)},
+  blindBusy:()=>!!window.CasaShelly?.isBusy(),
   lamp:()=>window.CasaShelly?.lampSnapshot('master')||{configured:false,state:null,busy:false,ready:false,error:''},
   city:()=>window.CasaEnvironment?.getState().city,
   setCity:city=>window.CasaEnvironment?.selectCity(city)};

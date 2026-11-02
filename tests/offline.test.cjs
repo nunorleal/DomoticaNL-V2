@@ -130,3 +130,12 @@ test('contour-only targets do not get extra badges; contact overlays disappear o
  h.mark(contact,offlineRows(),{plan:true,hiddenUnlessOffline:true});assert.equal(contact.hidden,false);
  h.mark(contact,readyRows(),{plan:true,hiddenUnlessOffline:true});assert.equal(contact.hidden,true);assert.equal(contact.children.length,0);
 });
+
+test('badge-less appliance switches to its own offline symbol and clears for non-offline states',()=>{
+ const h=rendererFixture(),node=new FakeElement();let clicks=0;node.addEventListener('click',()=>clicks++);
+ h.mark(node,offlineRows('Máquina','kitchen','washer'),{plan:true});assert.equal(badgeChildren(node).length,1);
+ h.mark(node,offlineRows('Máquina','kitchen','washer'),{contourOnly:true,symbolOnly:true});
+ assert.equal(badgeChildren(node).length,0);assert.equal(node.classList.contains('offline-symbol-alert'),true);
+ for(const status of ['ready','pending','stale','error','unavailable']){h.mark(node,[make('kitchen','washer',status)],{contourOnly:true,symbolOnly:true});assert.equal(node.classList.contains('offline-symbol-alert'),false)}
+ node.click();assert.equal(clicks,1);assert.deepEqual(h.network,[]);assert.deepEqual(h.commands,[]);assert.deepEqual(h.storage,[]);
+});
