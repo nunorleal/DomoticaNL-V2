@@ -74,3 +74,22 @@
 #open-cellar .shelly-offline-mark{display:inline-flex;width:max-content;color:#fff;gap:3px;margin-top:4px}
 #open-cellar .shelly-offline-mark>span{color:#fff;width:auto;font-size:inherit}
 @media(max-width:550px){.plan-status-rails .energy-rail>.shelly-offline-mark{flex-direction:column;gap:1px;padding:1px;max-width:none;font-size:7px;line-height:1.2}.plan-status-rails .energy-rail>.shelly-offline-mark svg{width:8px;height:8px}}
+
+/* Enlarge and gently shake the complete Offline label, then rest until the next cycle. */
+.shelly-offline-mark,.shelly-offline-svg>path{animation:offline-label-alert 2.8s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
+@keyframes offline-label-alert{
+ 0%,12%,48%,100%{transform:translateX(0) rotate(0) scale(1)}
+ 20%,40%{transform:translateX(0) rotate(0) scale(1.15)}
+ 25%{transform:translateX(-1.5px) rotate(-1deg) scale(1.15)}
+ 30%{transform:translateX(1.5px) rotate(1deg) scale(1.15)}
+ 35%{transform:translateX(-.75px) rotate(-.5deg) scale(1.15)}
+}
+.meteo-visible .shelly-offline-mark,.meteo-visible .shelly-offline-svg>path{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.shelly-offline-mark,.shelly-offline-svg>path{animation:none}}
+
+/* Appliances without a text badge warn through their own symbol, never their hit area. */
+.kitchen-appliance-trigger.offline-symbol-alert .kitchen-working-symbol{display:block;background:#8c2337;color:#fff;border-color:#f3a5b2}
+.offline-symbol-alert .kitchen-working-symbol>svg{animation:offline-label-alert 2.8s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
+.offline-symbol-alert .kitchen-drum,.offline-symbol-alert .kitchen-flame{animation:none}
+.meteo-visible .offline-symbol-alert .kitchen-working-symbol>svg{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.offline-symbol-alert .kitchen-working-symbol>svg{animation:none}}

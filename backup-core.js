@@ -12,6 +12,7 @@
   for(const k of Object.keys(data))if(!allowed(k))fail();
   // Retired camera links are neither restored nor exported.
   delete data['casa-nl-camera-hall-v1'];
+  if(Object.hasOwn(data,'casa-nl-show-cats-v1')&&typeof data['casa-nl-show-cats-v1']!=='boolean')fail();
   const states=data['casa-nl-realistic-v2'];
   if(!Array.isArray(states)||states.length!==IDS.length||new Set(states.map(r=>r?.id)).size!==IDS.length)fail();
   for(const r of states){if(!object(r)||!IDS.includes(r.id)||typeof r.light!=='boolean')fail();if(BLINDS.includes(r.id)&&(!Number.isFinite(r.blind)||r.blind<0||r.blind>100))fail()}

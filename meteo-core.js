@@ -24,6 +24,13 @@
   const configured=!!binding,ready=!!(configured&&health==='ready'&&reading?.online&&!reading.error&&!reading.missing&&!reading.errors?.length&&reading.hasCover&&reading.calibrated===true&&Number.isFinite(reading.position)&&reading.position>=0&&reading.position<=100&&Number.isFinite(reading.fetchedAt)&&now>=reading.fetchedAt&&now-reading.fetchedAt<=45000);
   return {configured,ready,open:ready&&reading.position===100,position:ready?reading.position:null};
  }
+ function morningBlindVisible({red=false,now,sunrise,sunset},blind){
+  return red===true&&Number.isFinite(now)&&Number.isFinite(sunrise)&&Number.isFinite(sunset)&&sunrise<sunset&&sunset-sunrise<86400000&&now>=sunrise&&now<sunset&&blind?.ready===true&&blind.position===0;
+ }
+ async function morningBlindAction(api,snapshot,context){
+  if(!api||api.isBusy()||api.hasUnsavedChanges()||!morningBlindVisible(context(),snapshot()))return false;
+  return await api.command('master','open')===true;
+ }
  function bedsideMode(previous,{enabled=false,night=false,red=false,blindOpen=false}){
   let holdNight=enabled&&!!(previous?.holdNight||night&&!previous?.baseNight),holdRed=enabled&&!!(previous?.holdRed||red&&!previous?.baseRed);
   if(blindOpen===true){holdNight=false;holdRed=false}
@@ -38,5 +45,5 @@
   if(!lamp.ready||!lamp.state){await s.refresh({quiet:true});return}
   await s.commandLight('master',!lamp.state.on);
  }
- return {idle,preferences,lampAction,screensaver,realTemperature,redActive,bedroomBlind,bedsideMode};
+ return {idle,preferences,lampAction,screensaver,realTemperature,redActive,bedroomBlind,bedsideMode,morningBlindVisible,morningBlindAction};
 });

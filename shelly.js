@@ -231,7 +231,7 @@
    try{
     const result=await api('cover',payload);if(version!==generation||sequences.get(id)!==sequence)return;if(result.accepted!==true)throw Error('O comando não foi confirmado pelo servidor.');
     setCoverTarget(id,position==='open'?100:position==='close'?0:position);
-    feedback('Comando aceite pelo Cloud. A aguardar a posição reportada pelo estore.');notify('Comando enviado ao Shelly.');
+    feedback('Comando aceite pelo Cloud. A aguardar a posição reportada pelo estore.');notify('Comando enviado ao Shelly.');return true;
    }catch(error){if(version!==generation)return;feedback(error.name==='AbortError'?'Comando sem confirmação. Atualize os dados para verificar a posição.':error.message,true);notify('Não foi possível confirmar o comando.');}
    finally{commandCount--;if(position==='stop')stopping=false;summary();render();schedulePoll()}
   }catch(error){feedback(error.message,true)}

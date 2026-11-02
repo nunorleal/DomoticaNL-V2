@@ -804,3 +804,65 @@ Verificação2.68: build e diff check aprovados; vista Meteo isolada723×988 con
 Normalizar os limites do desenho completo de cada WeatherIcon para quadrado63unidades, centrado40,35 no viewBox80×70. Mesmo espaço visual da lua ampliada para sol/nuvens/chuva e combinações noturnas, incluindo extensão da precipitação e movimento. Conservar slots, grelhas, fases e animações; retirar escalas CSS cumulativas anteriores.
 
 Verificação2.69: build e diff check aprovados. Pré-visualização isolada dos componentes reais confirma lua/sol/nuvens/chuva com extensão visual equivalente e centrada. Prova review/meteo-simbolos-uniformes-2.69.jpg.
+
+# Abrir estore de manhã no Meteo — 2.70
+
+Botão grande fixo superior esquerdo, só em vermelho entre nascer/pôr do sol do dia local exato e master confirmado/calibrado/atual45s a0%. Falta de horários/qualidade ou posição>0 oculta; sem novas consultas/timers. Clique explícito revalida na ponte visibilidade/palette/horário e snapshot, busy/formulário sujo, chama apenas command(master,open) na fila/guards existentes. command devolve true apenas com aceitação Cloud, sem inferir posição; botão bloqueia cliques repetidos enquanto envio/aceite, feedback distingue aceitação e posição. Funciona acima da camada de foco; substitui marca visual nesse canto e respeita safe areas.
+
+Verificação2.70:243 testes aprovados e build/diff check concluídos. Fixture isolada tests/serve_morning_fixture.py:06:59 oculta,07:00 aparece para estore0%;50%/offline ocultam; clique regista exatamente master/open e bloqueia após aceitação. Verificação1280×720 e375×812; ajuste móvel evita sobrepor data. Nenhum equipamento ou credencial real usados. Prova review/meteo-abrir-estore-2.70.jpg.
+
+# Sol visível atrás da nuvem — 2.71
+
+Apenas códigos diurnos1/2: baixar/deslocar ligeiramente a nuvem e reduzir para88%, expondo parte substancial do disco solar. Recalcular limites para preservar espaço visual63unidades. Não alterar céu totalmente nublado, chuva, símbolos noturnos, fases ou restantes funções.
+
+Verificação2.71: build e diff check aprovados. Pré-visualização dos componentes reais confirma disco solar visível acima/à esquerda da nuvem em códigos1/2 e apresentação uniforme com sol/céu nublado. Prova review/meteo-sol-visivel-2.71.jpg.
+
+# Símbolo principal à altura das leituras — 2.72
+
+Símbolo principal ocupa a altura desde temperatura até máximas/mínimas: ResizeObserver da caixa weather-reading aplica altura local sem polling nem rede; SVG usa viewBox justo63×63 para aproveitar área. Largura limitada42vw em ecrãs pequenos; preservar proporções e previsões. Observer acompanha fonte/unidades/resize/foco e desliga no unmount. Mesmas fases, animações e filtros.
+
+Verificação2.72: build e diff check aprovados. Meteo isolada1280×720: altura medida143px tanto na caixa do símbolo como nas leituras; vista ampliada adapta-se ao novo tamanho e não sobrepõe leituras. Zero errosJS, sem dispositivos reais. Prova review/meteo-simbolo-altura-2.72.jpg.
+
+# Pulsação do ícone offline — 2.73
+
+Pulsação CSS suave2,8s apenas no glifo de ligação indisponível (SVG dos badges HTML e path do badge SVG da porta), opacidade65–100% e escala1–1,1. Rótulo, retângulo e contorno estáticos; sem alterar critérios offline, consultas, timers ou dispositivos. Respeitar reduced-motion e pausar enquanto Meteo está visível.
+
+Verificação2.73:13 testes offline, build Meteo e diff check aprovados. Fixture com termoventilador fictício offline: ícone com offline-icon-pulse2,8s e valores de opacidade/escala variáveis; badge animation:none. Sem comandos ou equipamentos reais. Prova estática review/offline-pulse-2.73.jpg (a pulsação é visível na app).
+
+# Zoom e tremor do rótulo Offline — 2.74
+
+Correção explícita: animar badge HTML completo (texto+ícone+retângulo) com aumento até115% e tremor horizontal1,5px/rotação1grau, voltando ao tamanho normal com repouso em cada ciclo2,8s. Não reduzir nem esbater. Contorno do equipamento continua estático. Badge SVG da porta anima apenas glifo para preservar posicionamento do grupo. Retirar pulsação anterior só do ícone; manter reduced-motion/pausa Meteo.
+
+Verificação2.74: build e diff check aprovados. Fixture confirma offline-label-alert2,8s no badge completo e animation:none no ícone interno, substituindo efeito anterior; sem comandos reais. Prova estática review/offline-zoom-shake-2.74.jpg.
+
+# Offline sem badge — 2.75
+
+Regra visual comum autorizada nas duas casas: badge textual mantém zoom115%/tremor2,8s; máquinas sem rótulo Offline mostram o seu glifo a vermelho com o mesmo efeito. T2 usa kitchen-working-symbol e flag offline-symbol-alert derivada de rows offline confirmadas; sem acrescentar badge nos três atalhos da cozinha. Condados usa glifos SVG dishwasher/balcony existentes com data-shelly-offline da ligação atual. Não animar wrappers posicionados, imagem base, halos ou paredes; desativar animações normais de trabalho enquanto offline para não sugerir atividade. Recuperação retira aviso, preservando estado de funcionamento real. Pausar em Meteo e respeitar reduced-motion. Sem novas consultas, timers JS, comandos, configurações ou associações copiadas.
+
+Verificação2.75:19 testes direcionados aprovados, diff check concluído. Fixture local com IDs/credenciais fictícios e rede externa bloqueada confirma símbolo visível/vermelho e offline-label-alert2,8s, recuperação oculta o aviso; sem comandos e errosJS. Contornos e coordenadas estáticos. Prova review/t2-offline-symbol-2.75.jpg.
+
+# Textos centrados sob temperatura Meteo — 2.76
+
+Centrar weather-reading (temperatura, leitura Real, condição, sensação e máximas/mínimas) no seu próprio eixo vertical. Nascer/pôr do sol permanece fora deste bloco, centrado no relógio/ecrã. Aplicar também à vista ampliada e modo vermelho; preservar tamanhos, fases, animações e regras existentes. Só apresentação, sem consultas ou comandos.
+
+Verificação2.76: build concluído; fixture sem dispositivos, previsão16°C/sensor15,8°C. Medição1280×720 confirma centros de temperatura/condição/Real iguais737,49px e horários solares/relógio640px. Prova review/meteo-textos-centrados-2.76.jpg. Sem lógica de dispositivos alterada.
+
+# Versão MeteoNL comum às duas apps — 2.76
+
+Por pedido explícito, MeteoNL tem versão2.76 nas duas casas e passa a evoluir em conjunto (2.77,etc.), independente de version.json da aplicação de domótica. Fonte canónica da versão Meteo: meteo-src/app-info.ts; build lê esse ficheiro, nunca a versão da casa. Sincronizar package.json, referências meteo/index.html e meteo.js (HTTP e file/srcdoc) e recompilar em cada projeto, sem copiar pontes/associações/configurações entre casas. Cache do script meteo.js da casa deve mudar quando necessário.
+
+Preferência persistente: aplicar alterações comuns compatíveis à Domótica NL e Casa Condados, adaptando cada implementação e preservando dispositivos, IDs, credenciais, regras e plantas. Testes apenas fictícios. As versões próprias da domótica continuam independentes.
+
+Verificação: builds de ambas as Meteo aprovados, referências HTTP/srcdoc apontam para app-2.76 e UI de ambas mostra2.76 com dados fictícios. Versões da domótica preservadas: T2 2.76, Condados1.150.
+
+# Vasco e Zeca na planta — 2.77
+
+Ensaio autorizado apenas na Domótica NL/T2; não replicar na Casa Condados sem avaliação do utilizador. Dois gatos SVG vistos de cima, inspirados no Vasco tigrado e na Zeca laranja. cats-core.js define grafo local de passagens interiores, salas adjacentes e ciclo30s; cats.js anima percursos/patas/caudas sem rede, polling Cloud ou comandos. Rotas evitam paredes/móveis e não incluem varanda, cave ou escadas. Inserir grupo antes da white-wall-overlay no SVG existente para preservar paredes brancas acima dos gatos. Não alterar plantas nem associações.
+
+À noite escurecer ambos (mais nas zonas apagadas) e brilho de olhos5s. Reutilizar CasaEnvironment e estados locais, sem novas leituras Shelly. Pausar requestAnimationFrame/CSS quando app oculta, Meteo, outro piso ou diálogo aberto; suspender movimento/brilho com prefers-reduced-motion. Não recuperar tempo oculto nem saltar de divisão ao regressar. Opção Definições «Vasco e Zeca na planta», por omissão visível, chave booleana opcional casa-nl-show-cats-v1 validada/incluída no backup. Posições são efémeras; sem seguimento real dos animais. MeteoNL mantém2.76.
+
+Verificação:249 testes locais aprovados, incluindo rotas/obstáculos/amostragem e backup antigo/novo. Fixture apenas com IDs/chave fictícios confirma dois gatos, cores distintas, movimento, opção ocultar, modo noturno/brilho5s, zero comandos e zero errosJS. Paredes acima da camada confirmadas no DOM. Capturas review/vasco-zeca-dia-2.77.jpg e review/vasco-zeca-noite-2.77.jpg.
+
+# Check dos gatos na lista comum — 2.78
+
+Vasco e Zeca na planta usa settings-row/row-check igual aos restantes checks, imediatamente após Mostrar ícones da TV e secretária. Retirar estado textual Visíveis/Ocultos e posição isolada no ambiente. Preservar preferência, animação, percursos e backups. Utilizador aprovou replicação adaptada na Casa Condados. MeteoNL mantém2.76. Verificação:249 testes aprovados e fixture confirma caixa28px, estado marcado/desmarcado e ocultação real da camada; captura review/vasco-zeca-check-2.78.jpg.

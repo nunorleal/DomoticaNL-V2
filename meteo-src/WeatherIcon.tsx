@@ -6,12 +6,14 @@ export function WeatherIcon({
   className = "",
   time = Date.now(),
   latitude = 40.1508,
+  fillSlot = false,
 }: {
   code?: number;
   night?: boolean;
   className?: string;
   time?: number;
   latitude?: number;
+  fillSlot?: boolean;
 }) {
   const id = useId().replace(/:/g, "");
   const cloud = code > 0,
@@ -19,10 +21,11 @@ export function WeatherIcon({
     snow = (code >= 71 && code <= 77) || code === 85 || code === 86,
     storm = code >= 95,
     fog = code === 45 || code === 48;
+  const sunBehindCloud = !night && code > 0 && code < 3;
   // Fit each complete symbol (including precipitation) to the same63-unit square.
   const bounds = !cloud
     ? (night ? [16, 9, 58, 51] : [13, 5, 61, 53])
-    : [night ? 10 : 12, 9, night ? 73 : 76,
+    : sunBehindCloud ? [13, 5, 76, 62] : [night ? 10 : 12, 9, night ? 73 : 76,
        storm ? 70 : fog ? 67 : snow ? 66 : rain ? (night ? 69 : 61) : night ? 58 : 49];
   const [left, top, right, bottom] = bounds;
   const symbolScale = 63 / Math.max(right - left, bottom - top);
@@ -31,7 +34,7 @@ export function WeatherIcon({
   return (
     <svg
       className={"weather-icon " + (night ? "weather-night " : "") + className}
-      viewBox="0 0 80 70"
+      viewBox={fillSlot ? "8.5 3.5 63 63" : "0 0 80 70"}
       role="img"
       aria-label={
         (night ? lunarDescription(time) + " · " : "") +
@@ -73,7 +76,7 @@ export function WeatherIcon({
       {cloud && (
         <g className="weather-cloud"><path
           d="M21 49a12 12 0 0 1 0-24 17 17 0 0 1 32-5 14 14 0 1 1 6 29Z"
-          transform={night ? "translate(5 15) scale(.88)" : "translate(3 0)"}
+          transform={night ? "translate(5 15) scale(.88)" : sunBehindCloud ? "translate(11 18) scale(.88)" : "translate(3 0)"}
           fill={`url(#${id}c)`}
           opacity={night ? .9 : 1}
         /></g>

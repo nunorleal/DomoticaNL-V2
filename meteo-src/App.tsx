@@ -5,7 +5,7 @@ import { useShellyLamp } from "./useShellyLamp";
 import { assetUrl } from "./assets";
 import { APP_VERSION } from "./app-info";
 import { useEffect, useRef, useState } from "react";
-import { redActive } from "../meteo-core.js";
+import { redActive, morningBlindVisible } from "../meteo-core.js";
 import { useFocusView } from "./useFocusView";
 import {
   Settings as Gear,
@@ -20,6 +20,7 @@ import {
   CalendarDays,
   Clock3,
   Moon,
+  ArrowUp,
   ArrowUpRight,
   RefreshCw,
 } from "lucide-react";
@@ -106,6 +107,7 @@ function Landscape({
 export default function App() {
   useEffect(() => { bridge?.ready?.(); }, []);
   const lamp = useShellyLamp();
+  const weatherReadingRef = useRef<HTMLDivElement>(null);
   const [prefs, setPrefs] = useState(loadSettings),
     [now, setNow] = useState(Date.now()),
     [open, setOpen] = useState(false),
@@ -116,6 +118,10 @@ export default function App() {
     [loading, setLoading] = useState(false),
     [offline, setOffline] = useState(!navigator.onLine),
     [retry, setRetry] = useState(0);
+  const [blindSending,setBlindSending] = useState(false);
+  const [blindSent,setBlindSent] = useState(false);
+  const [blindMessage,setBlindMessage] = useState("");
+  const blindClickLock = useRef(false);
   const focus = useFocusView(prefs.focusSeconds, open);
   const dismissFocus = useRef<HTMLButtonElement>(null);
   useEffect(() => { if (focus.expanded) dismissFocus.current?.focus({ preventScroll: true }); }, [focus.expanded]);
@@ -187,6 +193,15 @@ export default function App() {
   }, [prefs.city.latitude, prefs.city.longitude, retry]);
   const w = snapshot?.data,
     tz = w?.timezone || prefs.city.timezone || "Europe/Lisbon";
+  useEffect(() => {
+    const reading = weatherReadingRef.current;
+    if (!reading) return;
+    const fit = () => reading.parentElement?.style.setProperty("--weather-reading-height", `${Math.ceil(reading.getBoundingClientRect().height)}px`);
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(reading);
+    return () => observer.disconnect();
+  }, [!!w]);
   const time = fmt(now, tz, {
       hour: "2-digit",
       minute: "2-digit",
@@ -201,7 +216,7 @@ export default function App() {
     (prefs.night === "auto" &&
       isNightSchedule(localMinutes, prefs.start, prefs.end));
   const scheduledRed = redActive(prefs, localMinutes, scheduledNight);
-  const { red, night } = useBedsideMode(prefs, scheduledNight, scheduledRed, tz);
+  const { red, night, blind } = useBedsideMode(prefs, scheduledNight, scheduledRed, tz);
   useEffect(() => {
     document.documentElement.classList.toggle("red-night", red);
     return () => document.documentElement.classList.remove("red-night");
@@ -239,6 +254,21 @@ export default function App() {
         ),
       )
     : 0;
+  const sunDay = w?.daily.time.findIndex(t => localDate(t * 1000, tz) === localDate(now, tz)) ?? -1;
+  const sunrise = sunDay >= 0 ? w!.daily.sunrise[sunDay] * 1000 : NaN;
+  const sunset = sunDay >= 0 ? w!.daily.sunset[sunDay] * 1000 : NaN;
+  const showMorningBlind = !!bridge?.openMorningBlind && !open && morningBlindVisible({red,now,sunrise,sunset},blind);
+  useEffect(() => { if (!showMorningBlind) { setBlindSent(false); setBlindMessage(""); } }, [showMorningBlind]);
+  async function openMorningBlind() {
+    if (blindClickLock.current || blindSent || !showMorningBlind) return;
+    blindClickLock.current = true; setBlindSending(true); setBlindMessage("");
+    try {
+      const accepted = await bridge.openMorningBlind({sunrise,sunset});
+      setBlindSent(accepted === true);
+      setBlindMessage(accepted ? "Pedido aceite. A aguardar a posição do estore." : "Não foi possível confirmar a abertura. Verifique a ligação e tente novamente.");
+    } catch { setBlindMessage("Não foi possível confirmar a abertura. Tente novamente."); }
+    finally { blindClickLock.current = false; setBlindSending(false); }
+  }
   const hours = w
     ? w.hourly.time
         .map((t, i) => ({ t, i }))
@@ -275,7 +305,7 @@ export default function App() {
         className={"night-veil " + (night ? "on" : "")}
         style={{ opacity: night ? prefs.dim / 100 : 0 }}
       />
-      <main data-weather-motion={prefs.animations && prefs.effects > 0 ? "on" : "off"} data-night-palette={red ? "red" : night ? "color" : "day"} className={[night ? "bedside" : "", focus.expanded ? "focus-view" : ""].filter(Boolean).join(" ")} data-focus-view={focus.expanded ? "expanded" : "normal"}>
+      <main data-weather-motion={prefs.animations && prefs.effects > 0 ? "on" : "off"} data-night-palette={red ? "red" : night ? "color" : "day"} className={[showMorningBlind ? "morning-blind-visible" : "", night ? "bedside" : "", focus.expanded ? "focus-view" : ""].filter(Boolean).join(" ")} data-focus-view={focus.expanded ? "expanded" : "normal"}>
         <nav className="topbar">
           <div className="brand">
             <span className="wordmark">
@@ -377,13 +407,14 @@ export default function App() {
           </div>
           {w && (
             <div className="current-summary">
-              <WeatherIcon
+              <div className="current-weather-symbol" aria-hidden="false"><WeatherIcon
                 code={w.current.weather_code}
                 night={!w.current.is_day}
                 time={now}
                 latitude={prefs.city.latitude}
-              />
-              <div className="weather-reading">
+                fillSlot
+              /></div>
+              <div className="weather-reading" ref={weatherReadingRef}>
                 <div className="temperature">
                   {tempText(w.current.temperature_2m)}
                 </div>
@@ -608,6 +639,14 @@ export default function App() {
           </a>
         </footer>
       </main>
+      {showMorningBlind && <div className="morning-blind-control">
+        <button type="button" className="morning-blind-button" onClick={openMorningBlind}
+          disabled={blindSending || blindSent || bridge?.blindBusy?.()} aria-label="Abrir estore do quarto principal" aria-busy={blindSending}>
+          <ArrowUp size={30} aria-hidden="true" />
+          <span><strong>{blindSending ? "A enviar…" : blindSent ? "Abertura pedida" : "Abrir estore"}</strong><small>Quarto principal</small></span>
+        </button>
+        {blindMessage && <p role="status">{blindMessage}</p>}
+      </div>}
       {focus.expanded && <button ref={dismissFocus} className="focus-dismiss" aria-label="Voltar à vista normal" onClick={(event) => { event.preventDefault(); event.stopPropagation(); focus.wake(); }} onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); focus.wake(); } }}><span>Toque para voltar</span></button>}
       {open && (
         <Settings
