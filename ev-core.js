@@ -31,11 +31,22 @@
   if(energy!==null&&energy<0)energy=null;
   return {online:device.online===true||device.online===1,hasMeter:!!c,power,energyKWh:energy===null?null:energy/(type==='meter'?60000:1000),component:type||null,available:candidates.map(c=>c.type+':'+ch),errors:errs,model:String(device.code||device.type||'').slice(0,100)};
  }
+ function relayTimer(c,s){
+  if(!c||!['has_timer','timer_remaining','timer_duration','timer_started_at','timer_started'].some(k=>Object.hasOwn(c,k)))return {};
+  const number=v=>typeof v==='number'&&Number.isFinite(v),stop={timerActive:false,timerSeconds:0};
+  if(c.has_timer===false)return stop;
+  let remaining=null;
+  if(Object.hasOwn(c,'timer_remaining')){if(!number(c.timer_remaining)||c.timer_remaining<0)return stop;remaining=c.timer_remaining}
+  else{const start=c.timer_started_at??c.timer_started,clock=s.sys?.unixtime??s.unixtime??Date.now()/1000;
+   if(number(start)&&start>0&&number(c.timer_duration)&&c.timer_duration>0&&number(clock)&&clock>=start)remaining=Math.max(0,start+c.timer_duration-clock);
+  }
+  return {timerActive:remaining!==null?remaining>0:c.has_timer===true,timerSeconds:remaining};
+ }
  function relayStatus(device,b){
   if(!object(device))return {missing:true,online:false,hasOutput:false,on:null,errors:[]};
   const s=device.status||{},c=s['switch:'+b.channel]||s.relays?.[b.channel],errs=errors(c);
   for(const flag of ['overtemperature','overpower','overvoltage'])if(c?.[flag]===true||s[flag]===true)errs.push(flag);
-  return {online:device.online===true||device.online===1,hasOutput:object(c),on:typeof c?.output==='boolean'?c.output:typeof c?.ison==='boolean'?c.ison:null,errors:errs,model:String(device.code||device.type||'').slice(0,100)};
+  return {...relayTimer(c,s),online:device.online===true||device.online===1,hasOutput:object(c),on:typeof c?.output==='boolean'?c.output:typeof c?.ison==='boolean'?c.ison:null,errors:errs,model:String(device.code||device.type||'').slice(0,100)};
  }
  function fresh(d,now=Date.now()){return !!(d?.online&&!d.error&&!d.missing&&!d.errors?.length&&Number.isFinite(d.fetchedAt)&&now>=d.fetchedAt&&now-d.fetchedAt<=45000)}
  function canControl(d,now=Date.now()){return fresh(d,now)&&d.hasOutput&&typeof d.on==='boolean'}
