@@ -13,5 +13,11 @@
  function sample(j,elapsed){const progress=Math.min(1,Math.max(0,elapsed/j.duration));let left=j.length*progress;for(let i=1;i<j.path.length;i++){const a=j.path[i-1],b=j.path[i],d=distance(a,b);if(left<=d||i===j.path.length-1){const t=d?Math.min(1,left/d):1;return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,angle:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI+90,room:t<.5?a.room:b.room,walking:progress<1}}left-=d}return {...j.path[0],angle:0,walking:false}}
  function next(room,random=Math.random){const options=neighbours[room];return options[Math.min(options.length-1,Math.max(0,Math.floor(random()*options.length)))]}
  function shade(opacity,electric=0){const dark=Math.max(0,Math.min(1,Number.isFinite(opacity)?opacity/.86:1)),lit=Math.max(0,Math.min(1,Number.isFinite(electric)?electric:0));return 1-.78*dark*(1-lit)}
- return {CYCLE,nodes,edges,anchors,neighbours,route,journey,sample,next,shade};
+ function palette(id,brightness){
+  const colors=id==='zeca'?{fur:'#ea9a46',stripe:'#a95122',muzzle:'#ffe3b4',eye:'#e6d66f'}:{fur:'#b78346',stripe:'#35271e',muzzle:'#edd8ab',eye:'#b8f37a'};
+  Object.assign(colors,{outline:'#35271e',nose:'#7c4940'});
+  const factor=Math.max(.12,Math.min(1,Number.isFinite(brightness)?brightness:.16));
+  return Object.fromEntries(Object.entries(colors).map(([key,hex])=>[key,'#'+hex.slice(1).match(/../g).map(c=>Math.round(parseInt(c,16)*factor).toString(16).padStart(2,'0')).join('')]));
+ }
+ return {CYCLE,nodes,edges,anchors,neighbours,route,journey,sample,next,shade,palette};
 });

@@ -903,3 +903,47 @@ Banners da vista raio mostram exclusivamente W/kW e indicação +? quando parcia
 T2 acrescenta ajuste Tamanho dos banners de consumo nas Definições,60..160%, em casa-nl-room-power-scale-v1, validado e incluído no backup genérico. Não copiar associações da outra casa. Consumos de washer/boiler pertencem à varanda.
 
 Verificação: 262 testes aprovados. Fixtures fictícias confirmam abrir por toque/teclado, desligar/confirmar0W/manter linha/voltar a ligar, escala100→160%, popup compacto em375px e bloqueio de outros popups. Sem equipamentos reais. Prova review/domotica-consumos-lista-2.83.png.
+
+# Gatos como obstáculos mútuos — 2026-11-03
+
+CasaCatsTraffic reserva os percursos completos antes de cada passeio, com distância conservadora84unidades para incluir corpo/cabeça/cauda animada/rotação e folga. Verificar distâncias entre segmentos, incluindo cruzamentos e sentidos opostos, e distância ao outro gato parado. Se houver conflito, escolher outro destino seguro do grafo existente ou esperar e reavaliar no RAF local (cooldown1s em memória). Nunca deslocar lateralmente para fora de passagens ou alterar as plantas. A espera pausa as patas; não inferir tráfego de outro piso. Preservar ciclos30s quando livres, pausas, exploração equilibrada, distribuição única entre pisos e brilho da iluminação. Sem consultas/comandos/timers Cloud, IDs ou preferências novas. Montar cats-traffic-core antes de cats.js; estado é só efémero.
+
+Testes fictícios: travessias de segmentos/head-on, obstáculos parados e20min por cenário em8 sementes para cada planta/piso, distância mínima preservada, exploração e regresso a piso sem bloqueio permanente. Fixture confirma módulo montado, gatos em movimento e zero errosJS/comandos físicos. Captura review/gatos-obstaculos-mutuos.jpg.
+
+# Banner interior do quarto — MeteoNL2.78
+
+Banner glass inferior na hero, sob horários solares, com Quarto · Ambiente interior, temperatura/humidade lado a lado e idade da última consulta Cloud. Usar BedDouble/Thermometer/Droplets/Cloud, sem afirmar Bluetooth sem conhecer transporte. CasaMeteoBridge.bedroomClimate lê exclusivamente sensor master existente: CasaShelly.sensorBinding/sensorReading no T2, CasaCloudRead.temperatureSnapshot(master) na Casa Condados. Preservar Real exterior/varanda e restantes pontes. Snapshot normalizado sem IDs/segredos, temperatura/humidade independentes válidas (zero incluído), pending/partial/unavailable/last/offline distintos; leitura antiga não é atual e falta não é zero. Esconder se não associado. fetchedAt representa consulta, nunca medição, por isso legenda Última consulta.
+
+BedroomClimate renderiza com relógio React existente, sem novo timer/polling/refresh/comando. Visível no modo ampliado e vermelho, com ajuste de tamanhos para encaixar o banner sem sobreposição. Vermelho mantém fundo preto. Versão Meteo2.78 comum, fontes/bundles/referências HTTP/srcdoc/package coerentes; preservar versões próprias e alterações das casas. Tests/meteo-bedroom verifica qualidade, valores, ausência de segredos e leitura exclusiva master sem transporte. Fixture isolada confirmou21,5°C/54%, última consulta1min, antiga10min, modo vermelho e modo ampliado375×812 (banner y584..733). Provas review/meteo-quarto-2.78.jpg e review/meteo-quarto-vermelho-2.78.jpg. Sem equipamentos reais.
+
+# Temporizador dos aparelhos — 2.86
+
+Opção extra Ligar 10 min/Ligar 15 min no popup do termoventilador/desumidificador, preservando ligar/desligar normal. Enviar on:true e toggle_after:600/900 no mesmo set/switch Cloud v2, documentado em https://shelly-api-docs.shelly.cloud/cloud-control-api/communication-v2/#control-a-switch. Temporizador nativo, sem setTimeout de desligamento no navegador, novas leituras ou repetição automática. Nova duração reinicia o tempo. Validar duração antes da fila e no transporte, preservar guardas de estado recente, pending, formulário sujo e confirmação por leitura; HTTP aceite não confirma estado físico nem execução do temporizador. Não alterar configurações, IDs, canais, credenciais ou MeteoNL. Testes exclusivamente fictícios.
+
+Verificação: suite local aprovada com fixtures, transporte valida 600/900s e mantém comando normal sem duração; rejeita valores inválidos e cancela estado alterado antes da fila, sem repetição de comandos. Popups dos dois aparelhos verificados na UI com IDs/chaves fictícios: pedido de 10/15min leva toggle_after no mesmo set/switch; estado só muda após leitura, desligar normal envia on:false sem timer. Captura review/appliance-timer.jpg. Temporizador físico não testado em equipamentos reais.
+
+# Banner interior alinhado — MeteoNL2.79
+
+Por pedido do utilizador, banner do quarto ocupa100% da largura da hero e reutiliza o fundo, borda, sombra e transparência da classe glass comum aos painéis inferiores, sem gradiente próprio opaco. Retirar a frase Última consulta e a contagem de idade da apresentação; preservar avisos de dados antigos/offline/parciais, validação e frescura. Trocar nuvem por Bluetooth, com nome acessível que esclarece sensor Bluetooth/leitura Shelly Cloud. Sem alterar pontes, IDs, transporte, polling ou comandos. Aplicar nas duas apps, build2.79 e cache sincronizados.
+
+Verificação2.79: build aprovado, testes Meteo existentes aprovados e fixture sem dispositivos confirma banner/painel inferior ambos x282/largura716px, background e backdrop-filter calculados idênticos, símbolo lucide-bluetooth presente e ausência da frase Última consulta. Captura review/meteo-banner-2.79.jpg. Apenas apresentação alterada.
+
+# Olhos dos gatos e identificação da divisão — 2.88
+
+No escuro, olhos verde claros independentes das cores escurecidas do corpo, com pulsação/piscadela em scaleY e opacidade a cada4,8s; Zeca desfasada1,7s. Sem animação de brilho em divisões claras. Movimento reduzido mantém olhos estáticos discretos; pausas existentes preservadas. T2 passa a paleta direta por cor, sem filtro brightness no grupo inteiro.
+
+A deteção geométrica usa rectFits com alvo1×1:0,1×0,1 era inferior à tolerância de área0,1 e aceitava uma divisão errada. Preservar fallback do percurso nos vãos. UI T2 confirmou brilho corporal0,220 em master/living apagados e1,000 em hall/kitchen iluminados, animação cat-eye-blink só no escuro. Condados confirmou0,160 e olhos animados em living2 apagada e0,832 sem brilho em studio iluminado. 26 testes dos gatos/tráfego nas duas apps aprovados; fixtures intercetam todos os pedidos, sem equipamentos reais.
+
+# Temporizador por pressão prolongada — 2.90
+
+Substituir painel sempre visível por cronómetro pequeno no botão normal de alimentação. Clique curto preserva ligar/desligar; pressão550ms rato/toque apenas abre escolhas5/10/15min e Personalizado1..1440min inteiros. Suprimir clique sintético após pressão longa; cancelar gesto com deslocação>10px, pointercancel, perda de captura, blur, diálogo fechado ou app oculta. Teclado seta abaixo/ShiftF10 abre opções; Escape fecha. Abrir opções nunca envia comandos. Escolha explícita liga on:true/toggle_after:segundos no mesmo comando nativo, sem timer de desligamento do navegador. Validar inteiro60..86400 múltiplo60 antes da fila e transporte; mesmas guardas dirty/fresco/pending e confirmação existente. Preservar estados normais e configurações; testes só fictícios.
+
+# Pressão prolongada nos estores — 2.89
+
+blind-drag-core/js/css partilhados nas duas apps: manter450ms no alvo do estore ou banner e arrastar verticalmente escolhe percentagem inteira0..100. Subir aumenta abertura, descer diminui; apenas a cápsula mostra pré-visualização. Clique curto/teclado preservam popup. Só pointerup envia uma posição explícita pelo comando existente; sem comandos em input/move, sem retry ou posição otimista. Demo aplica só ao largar, preservando seguidores/manuais nos Condados.
+
+Snapshot inicial e final exigem estado controlável/posição válida; geração de configuração deve coincidir. Offline/stale/pendente/configuração suja sem controlo. Escape, pointercancel, perda de captura, blur, documento oculto, segundo ponteiro e popup aberto cancelam. Movimento antes de450ms cancela gesto. Captura de documento e touch-action:none nos alvos impedem swipe/pan/drag concorrente; suprimir clique residual só após hold/movimento. Não alterar os controlos de popup, imagens ou associações.
+
+36 testes de estores aprovados nas duas apps; relógio/DOM fictícios garantem zero comandos na pré-visualização/cancelamento/estado alterado e um único ao largar. UI fictícia confirmou Condados40→60, T2demo0→20 e T2Cloud50→70 com um set/cover e confirmação por leitura. Escape em pré-visualização90 preservou70 e contador de comandos1. Cliques curtos abrem ambos os popups. Fixtures intercetam pedidos com IDs/chaves fictícios; nenhum equipamento real usado.
+
+Verificação: suites279 testes T2/296 Condados aprovadas e testes dirigidos11/17 após ajuste final. UI com fixtures fictícias confirmou pressão750ms nos dois projetos abre opções sem qualquer comando;5min envia toggle_after300, personalizado23min envia1380, zero bloqueado pelo formulário sem envio; clique normal posterior envia on:false sem duração. Teclado ArrowDown abre opções sem comando e fechar devolve foco, painel oculto por omissão. Leitura temporariamente ocupada só desativa escolhas, nunca apaga duração em edição; fechar permanece disponível. Capturas review/appliance-timer-longpress.jpg e T2 review/appliance-timer-compact.jpg. Nenhum aparelho real testado.

@@ -28,8 +28,8 @@
    loading.hidden=false;loadTimer=setTimeout(()=>{loadMessage.textContent='Não foi possível carregar a MeteoNL. Volte à casa e atualize a página.'},15000);
    if(location.protocol==='file:'){
     const base=new URL('meteo/',document.baseURI).href.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-    frame.srcdoc=`<!doctype html><html lang="pt"><head><meta charset="utf-8"><base href="${base}"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MeteoNL · Casa NL</title><link rel="stylesheet" href="assets/app-2.77.css?v=2.77-red"></head><body><div id="root"></div><script src="assets/app-2.77.js?v=2.77-red"><\/script></body></html>`;
-   }else frame.src='meteo/index.html?v=2.77';
+    frame.srcdoc=`<!doctype html><html lang="pt"><head><meta charset="utf-8"><base href="${base}"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MeteoNL · Casa NL</title><link rel="stylesheet" href="assets/app-2.79.css?v=2.79-red"></head><body><div id="root"></div><script src="assets/app-2.79.js?v=2.79-red"><\/script></body></html>`;
+   }else frame.src='meteo/index.html?v=2.79';
    loaded=true;
   }
   window.CasaShelly?.ensureFresh('master');window.CasaShelly?.ensureFresh('balcony');frame.focus();
@@ -46,6 +46,7 @@
   return CasaMeteoCore.morningBlindAction(window.CasaShelly,()=>window.CasaMeteoBridge.bedroomBlind(),context);
  }
  window.CasaMeteoBridge={visible:()=>!host.hidden,preferences:CasaMeteoCore.preferences,ready,open,home:()=>home(),settings,toggleLamp,openMorningBlind,
+  bedroomClimate:()=>CasaMeteoCore.bedroomClimate(window.CasaShelly?.sensorBinding('master'),window.CasaShelly?.sensorReading('master')),
   realTemperature:()=>CasaMeteoCore.realTemperature(window.CasaShelly?.sensorBinding('balcony'),window.CasaShelly?.sensorReading('balcony')),
   bedroomBlind:()=>{const api=window.CasaShelly,row=api?.houseSnapshot().deviceRows.find(r=>r.kind==='cover'&&r.key==='master');return CasaMeteoCore.bedroomBlind(api?.binding('master'),api?.reading('master'),row?.status)},
   blindBusy:()=>!!window.CasaShelly?.isBusy(),

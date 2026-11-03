@@ -9,3 +9,29 @@ test('cat brightness follows room darkness and electric light, including closed 
  assert.equal(C.shade(0,0),1);assert.ok(Math.abs(C.shade(.86,0)-.22)<1e-8);assert.equal(C.shade(.86,1),1);
  assert.ok(C.shade(.4,0)<C.shade(.2,0));assert.ok(C.shade(.86,.6)>C.shade(.86,0));assert.equal(C.shade(-1,0),1);assert.ok(C.shade(2,0)>=.21);assert.ok(Number.isFinite(C.shade(undefined,undefined)));
 });
+
+ test('dark coats use direct colors and eye blinking is isolated to dark rooms',()=>{
+ const fs=require('node:fs'),path=require('node:path'),css=fs.readFileSync(path.join(__dirname,'../cats.css'),'utf8'),js=fs.readFileSync(path.join(__dirname,'../cats.js'),'utf8');
+ assert.ok(!css.includes('filter:brightness(var(--shade))'));
+ assert.match(css,/\.house-cat\.cat-dark \.cat-eyes\{fill:#d4ff8c/);
+ assert.match(css,/@keyframes cat-eye-blink/);assert.ok(css.includes('scaleY(.06)'));assert.ok(css.includes('animation-delay:-1.7s'));assert.ok(css.includes('prefers-reduced-motion:reduce'));
+ assert.ok(js.includes('CORE.palette(cat.id,shade)'));
+ for(const id of ['vasco','zeca']){const dark=C.palette(id,.22),lit=C.palette(id,1);assert.notEqual(dark.fur,lit.fur);assert.notEqual(dark.eye,lit.eye)}
+ });
+
+ test('lighting detection rejects the wrong room instead of accepting an undersized probe within area tolerance',()=>{
+ const G=require('../banner-core.js'),fs=require('node:fs'),path=require('node:path'),polygons=G.polygons('M0 0H100V100H0Z');
+ assert.equal(G.rectFits(polygons,{x:50,y:50},1,1),true);
+ assert.equal(G.rectFits(polygons,{x:250,y:250},1,1),false);
+ const js=fs.readFileSync(path.join(__dirname,'../cats.js'),'utf8');assert.ok(js.includes('cat.point,1,1'));assert.ok(!js.includes('cat.point,.1,.1'));
+ });
+
+ test('T2 detects the room under each cat and follows the same lighting rules as the floor',()=>{
+ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),G=require('../banner-core.js'),E=require('../environment-core.js');
+ const source=fs.readFileSync(path.join(__dirname,'../app.js'),'utf8'),text=source.match(/const lightingZones=(\{[\s\S]*?\n\});/)[1],zones=vm.runInNewContext('('+text+')');
+ for(const room of ['master','hall','bedroom2','living','kitchen']){
+ const point=C.nodes[C.anchors[room]],found=Object.entries(zones).find(([id,d])=>G.rectFits(G.polygons(d),point,1,1));assert.equal(found?.[0],room);
+ const off={id:room,light:false,blind:0},on={...off,light:true};
+ const dark=C.shade(E.darkness(off,false,[off]),E.electricOpacity(off,false,[off])),lit=C.shade(E.darkness(on,false,[on]),E.electricOpacity(on,false,[on]));assert.ok(dark<.25);assert.equal(lit,1);
+ }
+ });

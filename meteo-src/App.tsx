@@ -1,4 +1,5 @@
 import { bridge, openCasaSettings } from "./bridge";
+import { BedroomClimate } from "./BedroomClimate";
 import { RealTemperature } from "./RealTemperature";
 import { useBedsideMode } from "./useBedsideMode";
 import { useShellyLamp } from "./useShellyLamp";
@@ -385,7 +386,7 @@ export default function App() {
             Lâmpada: {lamp.error}
           </button>
         )}
-        <header className="hero">
+        <header className={bridge?.bedroomClimate?.()?.configured ? "hero has-bedroom-climate" : "hero"}>
           <div className="date">
             <span>{fmt(now, tz, { weekday: "long" })}</span>
             <p>
@@ -455,6 +456,7 @@ export default function App() {
                 : "—"}
             </span>
           </div>
+          <BedroomClimate unit={prefs.temp} now={now} />
           {prefs.demo !== "auto" && (
             <button
               className="demo-badge"
