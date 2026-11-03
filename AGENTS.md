@@ -947,3 +947,33 @@ Snapshot inicial e final exigem estado controlável/posição válida; geração
 36 testes de estores aprovados nas duas apps; relógio/DOM fictícios garantem zero comandos na pré-visualização/cancelamento/estado alterado e um único ao largar. UI fictícia confirmou Condados40→60, T2demo0→20 e T2Cloud50→70 com um set/cover e confirmação por leitura. Escape em pré-visualização90 preservou70 e contador de comandos1. Cliques curtos abrem ambos os popups. Fixtures intercetam pedidos com IDs/chaves fictícios; nenhum equipamento real usado.
 
 Verificação: suites279 testes T2/296 Condados aprovadas e testes dirigidos11/17 após ajuste final. UI com fixtures fictícias confirmou pressão750ms nos dois projetos abre opções sem qualquer comando;5min envia toggle_after300, personalizado23min envia1380, zero bloqueado pelo formulário sem envio; clique normal posterior envia on:false sem duração. Teclado ArrowDown abre opções sem comando e fechar devolve foco, painel oculto por omissão. Leitura temporariamente ocupada só desativa escolhas, nunca apaga duração em edição; fechar permanece disponível. Capturas review/appliance-timer-longpress.jpg e T2 review/appliance-timer-compact.jpg. Nenhum aparelho real testado.
+
+Temporizador ativo: botão normal e cronómetro passam a âmbar exclusivamente com timer reportado pelo Shelly e alimentação on:true atual/fresca. relayTimer normaliza Gen1 has_timer/timer_remaining e Gen2 timer_started_at/timer_duration usando relógio do dispositivo quando presente. Restante tempo decresce a partir da consulta existente; sem polling/timers novos, persistência local ou estado otimista pela aceitação do comando. Desligado, expirado, dados antigos/offline/erro ou falta de prova retiram âmbar. Pontes/snapshots expõem apenas timerActive seguro; cores normais mantidas fora desse estado.
+
+# Fluidez e repetição do gesto dos estores — 2.91
+
+Separar previewAllowed (dados reais válidos/recentes e associação válida) de allowed (fila livre/confirmada). O gesto pode selecionar durante leitura ou confirmação pendente; ao largar, sendWhenReady verifica cache a cada100ms até15s, sem consultas Cloud novas, e envia uma única vez quando allowed. Nunca repetir comando enviado/falhado. Se expirar, estado inválido/antigo/offline, configuração/geração/contexto alterado ou cancelamento: não enviar. Nova seleção cancela espera anterior; resposta antiga não substitui a pré-visualização nova. Escape cancela também espera.
+
+Após450ms capturar no documentElement estável, não no botão que render/leituras podem substituir. Reencontrar alvo pelo ID lógico no piso/contexto atual, preservando clique curto e suprimindo clique residual mesmo com novo nó. Ignorar perda da captura implícita de botão substituído se alvo equivalente continua no mesmo contexto. Ocultar/mudar de piso/blur cancela.
+
+42 testes aprovados (29Condados+13T2), incluindo4gestos consecutivos após substituição de nós, fila temporariamente ocupada, timeout/cancelamento/configuração/erro e nenhum retry. FixtureT2 forçou redesenho e consulta lenta6s durante cada gesto e confirmou50→70→90, dois pedidos set/cover, zero popups. Condados40→60→80, dois pedidos. Todos os pedidos intercetados com IDs/chaves fictícios, nenhum equipamento real movido. ProvaT2 review/estores-fluidos-2.91.png.
+
+Verificação da cor: suites completas283/300 aprovadas, mais testes dirigidos de expiração durante leitura fresca, leitura antiga/offline, aparelho desligado e canal errado. Fixture em ambas confirmou data-timer-active:true/background rgb198,140,32 após leitura nativa; nenhuma cor ativa pela mera aceitação HTTP. Captura review/appliance-timer-active.jpg. Sem equipamentos reais.
+
+# Consumo da caldeira na cozinha — 2.92
+
+Por pedido do utilizador, a caldeira Bosch é contabilizada na cozinha na vista de consumo por divisão. Em room-power-adapter só a máquina de lavar roupa é reatribuída à varanda; boiler mantém room kitchen fornecida por houseSnapshot. Não alterar posição/desenho do aparelho, associações, ID/canal, controlos, leituras, fila ou Casa Condados.
+
+# Âmbar apenas no cronómetro escolhido — 2.93
+
+Correção explícita: nunca recolorir o botão de alimentação inteiro. Apenas ::after cronómetro fica âmbar e só depois de comando explícito com toggleAfter aceite nesta sessão/generation, acompanhado de timer nativo ativo e alimentação atual confirmada. Auto-off preexistente do Shelly não seleciona este modo. Comando normal aceite (on/off sem duração) apaga seleção; comando falhado não inventa seleção. Marcador efémero por aparelho, limitado à duração escolhida e invalidado pela mudança de configuração; não guardar em backups/configurações. Reabrir o popup mantém a seleção na mesma sessão; recarregar a app não assume a origem de timer nativo. Preservar cores normais/verde da alimentação.
+
+Verificação da correção: testes só fictícios distinguem timer nativo preexistente/ligar normal (sem âmbar) de escolha explícita de duração; expiração, offline e mudança de generation não ativam aviso. UI de ambas confirmou botão verde rgb12,169,102/rgb8,165,98 e exclusivamente cronómetro âmbar rgb255,211,107. Captura review/appliance-timer-badge-only.jpg.
+
+# Captura do estore e cliques residuais - 2.94
+
+A transferencia para documentElement pode gerar lostpointercapture no botao original ainda ligado ao DOM. Ignorar esse evento original; cancelar so perda real no documentElement sem hasPointerCapture. Pointerup ativo previne default. Suprimir clique fisico residual mesmo retargetado para outro antepassado. Novo pointerdown primario limpa supressao antiga, preservando clique curto seguinte. Suprimir contextmenu durante captura, incluindo alvo root.
+
+Hold em estore indisponivel mostra mensagem sem percentagem inventada, popup, consulta ou comando. Clique curto preserva consulta normal. Manter fila e guards existentes.
+
+52 testes aprovados (34Condados+18T2). Pressoes nativas de850ms repetidas: contador Condados4 para4, traceT2 de2 para2, zero popups/comandos. Ajuste ficticio50 para70 envia um set/cover e confirma70; clique curto nativo abre popup. Nenhum equipamento real usado. Prova review/estores-captura-1.175.png nos Condados.

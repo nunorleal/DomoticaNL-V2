@@ -10,5 +10,16 @@
   function finish(now){activate(now);if(ended)return null;ended=true;return active&&!cancelled&&value!==initial?value:null}
   return {activate,move,cancel,finish,get active(){return active},get cancelled(){return cancelled},get value(){return value}};
  }
- return {HOLD,create};
+ const selectable=s=>!!(s?.previewAllowed??s?.allowed)&&Number.isFinite(s?.position);
+ async function sendWhenReady({snapshot,token,target,alive,commit,waiting=()=>{},now=Date.now,sleep=ms=>new Promise(r=>setTimeout(r,ms)),timeout=15000}){
+  const start=now();
+  while(alive()){
+   const s=snapshot();if(!selectable(s)||s.token!==token)return {sent:false,reason:'changed'};
+   if(s.allowed){const sent=await commit(target);return {sent:s.configured?sent===true:sent!==false,reason:'result'}}
+   if(now()-start>=timeout)return {sent:false,reason:'busy'};
+   waiting();await sleep(100);
+  }
+  return {sent:false,reason:'cancelled'};
+ }
+ return {HOLD,create,selectable,sendWhenReady};
 });

@@ -14,7 +14,7 @@
   function cancelPress(){if(press)clearTimeout(press.timer);press=null}
   function close(){cancelPress();panel.hidden=true;form.hidden=true;button.setAttribute('aria-expanded','false')}
   function open(){if(!allowed())return;panel.hidden=false;button.setAttribute('aria-expanded','true');message.textContent='';update()}
-  function update(){const enabled=allowed();for(const control of controls)control.disabled=!enabled;if(!enabled&&!sending)cancelPress()}
+  function update(){const state=snapshot();button.dataset.timerActive=String(state.on===true&&state.timerActive===true);hint.textContent=(state.on===true&&state.timerActive===true?'Temporizador ativo. ':'')+'Clique para ligar ou desligar. Mantenha premido para escolher o tempo. Com teclado, use a seta para baixo para abrir o temporizador.';const enabled=allowed();for(const control of controls)control.disabled=!enabled;if(!enabled&&!sending)cancelPress()}
   button.addEventListener('pointerdown',event=>{
    if(event.isPrimary===false||event.button!==0||button.disabled||!allowed())return;
    cancelPress();consumeClick=false;
