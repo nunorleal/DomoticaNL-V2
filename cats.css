@@ -1,10 +1,14 @@
 .house-cats{pointer-events:none}.house-cats[hidden]{display:none}
 .house-cat{--fur:#b78346;--stripe:#35271e;--muzzle:#edd8ab;--eye:#b8f37a;--shade:1}.house-cat.zeca{--fur:#ea9a46;--stripe:#a95122;--muzzle:#ffe3b4;--eye:#e6d66f}
-.house-cat .cat-pose{filter:brightness(var(--shade));transition:filter 1.2s}.house-cat.cat-dark{--shade:.24}.house-cat .cat-shadow{fill:#000;opacity:.28;filter:blur(2px)}
-.house-cat .cat-coat,.house-cat .cat-paw,.house-cat .cat-ear{fill:var(--fur);stroke:#35271e;stroke-width:.65}.house-cat .cat-tail{fill:none;stroke:var(--fur);stroke-width:5.5;stroke-linecap:round;transform-origin:0 17px}.house-cat .cat-stripes{fill:none;stroke:var(--stripe);stroke-width:2;stroke-linecap:round}.house-cat .cat-ear{stroke-width:1.4}.house-cat .cat-muzzle{fill:var(--muzzle)}.house-cat .cat-nose{fill:#7c4940}.house-cat .cat-eyes{fill:var(--eye)}
+.house-cat .cat-pose *{transition:fill .4s,stroke .4s}.house-cat .cat-shadow{fill:#000;opacity:.28;filter:blur(2px)}
+.house-cat .cat-coat,.house-cat .cat-paw,.house-cat .cat-ear{fill:var(--fur);stroke:var(--outline,#35271e);stroke-width:.65}.house-cat .cat-tail{fill:none;stroke:var(--fur);stroke-width:5.5;stroke-linecap:round;transform-origin:0 17px}.house-cat .cat-stripes{fill:none;stroke:var(--stripe);stroke-width:2;stroke-linecap:round}.house-cat .cat-ear{stroke-width:1.4}.house-cat .cat-muzzle{fill:var(--muzzle)}.house-cat .cat-nose{fill:var(--nose,#7c4940)}.house-cat .cat-eyes{fill:var(--eye)}
 .house-cat.cat-walking .paw-a{animation:cat-step .5s ease-in-out infinite alternate}.house-cat.cat-walking .paw-b{animation:cat-step .5s ease-in-out -.5s infinite alternate}.house-cat.cat-walking .cat-tail{animation:cat-tail 1.6s ease-in-out infinite alternate}
-/* Eyes are above the dimmed coat so their brief glint remains visible at night. */
-.house-cat.cat-dark .cat-eyes{animation:cat-eye-glint 5s ease-in-out infinite}.house-cat.zeca .cat-eyes{animation-delay:1s}
-@keyframes cat-step{from{transform:translateY(-2px)}to{transform:translateY(2px)}}@keyframes cat-tail{from{transform:rotate(-12deg)}to{transform:rotate(12deg)}}@keyframes cat-eye-glint{0%,82%,100%{filter:brightness(1);opacity:.65}88%,93%{filter:brightness(12) drop-shadow(0 0 4px #c8ff7e);opacity:1}}
+/* Eye glow is independent of the dimmed coat and only appears in dark rooms. */
+.house-cat.cat-dark .cat-eyes{fill:#d4ff8c;filter:drop-shadow(0 0 2.5px #b8ff70);transform-box:fill-box;transform-origin:center;animation:cat-eye-blink 4.8s ease-in-out infinite}
+.house-cat.zeca.cat-dark .cat-eyes{animation-delay:-1.7s}
+@keyframes cat-step{from{transform:translateY(-2px)}to{transform:translateY(2px)}}@keyframes cat-tail{from{transform:rotate(-12deg)}to{transform:rotate(12deg)}}
+@keyframes cat-eye-blink{0%,58%,100%{opacity:.18;transform:scaleY(.8)}64%,72%,80%{opacity:1;transform:scaleY(1)}75%{opacity:.04;transform:scaleY(.06)}88%{opacity:.18;transform:scaleY(.8)}}
 .cats-paused *{animation-play-state:paused!important}
 @media(prefers-reduced-motion:reduce){.house-cat *{animation:none!important;transition:none!important}}
+
+@media(prefers-reduced-motion:reduce){.house-cat.cat-dark .cat-eyes{opacity:.8;transform:none}}

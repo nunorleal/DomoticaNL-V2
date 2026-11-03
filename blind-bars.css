@@ -1,0 +1,3 @@
+.blind-position-bar{pointer-events:none}.blind-bar-track{fill:#142d3c45;stroke:#e1eff5;stroke-width:1}.blind-bar-fill{fill:url(#blind-closure-slats);fill-opacity:.95;transition:height .35s linear}.blind-position-bar[data-quality=last] .blind-bar-fill{fill:#c3a270;fill-opacity:.8}.blind-position-bar[data-quality=last] .blind-bar-track,.blind-position-bar[data-quality=unknown] .blind-bar-track{stroke:#d6b781;stroke-dasharray:2 2}.blind-position-bar[data-quality=unknown] .blind-bar-track{fill:#b08a4b24}
+.window-frame-patch{pointer-events:none}.window-frame-night image{filter:brightness(.48) saturate(.6) sepia(.15) hue-rotate(155deg)}.window-frame-electric image{filter:brightness(.85) saturate(.75)}
+@media(prefers-reduced-motion:reduce){.blind-bar-fill{transition:none}}

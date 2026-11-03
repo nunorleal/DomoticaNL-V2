@@ -19,3 +19,7 @@ test('backup roundtrips four window contacts and validates the migration marker'
  const backup=B.parse(JSON.stringify(B.create(storage,'1.68')));B.restore(storage,backup);assert.deepEqual(JSON.parse(storage.getItem('casa-nl-shelly-cloud-v1')).windowBindings,W.defaults());assert.equal(storage.getItem('casa-nl-window-ids-associated-v1'),'true');
  const bad=JSON.parse(JSON.stringify(backup));bad.data['casa-nl-window-ids-associated-v1']='yes';assert.throws(()=>B.parse(JSON.stringify(bad)));
 });
+test('window frame geometry comes from one canonical image in day, night and electric renders',()=>{
+ const fs=require('node:fs'),vm=require('node:vm'),s=fs.readFileSync(require.resolve('../windows.js'),'utf8'),code=s.slice(s.indexOf(' const frameRects='),s.indexOf(' function fill(')),ctx={rects:{},assets:{}};vm.createContext(ctx);vm.runInContext(code,ctx);
+ for(const room of ['master','bedroom2','living','kitchen']){const frames=['day','night','electric'].map(v=>ctx.frame(room,v));const geometry=frames.map(x=>x.match(/ x="[^"]+" y="[^"]+" width="[^"]+" height="[^"]+" viewBox="[^"]+"/)[0]);assert.equal(new Set(geometry).size,1);for(const f of frames)assert.match(f,/href="assets\/planta-realista-sofa-v2.png"/)}
+});

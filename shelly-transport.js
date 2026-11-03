@@ -11,6 +11,7 @@
    endpoint='get';body={ids:[...new Set(payload.ids.map(CORE.statusDeviceId))],select:['status']};
   }else if(path==='light'){
    const c=CORE.lightCommand({deviceId:payload.id,channel:payload.channel,type:payload.type},payload.on,payload.brightness);endpoint='set/'+c.type;body={id:c.id,channel:c.channel,on:c.on,...(c.brightness!==undefined?{brightness:c.brightness}:{})};
+   if(payload.toggle_after!==undefined){if(payload.on!==true||payload.type!=='switch'||(!Number.isInteger(payload.toggle_after)||payload.toggle_after<60||payload.toggle_after>86400||payload.toggle_after%60!==0))throw Error('Duração inválida: escolha entre 1 e 1440 minutos.');body.toggle_after=payload.toggle_after;}
   }else if(path==='cover'){
    endpoint='set/cover';body=CORE.command({deviceId:payload.id,channel:payload.channel},payload.position);
   }else if(path==='covers'){

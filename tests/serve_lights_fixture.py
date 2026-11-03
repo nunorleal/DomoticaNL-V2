@@ -112,6 +112,7 @@ let evMode=sensorTestParams.get('ev')||'charging';if(sensorTestParams.has('ev'))
 states.deadbeefab02=new URLSearchParams(location.search).get('dehumidifier')==='on';types.deadbeefab02='switch';channels.deadbeefab02=0;
 states.deadbeefab01=paramsHeaterOn();types.deadbeefab01='switch';channels.deadbeefab01=0;function paramsHeaterOn(){return new URLSearchParams(location.search).get('heater')==='on'}
 let slowNext=false,cloudStatusCount=0,cloudPaused=false;const requestTrace=[];document.addEventListener('DOMContentLoaded',()=>{if(sensorTestParams.has('retainproof')){const pause=document.createElement('button');pause.id='fixture-cloud-pause';pause.textContent='Simular pausa Cloud';pause.style='position:fixed;top:120px;left:8px;z-index:9000';pause.onclick=()=>{cloudPaused=true;window.CasaShelly.refresh({quiet:true})};document.body.append(pause)}if(!sensorTestParams.has('fluidproof'))return;const b=document.createElement('button');b.id='fixture-slow-read';b.textContent='Consulta lenta fictícia';b.style='position:fixed;top:120px;left:8px;z-index:9000';b.onclick=()=>{slowNext=true;window.CasaShelly.refresh({quiet:true})};const log=document.createElement('pre');log.id='fixture-request-log';log.hidden=true;document.body.append(b,log)});
+const fixtureCoverPositions={};
 const native=window.fetch.bind(window),params=new URLSearchParams(location.search);window.fetch=async(input,options={})=>{
  const url=new URL(typeof input==='string'?input:input.url,location.href);
  if(!url.hostname.endsWith('.shelly.cloud'))return native(input,options);
@@ -120,7 +121,7 @@ const native=window.fetch.bind(window),params=new URLSearchParams(location.searc
  if(params.has('wrongchannel'))channels.deadbeef2222=2;
  if(url.pathname==='/v2/devices/api/get')result=data.ids.map(id=>{
   if(id==='XB123456701'||id==='XB123456702')return {id:id.toLowerCase(),online:1,code:'MOCK-BLU-HT',status:{'temperature:0':{tC:id.endsWith('1')?18.4:17.6},'humidity:0':{rh:id.endsWith('1')?64:72},'devicepower:0':{battery:{percent:83}}}};
-  if(/^deadbeefcb0[0-3]$/.test(id)){const i=Number(id.slice(-1));return {id,online:1,status:{'cover:0':{state:'stopped',current_pos:params.has('meteoholdproof')&&i===0?fixtureMasterBlindPosition:params.has('lightjoinproof')&&i>=2?Math.max(0,Math.min(100,Number(params.get('lightjoinproof'))||0)):[80,50,100,25][i],pos_control:true,apower:0,aenergy:{total:1200},errors:[]}}}};
+  if(/^deadbeefcb0[0-3]$/.test(id)){const i=Number(id.slice(-1));return {id,online:1,status:{'cover:0':{state:'stopped',current_pos:Number.isFinite(fixtureCoverPositions[id])?fixtureCoverPositions[id]:params.has('meteoholdproof')&&i===0?fixtureMasterBlindPosition:params.has('lightjoinproof')&&i>=2?Math.max(0,Math.min(100,Number(params.get('lightjoinproof'))||0)):[80,50,100,25][i],pos_control:true,apower:0,aenergy:{total:1200},errors:[]}}}};
   if(/^deadbeefca0[0-2]$/.test(id))return {id,online:params.get('kitchen')==='offline'?0:1,status:{relays:[{ison:params.get('kitchen')==='unknown'?null:states[id]}],meters:[{power:states[id]?42.5:0,total:600000,is_valid:true}]}};
   if(/^deadbeefff0[0-4]$/.test(id))return {id,online:params.get('media')==='offline'?0:1,status:{relays:[{ison:params.get('media')==='unknown'?null:states[id]}],...(params.has('medianometer')?{}:{meters:[{power:params.has('mediainvalid')?null:params.has('tvregen')&&id==='deadbeefff00'?(Number(params.get('tvregen'))||6):params.has('mediastandby')&&['deadbeefff00','deadbeefff02'].includes(id)?0:states[id]?(id==='deadbeefff00'?85.5:23.5+Number(id.slice(-1))*8):0,total:720000+Number(id.slice(-1))*60000,is_valid:!params.has('mediainvalid')}]})}};
   if(id==='deadbeefdd01'||id==='e465b8b9c64c'){const m=params.get('gateway');return m==='missing'?null:{id,online:m==='offline'?0:1,status:m==='empty'?{}:{'bthomesensor:200':{value:84},'bthomesensor:201':{value:m==='open',last_updated_ts:Date.now()/1000},'bthomesensor:202':{value:28.2}}}}
@@ -142,6 +143,7 @@ const native=window.fetch.bind(window),params=new URLSearchParams(location.searc
   if(id==='deadbeef5555')return {id,online:params.has('sensoroffline')?0:1,code:'MOCK-HT-G3',status:{'temperature:0':{tC:params.has('invalidsensor')?null:19.6},'humidity:0':{rh:49.1},'devicepower:0':{battery:{percent:85}}}};
   return {id,online:params.has('offline')&&id==='deadbeef2222'?0:1,code:'MOCK-LAMP',status:{[types[id]+':'+channels[id]]:{output:states[id],...(params.has('dimmers')&&id in brightnessLevels?{brightness:brightnessLevels[id]}:{}),errors:[]}}};
  }).filter(Boolean);
+ else if(url.pathname==='/v2/devices/api/set/cover'&&params.has('drag')){if(!/^deadbeefcb0[0-3]$/.test(data.id)||data.channel!==0||!Number.isInteger(data.position)||data.position<0||data.position>100)throw Error('Invalid fictitious cover command');commands.push({path:url.pathname,...data});fixtureCoverPositions[data.id]=data.position;document.getElementById('fixture-command-log').textContent=JSON.stringify(commands);}
  else if(['/v2/devices/api/set/switch','/v2/devices/api/set/light'].includes(url.pathname)){
   commands.push({path:url.pathname,...data});
   const log=document.getElementById('fixture-command-log');if(log)log.textContent=JSON.stringify(commands);
@@ -171,6 +173,7 @@ class Fixture(SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path.split('?')[0] not in ('/','/index.html'):return super().do_GET()
         text=(ROOT/'index.html').read_text().replace('<head>','<head>'+SHIM).replace('<body>','<body><aside style="position:fixed;bottom:8px;right:8px;z-index:1000;background:#a43d20;color:white;padding:6px;font-size:11px;pointer-events:none">TESTE · dispositivos fictícios</aside><pre id="fixture-command-log" hidden>[]</pre>')
+        if 'drag' in self.path:text=text.replace('</body>','<script src="review/blind-drag-fixture.js"></script></body>')
         body=text.encode();self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.end_headers();self.wfile.write(body)
 if __name__=='__main__':
     print('Isolated light fixture http://127.0.0.1:8083/ (no physical devices)',flush=True)

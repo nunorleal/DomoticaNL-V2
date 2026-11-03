@@ -866,3 +866,84 @@ Verificação:249 testes locais aprovados, incluindo rotas/obstáculos/amostrage
 # Check dos gatos na lista comum — 2.78
 
 Vasco e Zeca na planta usa settings-row/row-check igual aos restantes checks, imediatamente após Mostrar ícones da TV e secretária. Retirar estado textual Visíveis/Ocultos e posição isolada no ambiente. Preservar preferência, animação, percursos e backups. Utilizador aprovou replicação adaptada na Casa Condados. MeteoNL mantém2.76. Verificação:249 testes aprovados e fixture confirma caixa28px, estado marcado/desmarcado e ocultação real da camada; captura review/vasco-zeca-check-2.78.jpg.
+
+# Barras discretas dos estores — 2.79
+
+Replicar leitura visual da Casa Condados só na Domótica NL: barras verticais centradas nas quatro janelas (geometria blindWindowZones), cheias com0% aberto e vazias com100%; preenchimento1-position/100. Novo blind-bar-core.js valida posição numérica0..100; associado sem leitura válida fica desconhecido e nunca usa demonstração guardada. Posição offline/erro/antiga120s fica âmbar/tracejada como última leitura, sem promover estado real. Demonstração só para estores sem associação.
+
+Usar SVG room-hit-zones já existente, pointer-events:none; preservar cliques/hover das janelas, banners, percentagens, slider e comandos. drawPlan e updatePositions atualizam barras a partir de CasaShelly.reading existente, sem consultas, timers, IDs, configurações ou comandos adicionais. Meteo mantém2.76. Verificação:252 testes aprovados, limites0/25/50/100, ausente/inválido/offline/antigo; fixture só fictícia confirma80/50/100/25 correspondem20/50/0/75% cheios, zero comandos. Captura review/estores-barras-2.79.jpg.
+
+# Estores visíveis e caixilharia alinhada — 2.80
+
+Corrigir a apresentação discreta demais de2.79: largura18unidades, preenchimento95% e padrão local de lâminas para distinguir fecho de vidro. Corrigir alturas das janelas Gui/sala/cozinha para283/213/133 e manter principal285, sem pintar sobre encontros de paredes. Mesma regra0% aberto cheio/100% vazio e qualidade last/unknown mantidas.
+
+CasaWindows.patch inclui agora frameRects com recorte canónico da planta diurna x835..861, nos mesmos limites em day/night/electric; nos últimos dois muda só filtro de luminosidade/cor. Não misturar caixilharias desalinhadas dos renders gerados. Recorte independente dos inserts das folhas/contactos, que mantêm regras existentes; paredes brancas acima. Não editar imagens base, dispositivos, IDs ou transporte. Correção específica T2: Casa Condados usa outra arquitetura/render. Meteo2.76 preservada.
+
+Verificação:253 testes aprovados, incluindo identidade da geometria e fonte canónica dos três modos. Fixture fictícia confirma lâminas visíveis em0/50/80%, modo noturno e frames com x/y/w/h idênticos, zero errosJS e zero comandos. Provas review/estores-janelas-dia-2.80.jpg e review/estores-janelas-noite-2.80.jpg.
+
+# Vista de consumo por divisão — 2.80
+
+Botão raio entre contador e pisos ativa modo temporário de leitura, aria-pressed e Escape. Apenas somar medições atuais online/válidas das saídas associadas à divisão, deduplicadas por identidade; excluir contador geral, sensores, demonstração, histórico e totalMeter EV. Incompletos mostram +? e Medição parcial; ausentes não são zero. Ocultar outros banners por CSS, fechar/bloquear popups e adiar protetor Meteo enquanto ativo; preferências/posições e campos não são reescritos. Desativar restaura a apresentação anterior. Sem comandos, novas consultas, credenciais, persistência do modo ou mistura de associações entre casas. Addon independente room-power-core/view/adapter/css, antes de Meteo.
+
+# Eixo comum da informação meteorológica — MeteoNL2.77
+
+Corrigir o alinhamento que text-align sozinho não resolve na temperatura display:flex: weather-reading passa a coluna flex com align-items:center; temperatura usa justify-content:center. Centrar temperatura principal, Real, condição, sensação e máximas/mínimas entre si; horários solares permanecem no eixo relógio/ecrã. Mesma alteração nas duas MeteoNL, incluindo foco e modo vermelho; sem alterar pontes, sensores, animações ou horários. Builds2.77 de ambas aprovados e referências HTTP/srcdoc/package sincronizadas. Na fixture isolada22°C/Real20,7°C, centros temperatura/condição/Real738,99px e relógio/solar640px em ambas. Prova review/meteo-eixo-centrado-2.77.jpg. Sem dispositivos reais.
+
+Verificação da vista: 259 testes da aplicação aprovados; seis testes específicos repetidos após ajuste final. Fixture fictícia confirma banners por piso, botão entre contador e layers, bloqueio de popups e reposição por clique/Escape; telefone375px verificado. Nenhum comando real nem consulta adicional por esta vista. Prova review/room-power.png.
+
+# Gatos e iluminação local — 2.82
+
+Cada gato continua único. Condados distribui Vasco/Zeca independentemente pelos pisos3/4: juntos num piso ou separados; mantém atribuição entre visitas rápidas e pode redistribuir ao entrar num piso após2–5min, sem teletransporte em cena. Não acrescentar gatos na garagem nem percursos de escadas. Escurecimento usa a mesma opacidade noturna/diurna e mistura elétrica da planta, na zona que contém a posição atual; transição suave existente, também com estores fechados de dia. Atualizações da planta renovam o brilho mesmo em movimento reduzido. T2 aplica só a iluminação, preservando o único piso habitável dos gatos. Sem rede, comandos ou alterações de dispositivos.
+
+Verificação: testes fictícios de distribuição/unicidade, percursos sem obstáculos e brilho da iluminação aprovados. Fixture Condados confirma Vasco/Zeca no mesmo piso, outro piso vazio e regresso sem duplicados; brilho diurno diferente em zonas claras/escuras e redução ao selecionar noite. T2 preserva os dois gatos no piso habitável com nova leitura contínua da iluminação. Nenhum equipamento real acionado.
+
+# Lista de consumos e escala — 2.83
+
+Banners da vista raio mostram exclusivamente W/kW e indicação +? quando parcial; nome/qualidade só em título e nome acessível. Agora são botões: popup exclusivo room-power-dialog é a exceção permitida ao bloqueio dos restantes diálogos nesta vista. Lista apenas medidores positivos, atuais e deduplicados da divisão; reter linhas já apresentadas até fechar para voltar a ligar depois de0W, sem inventar leituras antigas. Atualização da lista lê cache, sem novo transporte ou consultas. Controlos usam on/off booleano reportado e APIs individuais existentes, guardas de frescura/configuração/pendente/fila; sem inferir alimentação dos watts, otimismo, retry ou comandos ao abrir. Estores, sensores de disparo e medidores sem atuação continuam só leitura. Escape fecha primeiro a lista; novo Escape sai da vista. Slider escala a dimensão visível usada na contenção dos banners.
+T2 acrescenta ajuste Tamanho dos banners de consumo nas Definições,60..160%, em casa-nl-room-power-scale-v1, validado e incluído no backup genérico. Não copiar associações da outra casa. Consumos de washer/boiler pertencem à varanda.
+
+Verificação: 262 testes aprovados. Fixtures fictícias confirmam abrir por toque/teclado, desligar/confirmar0W/manter linha/voltar a ligar, escala100→160%, popup compacto em375px e bloqueio de outros popups. Sem equipamentos reais. Prova review/domotica-consumos-lista-2.83.png.
+
+# Gatos como obstáculos mútuos — 2026-11-03
+
+CasaCatsTraffic reserva os percursos completos antes de cada passeio, com distância conservadora84unidades para incluir corpo/cabeça/cauda animada/rotação e folga. Verificar distâncias entre segmentos, incluindo cruzamentos e sentidos opostos, e distância ao outro gato parado. Se houver conflito, escolher outro destino seguro do grafo existente ou esperar e reavaliar no RAF local (cooldown1s em memória). Nunca deslocar lateralmente para fora de passagens ou alterar as plantas. A espera pausa as patas; não inferir tráfego de outro piso. Preservar ciclos30s quando livres, pausas, exploração equilibrada, distribuição única entre pisos e brilho da iluminação. Sem consultas/comandos/timers Cloud, IDs ou preferências novas. Montar cats-traffic-core antes de cats.js; estado é só efémero.
+
+Testes fictícios: travessias de segmentos/head-on, obstáculos parados e20min por cenário em8 sementes para cada planta/piso, distância mínima preservada, exploração e regresso a piso sem bloqueio permanente. Fixture confirma módulo montado, gatos em movimento e zero errosJS/comandos físicos. Captura review/gatos-obstaculos-mutuos.jpg.
+
+# Banner interior do quarto — MeteoNL2.78
+
+Banner glass inferior na hero, sob horários solares, com Quarto · Ambiente interior, temperatura/humidade lado a lado e idade da última consulta Cloud. Usar BedDouble/Thermometer/Droplets/Cloud, sem afirmar Bluetooth sem conhecer transporte. CasaMeteoBridge.bedroomClimate lê exclusivamente sensor master existente: CasaShelly.sensorBinding/sensorReading no T2, CasaCloudRead.temperatureSnapshot(master) na Casa Condados. Preservar Real exterior/varanda e restantes pontes. Snapshot normalizado sem IDs/segredos, temperatura/humidade independentes válidas (zero incluído), pending/partial/unavailable/last/offline distintos; leitura antiga não é atual e falta não é zero. Esconder se não associado. fetchedAt representa consulta, nunca medição, por isso legenda Última consulta.
+
+BedroomClimate renderiza com relógio React existente, sem novo timer/polling/refresh/comando. Visível no modo ampliado e vermelho, com ajuste de tamanhos para encaixar o banner sem sobreposição. Vermelho mantém fundo preto. Versão Meteo2.78 comum, fontes/bundles/referências HTTP/srcdoc/package coerentes; preservar versões próprias e alterações das casas. Tests/meteo-bedroom verifica qualidade, valores, ausência de segredos e leitura exclusiva master sem transporte. Fixture isolada confirmou21,5°C/54%, última consulta1min, antiga10min, modo vermelho e modo ampliado375×812 (banner y584..733). Provas review/meteo-quarto-2.78.jpg e review/meteo-quarto-vermelho-2.78.jpg. Sem equipamentos reais.
+
+# Temporizador dos aparelhos — 2.86
+
+Opção extra Ligar 10 min/Ligar 15 min no popup do termoventilador/desumidificador, preservando ligar/desligar normal. Enviar on:true e toggle_after:600/900 no mesmo set/switch Cloud v2, documentado em https://shelly-api-docs.shelly.cloud/cloud-control-api/communication-v2/#control-a-switch. Temporizador nativo, sem setTimeout de desligamento no navegador, novas leituras ou repetição automática. Nova duração reinicia o tempo. Validar duração antes da fila e no transporte, preservar guardas de estado recente, pending, formulário sujo e confirmação por leitura; HTTP aceite não confirma estado físico nem execução do temporizador. Não alterar configurações, IDs, canais, credenciais ou MeteoNL. Testes exclusivamente fictícios.
+
+Verificação: suite local aprovada com fixtures, transporte valida 600/900s e mantém comando normal sem duração; rejeita valores inválidos e cancela estado alterado antes da fila, sem repetição de comandos. Popups dos dois aparelhos verificados na UI com IDs/chaves fictícios: pedido de 10/15min leva toggle_after no mesmo set/switch; estado só muda após leitura, desligar normal envia on:false sem timer. Captura review/appliance-timer.jpg. Temporizador físico não testado em equipamentos reais.
+
+# Banner interior alinhado — MeteoNL2.79
+
+Por pedido do utilizador, banner do quarto ocupa100% da largura da hero e reutiliza o fundo, borda, sombra e transparência da classe glass comum aos painéis inferiores, sem gradiente próprio opaco. Retirar a frase Última consulta e a contagem de idade da apresentação; preservar avisos de dados antigos/offline/parciais, validação e frescura. Trocar nuvem por Bluetooth, com nome acessível que esclarece sensor Bluetooth/leitura Shelly Cloud. Sem alterar pontes, IDs, transporte, polling ou comandos. Aplicar nas duas apps, build2.79 e cache sincronizados.
+
+Verificação2.79: build aprovado, testes Meteo existentes aprovados e fixture sem dispositivos confirma banner/painel inferior ambos x282/largura716px, background e backdrop-filter calculados idênticos, símbolo lucide-bluetooth presente e ausência da frase Última consulta. Captura review/meteo-banner-2.79.jpg. Apenas apresentação alterada.
+
+# Olhos dos gatos e identificação da divisão — 2.88
+
+No escuro, olhos verde claros independentes das cores escurecidas do corpo, com pulsação/piscadela em scaleY e opacidade a cada4,8s; Zeca desfasada1,7s. Sem animação de brilho em divisões claras. Movimento reduzido mantém olhos estáticos discretos; pausas existentes preservadas. T2 passa a paleta direta por cor, sem filtro brightness no grupo inteiro.
+
+A deteção geométrica usa rectFits com alvo1×1:0,1×0,1 era inferior à tolerância de área0,1 e aceitava uma divisão errada. Preservar fallback do percurso nos vãos. UI T2 confirmou brilho corporal0,220 em master/living apagados e1,000 em hall/kitchen iluminados, animação cat-eye-blink só no escuro. Condados confirmou0,160 e olhos animados em living2 apagada e0,832 sem brilho em studio iluminado. 26 testes dos gatos/tráfego nas duas apps aprovados; fixtures intercetam todos os pedidos, sem equipamentos reais.
+
+# Temporizador por pressão prolongada — 2.90
+
+Substituir painel sempre visível por cronómetro pequeno no botão normal de alimentação. Clique curto preserva ligar/desligar; pressão550ms rato/toque apenas abre escolhas5/10/15min e Personalizado1..1440min inteiros. Suprimir clique sintético após pressão longa; cancelar gesto com deslocação>10px, pointercancel, perda de captura, blur, diálogo fechado ou app oculta. Teclado seta abaixo/ShiftF10 abre opções; Escape fecha. Abrir opções nunca envia comandos. Escolha explícita liga on:true/toggle_after:segundos no mesmo comando nativo, sem timer de desligamento do navegador. Validar inteiro60..86400 múltiplo60 antes da fila e transporte; mesmas guardas dirty/fresco/pending e confirmação existente. Preservar estados normais e configurações; testes só fictícios.
+
+# Pressão prolongada nos estores — 2.89
+
+blind-drag-core/js/css partilhados nas duas apps: manter450ms no alvo do estore ou banner e arrastar verticalmente escolhe percentagem inteira0..100. Subir aumenta abertura, descer diminui; apenas a cápsula mostra pré-visualização. Clique curto/teclado preservam popup. Só pointerup envia uma posição explícita pelo comando existente; sem comandos em input/move, sem retry ou posição otimista. Demo aplica só ao largar, preservando seguidores/manuais nos Condados.
+
+Snapshot inicial e final exigem estado controlável/posição válida; geração de configuração deve coincidir. Offline/stale/pendente/configuração suja sem controlo. Escape, pointercancel, perda de captura, blur, documento oculto, segundo ponteiro e popup aberto cancelam. Movimento antes de450ms cancela gesto. Captura de documento e touch-action:none nos alvos impedem swipe/pan/drag concorrente; suprimir clique residual só após hold/movimento. Não alterar os controlos de popup, imagens ou associações.
+
+36 testes de estores aprovados nas duas apps; relógio/DOM fictícios garantem zero comandos na pré-visualização/cancelamento/estado alterado e um único ao largar. UI fictícia confirmou Condados40→60, T2demo0→20 e T2Cloud50→70 com um set/cover e confirmação por leitura. Escape em pré-visualização90 preservou70 e contador de comandos1. Cliques curtos abrem ambos os popups. Fixtures intercetam pedidos com IDs/chaves fictícios; nenhum equipamento real usado.
+
+Verificação: suites279 testes T2/296 Condados aprovadas e testes dirigidos11/17 após ajuste final. UI com fixtures fictícias confirmou pressão750ms nos dois projetos abre opções sem qualquer comando;5min envia toggle_after300, personalizado23min envia1380, zero bloqueado pelo formulário sem envio; clique normal posterior envia on:false sem duração. Teclado ArrowDown abre opções sem comando e fechar devolve foco, painel oculto por omissão. Leitura temporariamente ocupada só desativa escolhas, nunca apaga duração em edição; fechar permanece disponível. Capturas review/appliance-timer-longpress.jpg e T2 review/appliance-timer-compact.jpg. Nenhum aparelho real testado.

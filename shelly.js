@@ -442,10 +442,11 @@
  function heaterCard(){const d=heaterSnapshot();return d.configured?resultCard('heater','heater',`<p>${d.on===true?'Ligado':d.on===false?'Desligado':'Por confirmar'}</p>`,'Termoventilador'):''}
  function heaterEnsureFresh(){if(config.heater&&(!AL.fresh(heaterReading)||Date.now()-heaterReading.fetchedAt>10000))return refresh({quiet:true,ids:[config.heater.deviceId]})}
  function settleHeater(){if(heaterTarget!==null&&confirmationCurrent('heater',heaterReading)&&AL.fresh(heaterReading)&&heaterReading.on===heaterTarget){heaterMessage='Estado confirmado pelo Shelly: '+(heaterTarget?'ligado.':'desligado.');heaterTarget=null}}
- async function commandHeater(on){
+ async function commandHeater(on,toggleAfter){
+  if(toggleAfter!==undefined&&(on!==true||(!Number.isInteger(toggleAfter)||toggleAfter<60||toggleAfter>86400||toggleAfter%60!==0)))throw Error('Duração inválida: escolha entre 1 e 1440 minutos.');
   if(typeof on!=='boolean'||blockingRead()||commandCount||groupBusy||lightGroupBusy||heaterTarget!==null)return;
   if(!heaterSnapshot().canControl){heaterMessage='Atualize o estado e confirme a associação do termoventilador.';summary();return}
-  const version=generation,payload={id:config.heater.deviceId,channel:config.heater.channel,type:'switch',on};commandCount++;heaterMessage=on?'A ligar o termoventilador…':'A desligar o termoventilador…';summary();
+  const version=generation,payload={id:config.heater.deviceId,channel:config.heater.channel,type:'switch',on,...(toggleAfter!==undefined?{toggle_after:toggleAfter}:{})};commandCount++;heaterMessage=on?'A ligar o termoventilador…':'A desligar o termoventilador…';summary();
   try{const result=await api('light',payload);if(version!==generation)return;if(result.accepted!==true)throw Error('O Cloud não confirmou o comando.');heaterTarget=on;heaterMessage='Comando aceite. A aguardar confirmação do Shelly.'}
   catch(error){if(version===generation)heaterMessage=error.message}
   finally{commandCount--;if(version===generation){summary();settleHeater();settleDehumidifier();settleMedia();summary();schedulePoll()}}
@@ -454,10 +455,11 @@
  function dehumidifierCard(){const d=dehumidifierSnapshot();return d.configured?resultCard('dehumidifier','dehumidifier',`<p>${d.on===true?'Ligado':d.on===false?'Desligado':'Por confirmar'}</p>`,'Desumidificador'):''}
  function dehumidifierEnsureFresh(){if(config.dehumidifier&&(!AL.fresh(dehumidifierReading)||Date.now()-dehumidifierReading.fetchedAt>10000))return refresh({quiet:true,ids:[config.dehumidifier.deviceId]})}
  function settleDehumidifier(){if(dehumidifierTarget!==null&&confirmationCurrent('dehumidifier',dehumidifierReading)&&AL.fresh(dehumidifierReading)&&dehumidifierReading.on===dehumidifierTarget){dehumidifierMessage='Estado confirmado pelo Shelly: '+(dehumidifierTarget?'ligado.':'desligado.');dehumidifierTarget=null}}
- async function commandDehumidifier(on){
+ async function commandDehumidifier(on,toggleAfter){
+  if(toggleAfter!==undefined&&(on!==true||(!Number.isInteger(toggleAfter)||toggleAfter<60||toggleAfter>86400||toggleAfter%60!==0)))throw Error('Duração inválida: escolha entre 1 e 1440 minutos.');
   if(typeof on!=='boolean'||blockingRead()||commandCount||groupBusy||lightGroupBusy||dehumidifierTarget!==null)return;
   if(!dehumidifierSnapshot().canControl){dehumidifierMessage='Atualize o estado e confirme a associação do desumidificador.';summary();return}
-  const version=generation,payload={id:config.dehumidifier.deviceId,channel:config.dehumidifier.channel,type:'switch',on};commandCount++;dehumidifierMessage=on?'A ligar o desumidificador…':'A desligar o desumidificador…';summary();
+  const version=generation,payload={id:config.dehumidifier.deviceId,channel:config.dehumidifier.channel,type:'switch',on,...(toggleAfter!==undefined?{toggle_after:toggleAfter}:{})};commandCount++;dehumidifierMessage=on?'A ligar o desumidificador…':'A desligar o desumidificador…';summary();
   try{const result=await api('light',payload);if(version!==generation)return;if(result.accepted!==true)throw Error('O Cloud não confirmou o comando.');dehumidifierTarget=on;dehumidifierMessage='Comando aceite. A aguardar confirmação do Shelly.'}
   catch(error){if(version===generation)dehumidifierMessage=error.message}
   finally{commandCount--;if(version===generation){summary();settleDehumidifier();settleMedia();summary();schedulePoll()}}
@@ -516,7 +518,7 @@
   return {...C.aggregate(windows,lights,C.devices(rows)),windowRows:windows,lightRows:lights,deviceRows:rows.map(({kind,key,room,deviceId,name,status})=>({kind,key,room,deviceId,name,status}))};
  }
  function connectionSnapshot(){const waitSeconds=Math.max(0,Math.ceil(((transport.stats(config.server).retryAt||0)-Date.now())/1000));return {paused:waitSeconds>0,waitSeconds,recovering:deferredReads.size>0}}
- window.CasaShelly={houseSnapshot,brightnessControl,focusPopup,consumptionSnapshot,connectionSnapshot,commandKitchen,kitchenEnsureFresh,refreshEquipment,activitySnapshot,dehumidifierSnapshot,dehumidifierEnsureFresh,commandDehumidifier,heaterSnapshot,heaterEnsureFresh,commandHeater,hasUnsavedChanges:dirty,windowSnapshot,windowEnsureFresh,commandOffice,officeEnsureFresh,mediaSnapshot,mediaEnsureFresh,commandMedia,inspectDoorSensor,inspectDoorGateway,sensorMarkup,sensorCaption,fanSnapshot,fanEnsureFresh,commandFan,alarmSnapshot,alarmEnsureFresh,commandAlarm,energySnapshot,energyEnsureFresh,doorSnapshot,doorEnsureFresh,evSnapshot,commandEV,evEnsureFresh,lampSnapshot,isBusy:()=>busy||commandCount>0||lightGroupBusy||groupBusy||alarmTarget!==null||fanTarget!==null||heaterTarget!==null||dehumidifierTarget!==null||mediaTargets.size>0,sensorBinding,sensorReading,lightBinding,lightReading,lightCaption,lightValue,commandLight,commandAllLights,binding,reading,roomCaption:caption,decorateRoom,reapply,refresh,command,commandAll,ensureFresh,ensureBlindFresh};
+ window.CasaShelly={blindGestureSnapshot(id){const configured=!!binding(id),r=reading(id);return {configured,position:r?.position,allowed:configured&&controlReady(id,50),token:'real:'+generation}},houseSnapshot,brightnessControl,focusPopup,consumptionSnapshot,connectionSnapshot,commandKitchen,kitchenEnsureFresh,refreshEquipment,activitySnapshot,dehumidifierSnapshot,dehumidifierEnsureFresh,commandDehumidifier,heaterSnapshot,heaterEnsureFresh,commandHeater,hasUnsavedChanges:dirty,windowSnapshot,windowEnsureFresh,commandOffice,officeEnsureFresh,mediaSnapshot,mediaEnsureFresh,commandMedia,inspectDoorSensor,inspectDoorGateway,sensorMarkup,sensorCaption,fanSnapshot,fanEnsureFresh,commandFan,alarmSnapshot,alarmEnsureFresh,commandAlarm,energySnapshot,energyEnsureFresh,doorSnapshot,doorEnsureFresh,evSnapshot,commandEV,evEnsureFresh,lampSnapshot,isBusy:()=>busy||commandCount>0||lightGroupBusy||groupBusy||alarmTarget!==null||fanTarget!==null||heaterTarget!==null||dehumidifierTarget!==null||mediaTargets.size>0,sensorBinding,sensorReading,lightBinding,lightReading,lightCaption,lightValue,commandLight,commandAllLights,binding,reading,roomCaption:caption,decorateRoom,reapply,refresh,command,commandAll,ensureFresh,ensureBlindFresh};
  fill();summary();reapply();render();
  if(key&&config.server&&CORE.deviceIds(config).length)refresh({quiet:true});
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){nextRefreshAt=0;schedulePoll()}});
