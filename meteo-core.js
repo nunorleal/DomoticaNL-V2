@@ -15,7 +15,7 @@
   const choices={redSchedule:['night','custom'],nightPalette:['color','red'],night:['auto','on','off'],temp:['C','F'],wind:['kmh','ms','mph'],demo:['auto','sunny','cold','night','rain','storm','fog','sunset']};
   const booleans=['seconds','clock12','animations','dynamic','nightUntilBlindOpen'];const result={};
   for(const [k,v]of Object.entries(value)){
-   const valid=k==='focusSeconds'?[0,15,30,60,120,300].includes(v):booleans.includes(k)?typeof v==='boolean':choices[k]?choices[k].includes(v):['start','end','redStart','redEnd'].includes(k)?typeof v==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(v):['dim','effects','cold'].includes(k)?Number.isFinite(v)&&v>=(k==='cold'?-30:0)&&v<=(k==='cold'?40:100):false;
+   const valid=k==='indoorSensor'?typeof v==='string'&&/^[a-z][a-z0-9:-]{0,63}$/.test(v):k==='focusSeconds'?[0,15,30,60,120,300].includes(v):booleans.includes(k)?typeof v==='boolean':choices[k]?choices[k].includes(v):['start','end','redStart','redEnd'].includes(k)?typeof v==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(v):['dim','effects','cold'].includes(k)?Number.isFinite(v)&&v>=(k==='cold'?-30:0)&&v<=(k==='cold'?40:100):false;
    if(!valid)throw Error('Preferências MeteoNL inválidas.');result[k]=v;
   }return result;
  }
@@ -31,10 +31,20 @@
   if(!api||api.isBusy()||api.hasUnsavedChanges()||!morningBlindVisible(context(),snapshot()))return false;
   return await api.command('master','open')===true;
  }
- function bedsideMode(previous,{enabled=false,night=false,red=false,blindOpen=false}){
+ function bedsideMode(previous,{enabled=false,night=false,red=false,blindOpen=false,morningRequested=false,now,sunrise,sunset}){
   let holdNight=enabled&&!!(previous?.holdNight||night&&!previous?.baseNight),holdRed=enabled&&!!(previous?.holdRed||red&&!previous?.baseRed);
-  if(blindOpen===true){holdNight=false;holdRed=false}
-  return {baseNight:night,baseRed:red,holdNight,holdRed,night:night||red||holdNight||holdRed,red:red||holdRed};
+  const validNow=Number.isFinite(now),day=validNow&&Number.isFinite(sunrise)&&Number.isFinite(sunset)&&sunrise<sunset&&sunset-sunrise<86400000&&now>=sunrise&&now<sunset;
+  let morningUntil=validNow&&Number.isFinite(previous?.morningUntil)&&previous.morningUntil>now&&previous.morningUntil-now<86400000?previous.morningUntil:0;
+  let morningReleased=morningUntil>0&&previous?.morningReleased===true;
+  if(morningRequested===true&&day){morningUntil=sunset;morningReleased=false}
+  if(blindOpen===true){holdNight=false;holdRed=false;if(morningUntil>0)morningReleased=true}
+  const daylight=morningUntil>0&&morningReleased;
+  return {baseNight:night,baseRed:red,holdNight,holdRed,morningUntil,morningReleased,night:!daylight&&(night||red||holdNight||holdRed),red:!daylight&&(red||holdRed)};
+ }
+
+ function indoorClimate(id,sensors,read,now=Date.now()){
+  const sensor=sensors.find(sensor=>sensor.id===id);
+  return {...bedroomClimate(sensor?.configured,sensor?.configured?read(id):null,now),name:sensor?.name||'Divisão'};
  }
  function realTemperature(binding,reading,now=Date.now()){const configured=!!binding,value=reading?.temperature,temperature=configured&&typeof value==='number'&&Number.isFinite(value)&&value>=-100&&value<=150?value:null,fresh=temperature!==null&&reading.online&&!reading.error&&Number.isFinite(reading.fetchedAt)&&now>=reading.fetchedAt&&now-reading.fetchedAt<=120000;return {configured,temperature,status:!configured?'unconfigured':!reading?'pending':temperature===null?'unavailable':fresh?'current':'last'}}
  function bedroomClimate(binding,reading,now=Date.now()){
@@ -52,5 +62,5 @@
   if(!lamp.ready||!lamp.state){await s.refresh({quiet:true});return}
   await s.commandLight('master',!lamp.state.on);
  }
- return {idle,preferences,lampAction,screensaver,realTemperature,bedroomClimate,redActive,bedroomBlind,bedsideMode,morningBlindVisible,morningBlindAction};
+ return {indoorClimate,idle,preferences,lampAction,screensaver,realTemperature,bedroomClimate,redActive,bedroomBlind,bedsideMode,morningBlindVisible,morningBlindAction};
 });

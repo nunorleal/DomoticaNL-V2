@@ -28,11 +28,11 @@
    loading.hidden=false;loadTimer=setTimeout(()=>{loadMessage.textContent='Não foi possível carregar a MeteoNL. Volte à casa e atualize a página.'},15000);
    if(location.protocol==='file:'){
     const base=new URL('meteo/',document.baseURI).href.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-    frame.srcdoc=`<!doctype html><html lang="pt"><head><meta charset="utf-8"><base href="${base}"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MeteoNL · Casa NL</title><link rel="stylesheet" href="assets/app-2.79.css?v=2.79-red"></head><body><div id="root"></div><script src="assets/app-2.79.js?v=2.79-red"><\/script></body></html>`;
-   }else frame.src='meteo/index.html?v=2.79';
+    frame.srcdoc=`<!doctype html><html lang="pt"><head><meta charset="utf-8"><base href="${base}"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MeteoNL · Casa NL</title><link rel="stylesheet" href="assets/app-2.81.css?v=2.81-red"></head><body><div id="root"></div><script src="assets/app-2.81.js?v=2.81-red"><\/script></body></html>`;
+   }else frame.src='meteo/index.html?v=2.81';
    loaded=true;
   }
-  window.CasaShelly?.ensureFresh('master');window.CasaShelly?.ensureFresh('balcony');frame.focus();
+  window.CasaShelly?.ensureFresh('master');window.CasaShelly?.ensureFresh('balcony');refreshIndoorSensor();frame.focus();
  }
  function home(restore=true){
   host.hidden=true;document.documentElement.classList.remove('meteo-visible');document.getElementById('casa-app')?.removeAttribute('inert');idle.setActive(true);
@@ -45,8 +45,19 @@
   const context=()=>({red:!host.hidden&&!document.hidden&&frame.contentDocument?.querySelector('main')?.dataset.nightPalette==='red',now:Date.now(),sunrise,sunset});
   return CasaMeteoCore.morningBlindAction(window.CasaShelly,()=>window.CasaMeteoBridge.bedroomBlind(),context);
  }
+ function indoorSensors(){return window.CasaShelly?.sensorEntries?.()||[]}
+ let chosenIndoorSensor=null;
+ function selectedIndoorSensor(){if(chosenIndoorSensor)return chosenIndoorSensor;try{return CasaMeteoCore.preferences(JSON.parse(localStorage.getItem('casa-nl-meteo-v1')||'{}')).indoorSensor||'master'}catch{return 'master'}}
+ function selectIndoorSensor(id){
+  if(!indoorSensors().some(sensor=>sensor.id===id&&sensor.configured))return false;
+  let previous={};try{previous=CasaMeteoCore.preferences(JSON.parse(localStorage.getItem('casa-nl-meteo-v1')||'{}'))}catch{}
+  const next=CasaMeteoCore.preferences({...previous,indoorSensor:id});chosenIndoorSensor=id;try{localStorage.setItem('casa-nl-meteo-v1',JSON.stringify(next))}catch{}
+  refreshIndoorSensor(id);return true;
+ }
+ function refreshIndoorSensor(id=selectedIndoorSensor()){if(!indoorSensors().some(sensor=>sensor.id===id&&sensor.configured))return;window.CasaShelly?.ensureFresh(id)}
  window.CasaMeteoBridge={visible:()=>!host.hidden,preferences:CasaMeteoCore.preferences,ready,open,home:()=>home(),settings,toggleLamp,openMorningBlind,
-  bedroomClimate:()=>CasaMeteoCore.bedroomClimate(window.CasaShelly?.sensorBinding('master'),window.CasaShelly?.sensorReading('master')),
+  indoorSensors,selectIndoorSensor,
+  bedroomClimate:()=>CasaMeteoCore.indoorClimate(selectedIndoorSensor(),indoorSensors(),id=>window.CasaShelly?.sensorReading(id)),
   realTemperature:()=>CasaMeteoCore.realTemperature(window.CasaShelly?.sensorBinding('balcony'),window.CasaShelly?.sensorReading('balcony')),
   bedroomBlind:()=>{const api=window.CasaShelly,row=api?.houseSnapshot().deviceRows.find(r=>r.kind==='cover'&&r.key==='master');return CasaMeteoCore.bedroomBlind(api?.binding('master'),api?.reading('master'),row?.status)},
   blindBusy:()=>!!window.CasaShelly?.isBusy(),
@@ -60,6 +71,6 @@
  document.body.insertBefore(app,host);
  for(const event of ['pointerdown','pointermove','keydown','wheel','input'])document.addEventListener(event,()=>{if(host.hidden)idle.activity()},{passive:true});
  setInterval(()=>idle.tick(),500);
- setInterval(()=>{if(!host.hidden&&!document.hidden){window.CasaShelly?.ensureFresh('master');window.CasaShelly?.ensureFresh('balcony')}},60000);
+ setInterval(()=>{if(!host.hidden&&!document.hidden){window.CasaShelly?.ensureFresh('master');window.CasaShelly?.ensureFresh('balcony');refreshIndoorSensor()}},60000);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)idle.tick()});
 })();
