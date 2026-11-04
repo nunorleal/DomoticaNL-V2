@@ -135,3 +135,6 @@ body:before{background:linear-gradient(var(--street-shade-top),var(--street-shad
 .room-lighting .room-light-mask-zone{fill:#fff;stroke:#fff;stroke-width:16px;stroke-linejoin:round;transition:opacity 1.8s ease-in-out}
 .room-night-render,.room-electric-render{transition:opacity 1.8s ease-in-out}
 @media(prefers-reduced-motion:reduce){.room-lighting .room-light-mask-zone,.room-night-render,.room-electric-render{transition:none}}
+
+/* Empty normal confirmations do not reserve space in device popups. */
+dialog p[id$="-message"]:empty{display:none}

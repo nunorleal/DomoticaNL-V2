@@ -26,3 +26,5 @@
 .cloud-activity-rail[data-state=muted]{--cloud-fill:#a8becd}
 .cloud-activity-rail:hover,.cloud-activity-rail:focus-visible{outline:2px solid var(--plan-highlight-outline);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){.cloud-rail-track i{transition:none}}
+
+.light-audit{margin-top:18px;border-top:1px solid #c9dae3;padding-top:12px}.light-audit summary{cursor:pointer;font-weight:600}.light-audit p{font-size:.8rem;line-height:1.4}.light-audit ol{padding-left:20px;font-size:.8rem;line-height:1.5;max-height:260px;overflow:auto}.light-audit li{margin:8px 0}
