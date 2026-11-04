@@ -977,3 +977,9 @@ A transferencia para documentElement pode gerar lostpointercapture no botao orig
 Hold em estore indisponivel mostra mensagem sem percentagem inventada, popup, consulta ou comando. Clique curto preserva consulta normal. Manter fila e guards existentes.
 
 52 testes aprovados (34Condados+18T2). Pressoes nativas de850ms repetidas: contador Condados4 para4, traceT2 de2 para2, zero popups/comandos. Ajuste ficticio50 para70 envia um set/cover e confirma70; clique curto nativo abre popup. Nenhum equipamento real usado. Prova review/estores-captura-1.175.png nos Condados.
+
+# Abertura matinal liberta modo diurno — MeteoNL2.80
+
+Bug: bedsideMode só removia holdNight/holdRed quando estore100%, mantendo baseNight/baseRed, por isso o botão matinal podia abrir sem sair do vermelho/noturno. Após aceitação explícita do botão, armar pedido matinal no estado bedside existente; só uma posição100% atual confirmada liberta ambos os modos. Aceitação HTTP, percentagem parcial e dados antigos/offline nunca bastam. Libertação diurna persiste no mesmo estado/assinatura até pôr do sol, incluindo recarregar/reabrir Meteo e fechar depois o estore; ao pôr do sol retoma a programação/manual normal. Não reescrever preferências, IDs, transportes ou criar consultas/timers Cloud; relógio React existente atualiza ponte. Sem pedido matinal explícito, preservar semântica anterior da opção manter até100%.
+
+Verificação2.80: builds de ambas aprovados, suites completas290 T2/308 Condados aprovadas, regressões Meteo29/20. Ensaio isolado com estore fictício confirmou botão ausente antes do sol, exatamente um comando master/open, vermelho durante pedido/50%, palette day e classe red-night removida aos100% em ambas. Classe red-night sincronizada com useLayoutEffect antes da pintura para evitar fundo preto residual em atualizações adiadas do browser. Captura review/meteo-morning-day-2.80.jpg. Nenhum estore real comandado.

@@ -15,6 +15,7 @@ export function Settings({
   onClose: () => void;
 }) {
   const blind = bridge?.bedroomBlind?.();
+  const sensors: {id:string;name:string;configured:boolean}[] = bridge?.indoorSensors?.() || [];
   const [query, setQuery] = useState(""),
     [results, setResults] = useState<City[]>([]),
     [searchState, setSearchState] = useState("");
@@ -77,6 +78,16 @@ export function Settings({
       </header>
       <div className="settings-body">
         <section><h3>Conta e candeeiro Shelly</h3><p>Usam a configuração da Casa NL e o candeeiro do quarto principal.</p><button className="shared-settings-button" onClick={openCasaSettings}>Configurar na Casa NL</button></section>
+        <section>
+          <h3>Ambiente interior</h3>
+          <label>Sensor da divisão
+            <select value={value.indoorSensor} onChange={(e) => { set("indoorSensor", e.target.value); bridge?.selectIndoorSensor?.(e.target.value); }}>
+              {!sensors.some(s => s.id === value.indoorSensor) && <option value={value.indoorSensor}>Sensor não associado</option>}
+              {sensors.filter(s => s.configured || s.id === value.indoorSensor).map(s => <option key={s.id} value={s.id}>{s.name}{s.configured ? "" : " · sem sensor associado"}</option>)}
+            </select>
+          </label>
+          <p>Escolha o sensor já associado à casa que aparece no painel de temperatura e humidade. Guardado automaticamente.</p>
+        </section>
         <section>
           <h3>Localização</h3>
           <p className="selected-city">

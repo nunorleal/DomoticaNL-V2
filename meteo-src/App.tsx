@@ -5,7 +5,7 @@ import { useBedsideMode } from "./useBedsideMode";
 import { useShellyLamp } from "./useShellyLamp";
 import { assetUrl } from "./assets";
 import { APP_VERSION } from "./app-info";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { redActive, morningBlindVisible } from "../meteo-core.js";
 import { useFocusView } from "./useFocusView";
 import {
@@ -212,13 +212,16 @@ export default function App() {
   const localMinutes =
     +fmt(now, tz, { hour: "2-digit", hourCycle: "h23" }) * 60 +
     +fmt(now, tz, { minute: "2-digit" });
+  const sunDay = w?.daily.time.findIndex(t => localDate(t * 1000, tz) === localDate(now, tz)) ?? -1;
+  const sunrise = sunDay >= 0 ? w!.daily.sunrise[sunDay] * 1000 : NaN;
+  const sunset = sunDay >= 0 ? w!.daily.sunset[sunDay] * 1000 : NaN;
   const scheduledNight =
     prefs.night === "on" ||
     (prefs.night === "auto" &&
       isNightSchedule(localMinutes, prefs.start, prefs.end));
   const scheduledRed = redActive(prefs, localMinutes, scheduledNight);
-  const { red, night, blind } = useBedsideMode(prefs, scheduledNight, scheduledRed, tz);
-  useEffect(() => {
+  const { red, night, blind, requestMorning } = useBedsideMode(prefs, scheduledNight, scheduledRed, tz, {now,sunrise,sunset});
+  useLayoutEffect(() => {
     document.documentElement.classList.toggle("red-night", red);
     return () => document.documentElement.classList.remove("red-night");
   }, [red]);
@@ -255,9 +258,6 @@ export default function App() {
         ),
       )
     : 0;
-  const sunDay = w?.daily.time.findIndex(t => localDate(t * 1000, tz) === localDate(now, tz)) ?? -1;
-  const sunrise = sunDay >= 0 ? w!.daily.sunrise[sunDay] * 1000 : NaN;
-  const sunset = sunDay >= 0 ? w!.daily.sunset[sunDay] * 1000 : NaN;
   const showMorningBlind = !!bridge?.openMorningBlind && !open && morningBlindVisible({red,now,sunrise,sunset},blind);
   useEffect(() => { if (!showMorningBlind) { setBlindSent(false); setBlindMessage(""); } }, [showMorningBlind]);
   async function openMorningBlind() {
@@ -266,6 +266,7 @@ export default function App() {
     try {
       const accepted = await bridge.openMorningBlind({sunrise,sunset});
       setBlindSent(accepted === true);
+      if(accepted===true)requestMorning();
       setBlindMessage(accepted ? "Pedido aceite. A aguardar a posição do estore." : "Não foi possível confirmar a abertura. Verifique a ligação e tente novamente.");
     } catch { setBlindMessage("Não foi possível confirmar a abertura. Tente novamente."); }
     finally { blindClickLock.current = false; setBlindSending(false); }

@@ -2,6 +2,7 @@ import { bridge } from "./bridge";
 import { initialCity, type City, type Scene, type Snapshot } from "./weather";
 export type Settings = {
   city: City;
+  indoorSensor: string;
   seconds: boolean;
   clock12: boolean;
   focusSeconds: number;
@@ -24,6 +25,7 @@ export type Settings = {
 };
 export const defaults: Settings = {
   city: initialCity,
+  indoorSensor: "master",
   seconds: false,
   clock12: false,
   focusSeconds: 30,
