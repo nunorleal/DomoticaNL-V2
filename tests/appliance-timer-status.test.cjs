@@ -11,6 +11,13 @@ test('each appliance snapshot expires the timer without treating old/offline sta
  const fs=require('node:fs'),vm=require('node:vm'),A=require('../alarm-core.js'),source=fs.readFileSync(require.resolve('../shelly.js'),'utf8');
  for(const role of ['heater','dehumidifier']){let clock=100000;const reading={online:true,hasOutput:true,on:true,timerActive:true,timerSeconds:30,fetchedAt:clock};const line=source.split('\n').find(l=>l.includes('function '+role+'Snapshot()'));
  const selected=new Map();const context={generation:0,applianceTimers:selected,Date:{now:()=>clock},AL:{fresh:r=>A.fresh(r,clock)},blockingRead:()=>false,commandCount:0,groupBusy:false,lightGroupBusy:false,config:{[role]:{}},[role+'Reading']:reading,[role+'Target']:null,[role+'Message']:'',lastRelay:()=>null,dirty:()=>false,key:'FAKE'};
- const snapshot=vm.runInNewContext('('+line.trim()+')',context);assert.equal(snapshot().timerActive,false);selected.set(role,{generation:0,until:clock+600000});assert.equal(snapshot().timerActive,true);clock+=31000;assert.equal(snapshot().on,true);assert.equal(snapshot().timerActive,false);clock=100000;reading.online=false;assert.equal(snapshot().timerActive,false);reading.online=true;reading.on=false;assert.equal(snapshot().timerActive,false);reading.on=true;clock+=46000;assert.equal(snapshot().timerActive,false);
+ const snapshot=vm.runInNewContext('('+line.trim()+')',context);assert.equal(snapshot().timerActive,false);selected.set(role,{generation:0,until:clock+600000});assert.equal(snapshot().timerActive,true);assert.equal(snapshot().timerRemainingSeconds,30);clock+=1000;assert.equal(snapshot().timerRemainingSeconds,29);clock+=31000;assert.equal(snapshot().on,true);assert.equal(snapshot().timerActive,false);assert.equal(snapshot().timerRemainingSeconds,null);clock=100000;reading.online=false;assert.equal(snapshot().timerActive,false);reading.online=true;reading.on=false;assert.equal(snapshot().timerActive,false);reading.on=true;clock+=46000;assert.equal(snapshot().timerActive,false);
+ }
+});
+
+test('already ON does not settle a timed request before a native timer is reported',()=>{
+ const vm=require('node:vm'),fs=require('node:fs'),source=fs.readFileSync(require.resolve('../shelly.js'),'utf8');
+ for(const role of ['heater','dehumidifier']){const cap=role[0].toUpperCase()+role.slice(1),line=source.split('\n').find(l=>l.includes('function settle'+cap+'()')),reading={on:true,timerActive:false,timerSeconds:0,fetchedAt:100000},selection=new Map([[role,{generation:0,until:700000,acceptedAt:100000,awaiting:true}]]),context={generation:0,Date:{now:()=>100000},applianceTimers:selection,[role+'Target']:true,[role+'Reading']:reading,[role+'Message']:'',confirmationCurrent:()=>true,AL:{fresh:()=>true}};
+ const settle=vm.runInNewContext('('+line.trim()+')',context);settle();assert.equal(context[role+'Target'],true);reading.timerActive=true;reading.timerSeconds=590;settle();assert.equal(context[role+'Target'],null);
  }
 });

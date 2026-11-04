@@ -1,7 +1,10 @@
 /* Long press only reveals options. Timed ON uses the native Shelly timer. */
 (function(){
  'use strict';
- window.CasaApplianceTimer={mount(dialog,{snapshot,command,dirty=()=>false}){
+ window.CasaApplianceTimer={indicator(object){
+  const badge=document.createElement('span');badge.className='appliance-plan-timer';badge.hidden=true;badge.setAttribute('aria-hidden','true');badge.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M9 2h6M12 2v3M12 8v5l3 2"/></svg><span></span>';object.append(badge);
+  return state=>{const seconds=state.timerRemainingSeconds,visible=state.on===true&&(state.timerActive===true||state.timerEstimated===true)&&Number.isInteger(seconds)&&seconds>0;badge.hidden=!visible;if(!visible)return;const h=Math.floor(seconds/3600),m=Math.floor(seconds%3600/60),s=String(seconds%60).padStart(2,'0'),text=(state.timerEstimated?'≈':'')+(h?h+':'+String(m).padStart(2,'0'):String(m).padStart(2,'0'))+':'+s;badge.querySelector('span').textContent=text;badge.dataset.estimated=String(state.timerEstimated===true);badge.title=(state.timerEstimated?'Tempo restante previsto: ':'Temporizador: ')+text;object.setAttribute('aria-label',(object.getAttribute('aria-label')||'')+' · '+badge.title)};
+ },mount(dialog,{snapshot,command,dirty=()=>false}){
   const button=dialog.querySelector('[id$="-power-toggle"],[id$="-toggle"]');if(!button)return ()=>{};
   const panel=document.createElement('section');panel.className='appliance-timer';panel.id=dialog.id+'-timer';panel.hidden=true;
   const label=panel.id+'-minutes';
@@ -9,12 +12,13 @@
   const anchor=dialog.querySelector('.heater-power-row,.dehumidifier-power-row,.detail-row');anchor?anchor.after(panel):dialog.append(panel);
   const hint=document.createElement('span');hint.id=panel.id+'-hint';hint.className='appliance-timer-hint';hint.textContent='Clique para ligar ou desligar. Mantenha premido para escolher o tempo. Com teclado, use a seta para baixo para abrir o temporizador.';panel.after(hint);
   button.dataset.applianceTimer='true';button.setAttribute('aria-controls',panel.id);button.setAttribute('aria-expanded','false');button.setAttribute('aria-describedby',[button.getAttribute('aria-describedby'),hint.id].filter(Boolean).join(' '));
+  const stateLine=dialog.querySelector('#'+dialog.id.replace('-dialog','')+'-state'),countdown=document.createElement('span');countdown.className='appliance-timer-countdown';countdown.hidden=true;countdown.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M9 2h6M12 2v3M12 8v5l3 2"/></svg><span></span>';stateLine?.classList.add('appliance-timer-state');
   const controls=[...panel.querySelectorAll('button:not(.appliance-timer-close),input')],message=panel.querySelector('[role="status"]'),form=panel.querySelector('form'),input=panel.querySelector('input');let sending=false,press=null,consumeClick=false,suppressUntil=0;
   const allowed=()=>snapshot().canControl&&!dirty()&&!sending;
   function cancelPress(){if(press)clearTimeout(press.timer);press=null}
   function close(){cancelPress();panel.hidden=true;form.hidden=true;button.setAttribute('aria-expanded','false')}
   function open(){if(!allowed())return;panel.hidden=false;button.setAttribute('aria-expanded','true');message.textContent='';update()}
-  function update(){const state=snapshot();button.dataset.timerActive=String(state.on===true&&state.timerActive===true);hint.textContent=(state.on===true&&state.timerActive===true?'Temporizador ativo. ':'')+'Clique para ligar ou desligar. Mantenha premido para escolher o tempo. Com teclado, use a seta para baixo para abrir o temporizador.';const enabled=allowed();for(const control of controls)control.disabled=!enabled;if(!enabled&&!sending)cancelPress()}
+  function update(){const state=snapshot(),remaining=state.timerRemainingSeconds;const counting=state.on===true&&(state.timerActive===true||state.timerEstimated===true)&&Number.isInteger(remaining)&&remaining>0;countdown.hidden=!counting;if(stateLine&&counting){const h=Math.floor(remaining/3600),m=Math.floor(remaining%3600/60),seconds=String(remaining%60).padStart(2,'0'),text=(h?h+':'+String(m).padStart(2,'0'):String(m).padStart(2,'0'))+':'+seconds;countdown.querySelector('span').textContent=(state.timerEstimated?'≈ ':'')+text;countdown.setAttribute('aria-label',(state.timerEstimated?'Tempo restante previsto: ':'Tempo restante: ')+text);countdown.title=state.timerEstimated?'Tempo previsto pela duração escolhida; a leitura atual não inclui o temporizador.':'';stateLine.hidden=false;if(!stateLine.contains(countdown))stateLine.append(countdown)}button.dataset.timerActive=String(state.on===true&&state.timerActive===true);hint.textContent=(state.on===true&&state.timerActive===true?'Temporizador ativo. ':'')+'Clique para ligar ou desligar. Mantenha premido para escolher o tempo. Com teclado, use a seta para baixo para abrir o temporizador.';const enabled=allowed();for(const control of controls)control.disabled=!enabled;if(!enabled&&!sending)cancelPress()}
   button.addEventListener('pointerdown',event=>{
    if(event.isPrimary===false||event.button!==0||button.disabled||!allowed())return;
    cancelPress();consumeClick=false;

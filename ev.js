@@ -19,7 +19,7 @@
   $('ev-feed-caption').textContent=d.feed===null?(d.roles.includes('relay')?'Estado por confirmar':'Interruptor por associar'):d.feed?'Ponto ligado · estado do relé':'Ponto desligado · estado do relé';
   dialog.classList.toggle('ev-powered',feed);dialog.classList.toggle('ev-feed-unknown',d.feed===null);
   updatePower(d);$('ev-refresh').disabled=d.busy||!d.configured;
-  $('ev-message').textContent=d.message;$('ev-quality').textContent=quality(d);
+  $('ev-message').textContent=/^(?:Estado confirmado pelo Shelly: (?:ligad[oa]|desligad[oa])\.|Alimenta\u00e7\u00e3o (?:ligada|desligada) \u00b7 estado confirmado pelo Shelly\.|Ponto (?:ligado|desligado) \u00b7 estado confirmado pelo Shelly\.|Arma\u00e7\u00e3o confirmada pelo Shelly: (?:armado|desarmado)\.)$/.test(d.message||'')?'':d.message;$('ev-quality').textContent=quality(d);
   post.setAttribute('aria-label','Ponto de carregamento · '+(d.feed===true?'ligado':d.feed===false?'desligado':'alimentação por confirmar'));
  }
  function open(){showPopup('ev-dialog');draw();window.CasaShelly?.evEnsureFresh()}
