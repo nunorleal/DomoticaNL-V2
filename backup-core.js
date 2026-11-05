@@ -10,6 +10,7 @@
  function validateStorage(data){
   if(!object(data)||Object.keys(data).length>100)fail();safe(data);
   for(const k of Object.keys(data))if(!allowed(k))fail();
+  if(Object.hasOwn(data,'casa-nl-appliance-timer-presets-v1')){const core=typeof module==='object'&&module.exports?require('./appliance-timer-store.js'):globalThis.CasaApplianceTimerStore;data['casa-nl-appliance-timer-presets-v1']=core.presetSettings(data['casa-nl-appliance-timer-presets-v1'])}
   // Retired camera links are neither restored nor exported.
   delete data['casa-nl-camera-hall-v1'];
   if(Object.hasOwn(data,'casa-nl-show-cats-v1')&&typeof data['casa-nl-show-cats-v1']!=='boolean')fail();

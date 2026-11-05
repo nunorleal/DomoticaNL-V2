@@ -1,4 +1,5 @@
 import { bridge, openCasaSettings } from "./bridge";
+import { ActivityDevices, type ActivityRow } from "./ActivityDevices";
 import { BedroomClimate } from "./BedroomClimate";
 import { RealTemperature } from "./RealTemperature";
 import { useBedsideMode } from "./useBedsideMode";
@@ -283,6 +284,8 @@ export default function App() {
         .filter(({ t }) => localDate(t * 1000, tz) >= localDate(now, tz))
         .slice(0, 7)
     : [];
+  const activityRows: ActivityRow[] = prefs.activityEnabled ? (bridge?.activitySnapshot?.() || []).filter((row:ActivityRow)=>prefs.activityDevices.includes(row.id)) : [];
+  const activityLines = Math.ceil(activityRows.length / 2);
   const stale = !!snapshot && now - snapshot.fetchedAt > 30 * 60000;
   const min = w
       ? Math.min(...days.map(({ i }) => w.daily.temperature_2m_min[i]))
@@ -387,7 +390,7 @@ export default function App() {
             Lâmpada: {lamp.error}
           </button>
         )}
-        <header className={bridge?.bedroomClimate?.()?.configured ? "hero has-bedroom-climate" : "hero"}>
+        <header className={["hero",bridge?.bedroomClimate?.()?.configured?"has-bedroom-climate":"",activityLines?"has-activity":""].filter(Boolean).join(" ")} data-activity-rows={activityLines}>
           <div className="date">
             <span>{fmt(now, tz, { weekday: "long" })}</span>
             <p>
@@ -458,6 +461,7 @@ export default function App() {
             </span>
           </div>
           <BedroomClimate unit={prefs.temp} now={now} />
+          <ActivityDevices rows={activityRows} />
           {prefs.demo !== "auto" && (
             <button
               className="demo-badge"
