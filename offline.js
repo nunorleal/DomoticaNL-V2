@@ -2,7 +2,7 @@
 (function(){
  'use strict';const C=CasaOfflineCore,NS='http://www.w3.org/2000/svg',$=id=>document.getElementById(id),aria=new WeakMap();
  const wifi='<svg class="offline-symbol" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8a15 15 0 0 1 18 0M6 12a10 10 0 0 1 12 0M9 16a5 5 0 0 1 6 0M12 20h.01M3 3l18 18"/></svg>';
- let serial=0,scheduled=false,painting=false;
+ let serial=0,scheduled=false,painting=false,lastRowsSignature='',forcePaint=true;
  function badgeContent(node,state){node.title=state.title;node.setAttribute('aria-label',state.title);node.setAttribute('role','img');const label=node.querySelector('.offline-text');if(label&&label.textContent!==state.text)label.textContent=state.text}
  function mark(node,rows,options={}){
   if(!node)return;const d=C.state(rows),want=String(d.offline);if(node.dataset.shellyOffline!==want)node.dataset.shellyOffline=want;
@@ -111,9 +111,9 @@
  function sync(){
   if(painting||document.hidden||document.documentElement.classList.contains('meteo-visible'))return;
   const api=window.CasaShelly;if(!api?.houseSnapshot)return;
-  painting=true;try{ensureContacts();const rows=api.houseSnapshot().deviceRows||[];uiFor(rows)}finally{painting=false}
+  painting=true;try{ensureContacts();const rows=api.houseSnapshot().deviceRows||[],signature=JSON.stringify(rows);if(!forcePaint&&signature===lastRowsSignature)return;forcePaint=false;lastRowsSignature=signature;uiFor(rows)}finally{painting=false}
  }
- function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;sync()})}
+ function schedule(){forcePaint=true;if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;sync()})}
  const observed=['mediachange','sensorchange','heaterchange','dehumidifierchange','fanchange','alarmchange','energychange','evchange','doorchange','shellyactivitychange','floorchange','roomlayoutchange','environmentchange'];
  observed.forEach(event=>window.addEventListener(event,schedule));
  document.addEventListener('visibilitychange',schedule);document.addEventListener('toggle',schedule,true);document.addEventListener('click',schedule,true);document.addEventListener('pointerup',schedule,true);

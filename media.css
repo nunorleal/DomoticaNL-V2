@@ -81,3 +81,7 @@ body:not([data-floor="-1"]) .tv-floor-reflection[data-working=true] stop,body:no
 .meteo-visible .tv-floor-reflection stop,.meteo-visible .office-floor-reflection stop{animation-play-state:paused!important}
 @keyframes screen-floor-rgb{0%,100%{stop-color:#ff315e}33.333%{stop-color:#25f487}66.667%{stop-color:#386bff}}
 @media(prefers-reduced-motion:reduce){.tv-floor-reflection stop,.office-floor-reflection stop{animation:none}}
+
+/* Rasterizing the full SVG every display frame is costly on older iPads.
+   Preserve RGB colours and cycle lengths, with 28 small colour steps per segment. */
+@media(hover:none) and (pointer:coarse){.tv-floor-reflection stop,.office-floor-reflection stop{animation-timing-function:steps(28,end)}}

@@ -1,0 +1,290 @@
+{
+  "scope": "T2 only; fictional devices; cats disabled; 10-second idle window",
+  "before": {
+    "mutations": 1720,
+    "targets": [
+      [
+        "media-device-hit",
+        100
+      ],
+      [
+        "room-device-row",
+        100
+      ],
+      [
+        "eyebrow",
+        90
+      ],
+      [
+        "device-item",
+        80
+      ],
+      [
+        "heater-power-toggle",
+        60
+      ],
+      [
+        "dehumidifier-power-toggle",
+        60
+      ],
+      [
+        "blind-window-trigger",
+        40
+      ],
+      [
+        "blind-pin",
+        40
+      ],
+      [
+        "alarm-power-toggle",
+        30
+      ],
+      [
+        "heater-object",
+        30
+      ],
+      [
+        "dehumidifier-object",
+        30
+      ],
+      [
+        "shelly-activity",
+        30
+      ]
+    ],
+    "timers": {
+      "500:()=>idle.tick()": {
+        "calls": 20,
+        "ms": 0.20000004768371582
+      },
+      "1000:function updateHeaderClock(){\n const now=new Date();\n const time=": {
+        "calls": 10,
+        "ms": 2.599999785423279
+      },
+      "1000:function automaticRefresh(){\n  if(document.visibilityState!=='vis": {
+        "calls": 10,
+        "ms": 1.6999998092651367
+      },
+      "2000:()=>{if(!document.hidden)draw()}": {
+        "calls": 20,
+        "ms": 3.7000001668930054
+      },
+      "1000:()=>{if(!document.hidden)draw()}": {
+        "calls": 20,
+        "ms": 2.999999761581421
+      },
+      "2000:()=>{if(!document.hidden){syncOperatingPlan();if(dialog.open)draw": {
+        "calls": 10,
+        "ms": 0.7000000476837158
+      },
+      "1000:()=>{if(!document.hidden){draw();window.CasaHouseSummary?.sync();": {
+        "calls": 10,
+        "ms": 18.09999990463257
+      },
+      "2000:()=>{if(!document.hidden)update()}": {
+        "calls": 5,
+        "ms": 0
+      },
+      "1000:function update(){if(!active||document.hidden)return;const plan=A": {
+        "calls": 10,
+        "ms": 0
+      },
+      "5000:function sync(){for(const id of ['entrance','cellar']){const d=wi": {
+        "calls": 2,
+        "ms": 0.2999999523162842
+      },
+      "5000:function sync(){for(const id of C.IDS){const d=window.CasaShelly?": {
+        "calls": 2,
+        "ms": 0.30000007152557373
+      },
+      "5000:function sync(){const d=window.CasaShelly?.energySnapshot?.();if(": {
+        "calls": 2,
+        "ms": 0.6999999284744263
+      },
+      "10000:()=>{if(!document.hidden)draw()}": {
+        "calls": 1,
+        "ms": 0.20000004768371582
+      },
+      "5000:()=>{if(!document.hidden)schedule()}": {
+        "calls": 2,
+        "ms": 0.10000002384185791
+      }
+    },
+    "animations": [
+      {
+        "target": "stop",
+        "id": "",
+        "animation": "screen-floor-rgb"
+      },
+      {
+        "target": "stop",
+        "id": "",
+        "animation": "screen-floor-rgb"
+      },
+      {
+        "target": "stop",
+        "id": "",
+        "animation": "screen-floor-rgb"
+      },
+      {
+        "target": "stop",
+        "id": "",
+        "animation": "screen-floor-rgb"
+      },
+      {
+        "target": "stop",
+        "id": "",
+        "animation": "screen-floor-rgb"
+      },
+      {
+        "target": "g",
+        "id": "",
+        "animation": "kitchen-wash-drum"
+      }
+    ]
+  },
+  "after": {
+    "mutations": 470,
+    "targets": [
+      [
+        "alarm-power-toggle",
+        30
+      ],
+      [
+        "B",
+        30
+      ],
+      [
+        "SPAN",
+        30
+      ],
+      [
+        "ev-power-toggle",
+        25
+      ],
+      [
+        "fan-power-toggle",
+        25
+      ],
+      [
+        "kitchen-device-power",
+        25
+      ],
+      [
+        "header-clock",
+        20
+      ],
+      [
+        "alarm-pin",
+        15
+      ],
+      [
+        "fan-pin",
+        15
+      ],
+      [
+        "open-kitchen-dishwasher",
+        15
+      ],
+      [
+        "open-kitchen-washer",
+        15
+      ],
+      [
+        "open-kitchen-boiler",
+        15
+      ]
+    ],
+    "timers": {
+      "500:()=>idle.tick()": {
+        "calls": 20,
+        "ms": 0.10000002384185791
+      },
+      "1000:function updateHeaderClock(){\n const now=new Date();\n const time=": {
+        "calls": 10,
+        "ms": 2.399999737739563
+      },
+      "1000:function automaticRefresh(){\n  if(document.visibilityState!=='vis": {
+        "calls": 10,
+        "ms": 1.7999999523162842
+      },
+      "2000:()=>{if(!document.hidden)draw()}": {
+        "calls": 20,
+        "ms": 3.7000001668930054
+      },
+      "1000:()=>{if(!document.hidden)draw()}": {
+        "calls": 20,
+        "ms": 1.2999999523162842
+      },
+      "2000:()=>{if(!document.hidden){syncOperatingPlan();if(dialog.open)draw": {
+        "calls": 10,
+        "ms": 0.10000002384185791
+      },
+      "1000:()=>{if(!document.hidden){draw();window.CasaHouseSummary?.sync();": {
+        "calls": 10,
+        "ms": 3.600000023841858
+      },
+      "2000:()=>{if(!document.hidden)update()}": {
+        "calls": 5,
+        "ms": 0.10000002384185791
+      },
+      "1000:function update(){if(!active||document.hidden)return;const plan=A": {
+        "calls": 10,
+        "ms": 0
+      },
+      "5000:function sync(){for(const id of ['entrance','cellar']){const d=wi": {
+        "calls": 2,
+        "ms": 0.2999999523162842
+      },
+      "5000:function sync(){for(const id of C.IDS){const d=window.CasaShelly?": {
+        "calls": 2,
+        "ms": 0.30000007152557373
+      },
+      "5000:function sync(){const d=window.CasaShelly?.energySnapshot?.();if(": {
+        "calls": 2,
+        "ms": 0.49999988079071045
+      },
+      "10000:()=>{if(!document.hidden)draw()}": {
+        "calls": 1,
+        "ms": 0.20000004768371582
+      },
+      "5000:()=>{if(!document.hidden)schedule()}": {
+        "calls": 2,
+        "ms": 0.10000002384185791
+      }
+    },
+    "animations": [
+      {
+        "target": "stop",
+        "id": "",
+        "animation": "screen-floor-rgb"
+      },
+      {
+        "target": "stop",
+        "id": "",
+        "animation": "screen-floor-rgb"
+      },
+      {
+        "target": "stop",
+        "id": "",
+        "animation": "screen-floor-rgb"
+      },
+      {
+        "target": "stop",
+        "id": "",
+        "animation": "screen-floor-rgb"
+      },
+      {
+        "target": "stop",
+        "id": "",
+        "animation": "screen-floor-rgb"
+      },
+      {
+        "target": "g",
+        "id": "",
+        "animation": "kitchen-wash-drum"
+      }
+    ]
+  },
+  "limitation": "DOM mutations and callback timings in desktop browser; not measured FPS or hardware performance on user iPad"
+}
