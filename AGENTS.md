@@ -1065,3 +1065,9 @@ Validação2.120:320 testes existentes aprovados e2 regressões adicionais para 
 Termoventilador e desumidificador selecionados também aparecem ligados manualmente com ON atual e potência positiva fresca. Cronómetro crescente desde primeira observação, não hora física garantida. Contagem decrescente existente tem prioridade; nenhum comando/poll novo. OFF/zero removem e reiniciam; dados antigos/erro/offline ocultam; retoma local recente só na mesma associação, sem credenciais. Condados expõe apenas timestamp do medidor já em cache; T2 usa consumptionSnapshot existente. Manter definições e restantes dispositivos. Testes só fictícios.
 
 Validação: 325 testes aprovados, incluindo consumo manual ON/zero/OFF/desconhecido/antigo, associação diferente, recuperação recente e prioridade do temporizador. Adaptadores testados com snapshots/medidores fictícios. Build Safari15 aprovado. UI bridge fictícia mostrou cronómetros02:12→02:42 e14:38→15:08, dois ícones de cronómetro e sem overflow horizontal a375×812; apresentação768×1024 preservada. Nenhum comando/pedido real ou novo polling. Captura review/meteo-manual-2.86.jpg. git diff --check válido.
+
+# Caldeira Bosch na MeteoNL — 2.122 / Meteo2.87
+
+Adicionar boiler à seleção validada, sem mudar seleções guardadas ou associações. Usar kitchenBindings.boiler/mediaSnapshot na T2 e balconyMeters.boiler/balconyApplianceSnapshot na Duplex. Potência atual positiva começa cronómetro crescente desde deteção; zero/OFF termina imediatamente, sem tolerância de pausa das máquinas; desconhecido/antigo/offline oculta. Preservar locais/consumos por divisão e configuração; nenhum novo polling/comando.
+
+Caldeira representada por Flame (gás), mantendo tempo crescente emMM:SS/H:MM:SS. Validação: 327 testes aprovados, build Safari15 válido. UI fictícia T2 confirma lucide-flame e tempo00:00→00:30; fonte de apresentação comum nas duas apps. Captura review/meteo-boiler-2.87.jpg. Nenhum aparelho real usado.
