@@ -5,7 +5,7 @@ function config(){const roles=(names,prefix)=>Object.fromEntries(names.map((id,i
 function data(c=config()){return {'casa-nl-realistic-v2':ids.map((id,i)=>({id,light:false,...(i<4?{blind:50}:{})})),'casa-nl-room-layout-v1':Object.fromEntries(ids.map(id=>[id,{name:null,lx:50,ly:50}])),'casa-nl-show-banners':true,'casa-nl-environment-v1':{city:null,mode:'auto'},[KEY]:c,'casa-nl-show-console-icons':false}}
 function backup(c){return B.parse(JSON.stringify(B.create(storage(data(c)),'1.71')))}
 test('complete export/import preserves every device ID, exact channel, sensor type and preference including both bedroom lights',()=>{
- const original=config(),s=storage(data(original)),b=B.parse(JSON.stringify(B.create(s,'1.71'))),target=storage({});B.restore(target,b);assert.deepEqual(JSON.parse(target.getItem(KEY)),original);assert.equal(B.associationCount(original),33);assert.equal(target.getItem('casa-nl-show-console-icons'),'false');assert.match(B.describe(b),/3 luzes/);assert.match(B.describe(b),/4 janelas/);assert.match(B.describe(b),/4 secretária/);
+ const original=config(),s=storage(data(original)),b=B.parse(JSON.stringify(B.create(s,'1.71'))),target=storage({});B.restore(target,b);assert.deepEqual(JSON.parse(target.getItem(KEY)),{...original,authKey:'',rememberKey:false});assert.equal(B.associationCount(original),33);assert.equal(target.getItem('casa-nl-show-console-icons'),'false');assert.match(B.describe(b),/3 luzes/);assert.match(B.describe(b),/4 janelas/);assert.match(B.describe(b),/4 secretária/);
  for(const id of ['master','bedroom2'])assert.deepEqual(b.data[KEY].lightBindings[id],original.lightBindings[id]);
 });
 test('not remembering the Cloud key excludes only the secret, never device associations',()=>{const c=config();c.rememberKey=false;const b=backup(c);assert.equal(b.data[KEY].authKey,'');assert.deepEqual(b.data[KEY].lightBindings,c.lightBindings);assert.equal(B.associationCount(b.data[KEY]),33)});
@@ -26,7 +26,7 @@ test('heater ID, migration flag and movable position survive full backup and pre
 });
 test('dehumidifier and heater preserve separate IDs, positions and flags through complete and older backups',()=>{
  const c=C.config({...config(),heater:{deviceId:'ea9d29',channel:0},dehumidifier:{deviceId:'88d798',channel:0}}),d={...data(c),'casa-nl-heater-layout-v1':{room:'master',x:779,y:420},'casa-nl-heater-added-v1':true,'casa-nl-dehumidifier-layout-v1':{room:'bath1',x:165,y:254},'casa-nl-dehumidifier-added-v1':true};
- const s=storage(d),b=B.parse(JSON.stringify(B.create(s,'1.81'))),target=storage({});B.restore(target,b);assert.equal(B.associationCount(b.data[KEY]),35);assert.deepEqual(JSON.parse(target.getItem(KEY)),c);for(const k of ['casa-nl-heater-layout-v1','casa-nl-dehumidifier-layout-v1','casa-nl-heater-added-v1','casa-nl-dehumidifier-added-v1'])assert.deepEqual(JSON.parse(target.getItem(k)),d[k]);
+ const s=storage(d),b=B.parse(JSON.stringify(B.create(s,'1.81'))),target=storage({});B.restore(target,b);assert.equal(B.associationCount(b.data[KEY]),35);assert.deepEqual(JSON.parse(target.getItem(KEY)),{...c,authKey:'',rememberKey:false});for(const k of ['casa-nl-heater-layout-v1','casa-nl-dehumidifier-layout-v1','casa-nl-heater-added-v1','casa-nl-dehumidifier-added-v1'])assert.deepEqual(JSON.parse(target.getItem(k)),d[k]);
  const plan=B.prepareImport(s,backup(config()));assert.deepEqual(plan.backup.data[KEY].dehumidifier,c.dehumidifier);assert.deepEqual(plan.backup.data[KEY].heater,c.heater);assert.equal(plan.preserved,2);assert.match(B.describe(b),/1 desumidificador/);
  const before=target.getItem(KEY);b.data['casa-nl-dehumidifier-layout-v1'].x=Infinity;assert.throws(()=>B.restore(target,b));assert.equal(target.getItem(KEY),before);
 });
@@ -39,4 +39,21 @@ test('sensor visibility remains independent of names and energy through backup, 
 test('local consumption history survives backup, rejects invalid records and remains optional in older files',()=>{
  const core=require('../consumption-core.js'),h=core.create(),id=core.identity('https://shelly-1-eu.shelly.cloud',{deviceId:'aabbcc',channel:0});h.record(id,{online:true,hasMeter:true,energyKWh:12,fetchedAt:100000});h.record(id,{online:true,hasMeter:true,energyKWh:12.1,fetchedAt:130000});const d={...data(),[core.KEY]:h.export()},b=B.parse(JSON.stringify(B.create(storage(d),'1.92'))),target=storage({});B.restore(target,b);assert.deepEqual(JSON.parse(target.getItem(core.KEY)),h.export());b.data[core.KEY].entries[id].days[0][1]=-1;assert.throws(()=>B.parse(JSON.stringify(b)));delete b.data[core.KEY];assert.doesNotThrow(()=>B.parse(JSON.stringify(b)));
 });
-test('cat visibility is optional in older backups, roundtrips and rejects non-boolean values',()=>{const d=data();d['casa-nl-show-cats-v1']=false;const b=B.parse(JSON.stringify(B.create(storage(d),'2.77'))),target=storage({});B.restore(target,b);assert.equal(target.getItem('casa-nl-show-cats-v1'),'false');assert.equal(b.data[KEY].authKey,'FAKE-KEY');b.data['casa-nl-show-cats-v1']='false';assert.throws(()=>B.parse(JSON.stringify(b)));assert.doesNotThrow(()=>backup())});
+test('cat visibility is optional in older backups, roundtrips and rejects non-boolean values',()=>{const d=data();d['casa-nl-show-cats-v1']=false;const b=B.parse(JSON.stringify(B.create(storage(d),'2.77'))),target=storage({});B.restore(target,b);assert.equal(target.getItem('casa-nl-show-cats-v1'),'false');assert.equal(b.data[KEY].authKey,'');b.data['casa-nl-show-cats-v1']='false';assert.throws(()=>B.parse(JSON.stringify(b)));assert.doesNotThrow(()=>backup())});
+
+const X=require('../backup-crypto.js');
+test('encrypted optional key roundtrips with four digits, no plaintext in JSON and no writes before password',async()=>{
+ const c=config(),source=storage(data(c)),b=B.create(source,'2.110');assert(!JSON.stringify(b).includes('FAKE-KEY'));assert.equal(JSON.parse(source.getItem(KEY)).authKey,'FAKE-KEY');
+ b.shellyCredentials=await X.encrypt({server:c.server,authKey:c.authKey},'1234');const json=JSON.stringify(b);assert(!json.includes(c.authKey));assert(!json.includes('"1234"'));const parsed=B.parse(json),target=storage({});
+ assert.throws(()=>B.restore(target,parsed,{restoreCredentials:true}),/palavra-passe/);assert.equal(target.length,0);
+ await assert.rejects(X.decrypt(parsed.shellyCredentials,'4321'),/incorreta|alterada/);assert.equal(target.length,0);
+ B.restore(target,parsed,{restoreCredentials:true,decrypted:await X.decrypt(parsed.shellyCredentials,'1234')});assert.deepEqual(JSON.parse(target.getItem(KEY)),c);assert.equal(B.associationCount(JSON.parse(target.getItem(KEY))),33);
+ const skip=storage({});B.restore(skip,parsed);assert.equal(JSON.parse(skip.getItem(KEY)).authKey,'');
+ const own=storage(data({...c,authKey:'CURRENT-FAKE'}));B.restore(own,parsed);assert.equal(JSON.parse(own.getItem(KEY)).authKey,'CURRENT-FAKE');
+ const other=storage(data({...c,server:'https://shelly-2-eu.shelly.cloud',authKey:'OTHER-FAKE'}));B.restore(other,parsed);assert.equal(JSON.parse(other.getItem(KEY)).authKey,'');
+ const malicious=JSON.parse(json);malicious.shellyCredentials.server='https://shelly-2-eu.shelly.cloud';assert.throws(()=>B.parse(JSON.stringify(malicious)),/servidor/);
+});
+test('legacy plaintext backups require explicit credential restoration; next export removes plaintext',()=>{
+ const c=config(),legacy={application:'Casa NL',schemaVersion:1,appVersion:'old',data:data(c)},parsed=B.parse(JSON.stringify(legacy));assert.equal(B.credentials(parsed).authKey,c.authKey);
+ const target=storage({});B.restore(target,parsed);assert.equal(JSON.parse(target.getItem(KEY)).authKey,'');B.restore(target,parsed,{restoreCredentials:true});assert.equal(JSON.parse(target.getItem(KEY)).authKey,c.authKey);assert(!JSON.stringify(B.create(target,'2.110')).includes(c.authKey));
+});

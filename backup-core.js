@@ -47,9 +47,14 @@
   const c=env.city;if(c!==null&&(!object(c)||typeof c.name!=='string'||!c.name.trim()||c.name.length>150||!Number.isFinite(c.latitude)||Math.abs(c.latitude)>90||!Number.isFinite(c.longitude)||Math.abs(c.longitude)>180))fail();
   return data;
  }
- function create(storage,appVersion){const data={};for(let i=0;i<storage.length;i++){const k=storage.key(i);if(allowed(k)){try{data[k]=JSON.parse(storage.getItem(k))}catch{throw new Error('Não foi possível ler os dados guardados: '+k)}}}validateStorage(data);return {application:'Casa NL',schemaVersion:1,appVersion,exportedAt:new Date().toISOString(),data}}
- function parse(text){if(typeof text!=='string'||new TextEncoder().encode(text).length>MAX_BYTES)throw new Error('O ficheiro deve ter no máximo 8 MB.');let value;try{value=JSON.parse(text)}catch{fail()}if(!object(value)||value.application!=='Casa NL'||value.schemaVersion!==1)fail();validateStorage(value.data);return value}
+ function create(storage,appVersion){const data={};for(let i=0;i<storage.length;i++){const k=storage.key(i);if(allowed(k)){try{data[k]=JSON.parse(storage.getItem(k))}catch{throw new Error('Não foi possível ler os dados guardados: '+k)}}}validateStorage(data);if(data['casa-nl-shelly-cloud-v1']){data['casa-nl-shelly-cloud-v1'].authKey='';data['casa-nl-shelly-cloud-v1'].rememberKey=false}return {application:'Casa NL',schemaVersion:1,appVersion,exportedAt:new Date().toISOString(),data}}
+ function parse(text){if(typeof text!=='string'||new TextEncoder().encode(text).length>MAX_BYTES)throw new Error('O ficheiro deve ter no máximo 8 MB.');let value;try{value=JSON.parse(text)}catch{fail()}if(!object(value)||value.application!=='Casa NL'||value.schemaVersion!==1)fail();validateStorage(value.data);credentials(value);return value}
  const CLOUD='casa-nl-shelly-cloud-v1',GROUPS=['bindings','lightBindings','sensorBindings','windowBindings','mediaBindings','officeBindings','kitchenBindings','alarm'],SINGLES=['door','cellarDoor','fan','heater','dehumidifier','homeEnergy'];
+ function credentials(backup){
+  const config=backup.data[CLOUD],value=backup.shellyCredentials;
+  if(value!==undefined){const crypto=typeof module==='object'&&module.exports?require('./backup-crypto.js'):globalThis.CasaBackupCrypto;const clean=crypto.validate(value);if(!config||clean.server!==config.server)throw Error('A chave Cloud não corresponde ao servidor da configuração.');if(config.authKey)throw Error('O backup cifrado não pode incluir uma chave em texto simples.');return clean}
+  return config?.authKey?{server:config.server,authKey:config.authKey}:null;
+ }
  function associationCount(c){if(!c)return 0;return GROUPS.reduce((n,k)=>n+Object.keys(c[k]||{}).length,0)+SINGLES.filter(k=>c[k]?.deviceId).length+['meter','totalMeter','relay'].filter(k=>c.ev?.[k]).length}
  function describe(backup){const c=backup.data[CLOUD];if(!c)return 'Sem configuração Shelly';const count=k=>Object.keys(c[k]||{}).length;return `${count('bindings')} estores · ${count('lightBindings')} luzes · ${count('sensorBindings')} sensores · ${count('windowBindings')} janelas · ${[c.door,c.cellarDoor].filter(Boolean).length} portas · ${count('mediaBindings')} sala · ${count('officeBindings')} secretária · ${count('kitchenBindings')} cozinha · ${['meter','totalMeter','relay'].filter(k=>c.ev?.[k]).length} carregamento · ${count('alarm')} alarme · ${c.fan?1:0} ventoinha · ${c.heater?1:0} termoventilador · ${c.dehumidifier?1:0} desumidificador · ${c.homeEnergy||c.ev?.meter||c.ev?.relay?1:0} contador`}
  function prepareImport(storage,backup,preserve=true){const out=JSON.parse(JSON.stringify(backup));validateStorage(out.data);if(!preserve)return {backup:out,preserved:0};let current;try{current=JSON.parse(storage.getItem(CLOUD)||'null')}catch{throw Error('A configuração Shelly atual não pode ser lida. Exporte-a antes de importar.')}if(!current)return {backup:out,preserved:0};
@@ -59,6 +64,22 @@
   try{out.data[CLOUD]=core.config(next)}catch{throw Error('As associações atuais e o ficheiro têm conflitos de ID/canal. Reveja os equipamentos ou desative a preservação para substituir pela cópia.')}
   validateStorage(out.data);return {backup:out,preserved:Math.max(0,associationCount(out.data[CLOUD])-before)};
  }
- function restore(storage,backup){const data=validateStorage(backup.data),previous=new Map();for(let i=0;i<storage.length;i++){const k=storage.key(i);if(allowed(k))previous.set(k,storage.getItem(k))}try{for(const k of previous.keys())storage.removeItem(k);for(const [k,v]of Object.entries(data))storage.setItem(k,JSON.stringify(v))}catch(e){try{for(const k of Object.keys(data))storage.removeItem(k);for(const [k,v]of previous)storage.setItem(k,v)}catch{}throw new Error('Não foi possível guardar a importação neste navegador. Verifique o espaço disponível.')}}
- return {create,parse,restore,prepareImport,describe,associationCount,MAX_BYTES};
+ function restore(storage,backup,{restoreCredentials=false,decrypted=null}={}){
+  const clean=JSON.parse(JSON.stringify(backup)),data=validateStorage(clean.data),included=credentials(clean),config=data[CLOUD];
+  if(config){
+   let current=null;try{current=JSON.parse(storage.getItem(CLOUD)||'null')}catch{}
+   config.authKey='';config.rememberKey=false;
+   if(restoreCredentials&&included){
+    const plain=included.encrypted?decrypted:included;
+    if(!plain)throw Error('Introduza a palavra-passe do backup antes de restaurar a chave.');
+    if(plain.server!==config.server||typeof plain.authKey!=='string'||!plain.authKey.trim()||plain.authKey.length>4096||/[\r\n]/.test(plain.authKey))throw Error('Chave Cloud inválida ou de outro servidor.');
+    config.authKey=plain.authKey;config.rememberKey=true;
+   }else if(current?.server===config.server&&current.rememberKey&&typeof current.authKey==='string'){config.authKey=current.authKey;config.rememberKey=true}
+  }
+  validateStorage(data);
+  const previous=new Map();for(let i=0;i<storage.length;i++){const k=storage.key(i);if(allowed(k))previous.set(k,storage.getItem(k))}
+  try{for(const k of previous.keys())storage.removeItem(k);for(const [k,v]of Object.entries(data))storage.setItem(k,JSON.stringify(v))}catch(e){try{for(const k of Object.keys(data))storage.removeItem(k);for(const [k,v]of previous)storage.setItem(k,v)}catch{}throw new Error('Não foi possível guardar a importação neste navegador. Verifique o espaço disponível.')}
+ }
+
+ return {create,parse,restore,prepareImport,describe,associationCount,credentials,MAX_BYTES};
 });
