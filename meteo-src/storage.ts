@@ -3,6 +3,8 @@ import { initialCity, type City, type Scene, type Snapshot } from "./weather";
 export type Settings = {
   city: City;
   indoorSensor: string;
+  activityEnabled: boolean;
+  activityDevices: string[];
   seconds: boolean;
   clock12: boolean;
   focusSeconds: number;
@@ -26,6 +28,8 @@ export type Settings = {
 export const defaults: Settings = {
   city: initialCity,
   indoorSensor: "master",
+  activityEnabled: true,
+  activityDevices: ["heater","dehumidifier","washer","dishwasher"],
   seconds: false,
   clock12: false,
   focusSeconds: 30,
