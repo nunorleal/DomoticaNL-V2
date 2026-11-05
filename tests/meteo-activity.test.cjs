@@ -39,3 +39,25 @@ test('extra devices are selectable, count fresh active time and reset when inact
  const reopened=C.create({storage,key:'extra-test',now:()=>now});assert.equal(reopened.update([sample('playstation',now)])[0].elapsed,60);assert.equal(reopened.update([sample('playstation',now,false)]).length,0);assert.equal(reopened.update([sample('playstation',now)])[0].elapsed,0);
  now+=45001;assert.equal(reopened.update([sample('playstation',now-45001)]).length,0);
 });
+
+for(const id of ['heater','dehumidifier'])test(`${id}: manual consumption counts up, restores briefly, and timer takes priority`,()=>{
+ let now=100000;const storage=disk(),open=()=>C.create({storage,key:'manual-test',now:()=>now});let c=open();
+ const s=()=>({...sample(id,now),on:true,timerActive:false});
+ assert.equal(c.update([s()])[0].kind,'manual');now+=31000;assert.equal(c.update([s()])[0].elapsed,31);
+ c=open();assert.equal(c.update([s()])[0].elapsed,31);
+ let row=c.update([{...s(),timerActive:true,remaining:60}])[0];assert.equal(row.kind,'timer');assert.equal(row.remaining,60);
+ now+=1000;assert.equal(c.update([s()])[0].elapsed,0);
+ assert.equal(c.update([{...s(),powerWatts:0}]).length,0);now+=1000;assert.equal(c.update([s()])[0].elapsed,0);
+ assert.equal(c.update([{...s(),on:false}]).length,0);now+=1000;assert.equal(c.update([s()])[0].elapsed,0);
+ for(const extra of [{powerWatts:null},{powerWatts:-1},{on:null},{configured:false},{fetchedAt:now-45001}])assert.equal(c.update([{...s(),...extra}]).length,0);
+ now+=400000;assert.equal(open().update([s()])[0].elapsed,0);
+ assert.equal(c.update([{...s(),identity:'OTHER-FAKE'}])[0].elapsed,0);
+});
+test('manual adapter reads cached consumption, hides zero/unknown power and never calls actuators',()=>{
+ const source=fs.readFileSync(require.resolve('../meteo-activity.js'),'utf8'),now=Date.now(),b={deviceId:'deadbeef0011',channel:0},setup={server:'https://example.test',heater:b,dehumidifier:b},storage=disk();storage.setItem('casa-nl-shelly-cloud-v1',JSON.stringify(setup));let watts=1500,on=true,fresh=true;
+ const snapshot=()=>({on,powerWatts:fresh?watts:null,powerFetchedAt:now});
+ const api={heaterSnapshot:snapshot,dehumidifierSnapshot:snapshot,consumptionSnapshot:()=>({fresh,reading:{power:watts,fetchedAt:now}}),mediaSnapshot:()=>({}),evSnapshot:()=>({}),balconyApplianceSnapshot:()=>({}),dishwasherSnapshot:()=>({}),tvSnapshot:()=>({})};
+ const window={CasaMeteoActivityCore:C,CasaShelly:api,CasaCloudRead:api,CasaShellySetup:{snapshot:()=>setup},addEventListener:()=>{}};vm.runInNewContext(source,{window,localStorage:storage,queueMicrotask:fn=>fn()});
+ let rows=window.CasaMeteoActivity.snapshot();assert.equal(rows.length,2);assert(rows.every(r=>r.kind==='manual'&&r.powerWatts===1500));
+ watts=0;assert.equal(window.CasaMeteoActivity.snapshot().length,0);watts=null;assert.equal(window.CasaMeteoActivity.snapshot().length,0);watts=1500;fresh=false;assert.equal(window.CasaMeteoActivity.snapshot().length,0);fresh=true;on=null;assert.equal(window.CasaMeteoActivity.snapshot().length,0);
+});
