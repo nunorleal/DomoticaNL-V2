@@ -1113,3 +1113,9 @@ Validação: build Safari15 aprovado nas duas apps; fixture Meteo isolada confir
 SóT2: apresentação CasaLeal+versão, meteorologia/relógio centrais, data com weekday/day/month/year emEurope/Lisbon e três acessos circulares sem legendas, mantendo aria-label e IDs/handlers. header.css adapta dimensões/responsividade e reserva altura da planta. Preservar câmaras, cenários, definições, configurações e todos os equipamentos; Condados apenas consultada. Testar com fixture fictícia.
 
 Validação do cabeçalho2.131: fixture isolada confirmou data sexta,06/11/2026, versão interna2.131 sem prefixo e apresentação v2.131; grupo central emx384 no iPad768px. Vista375px sem overflow/sobreposição. Cenários e Definições abrem, ligação das câmaras preservada; zero comandos na fixture. Sintaxe app.js e gitdiffcheck válidos. Prova review/header-condados-2.131.jpg. SóT2 alterada nesta tarefa.
+
+# MeteoNL sem faixas no iPhone — 2.132
+
+SóT2: remover padding safe-area do contentor meteo-view em modo standalone, que encolhia iframe e criava bandas pretas. Fundo passa a ocupar todo o viewport como Duplex; manter viewport-fit=cover, status-bar black-translucent, layout interno e restantes insets da casa/popups. Não alterar Duplex, Meteo2.91, preferências ou transportes. Testar exclusivamente com equipamentos fictícios.
+
+Validação: fixture isolada em393×852, regras standalone ativadas na folha servida e insets fictícios47px/34px. Contentor/iframe medidos em0,0,393,852 com padding0; fundo ocupa ambas as extremidades. Dados Shelly/previsão fictícios; captura review/meteo-fullscreen-2.132.jpg. Verificação no iPhone instalado ainda necessária para barras nativas do iOS; nenhuma alteração emDuplex ou código Meteo.
