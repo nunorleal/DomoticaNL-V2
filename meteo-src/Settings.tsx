@@ -1,3 +1,4 @@
+import { ActivityIcon } from "./ActivityIcon";
 import { install as installDismiss } from "../dialog-dismiss.js";
 import { bridge, openCasaSettings } from "./bridge";
 import { fetchJson } from "./network";
@@ -91,7 +92,7 @@ export function Settings({
         <details className="activity-settings">
           <summary>Dispositivos em atividade</summary><div className="activity-settings-body">
           <label className="check"><span>Mostrar dispositivos em atividade</span><input type="checkbox" checked={value.activityEnabled} onChange={e=>set("activityEnabled",e.target.checked)}/></label>
-          <div className="activity-device-options">{(bridge?.activityDevices?.()||[]).map((device:{id:string;name:string;configured:boolean})=><label className="check" key={device.id}><span>{device.name}{!device.configured&&<small> · por associar</small>}</span><input type="checkbox" disabled={!value.activityEnabled} checked={value.activityDevices.includes(device.id)} onChange={e=>set("activityDevices",e.target.checked?[...value.activityDevices,device.id]:value.activityDevices.filter(id=>id!==device.id))}/></label>)}</div>
+          <div className="activity-device-options">{(bridge?.activityDevices?.()||[]).map((device:{id:string;name:string;configured:boolean})=><label className="check" key={device.id}><ActivityIcon id={device.id}/><span>{device.name}{!device.configured&&<small> · por associar</small>}</span><input type="checkbox" disabled={!value.activityEnabled} checked={value.activityDevices.includes(device.id)} onChange={e=>set("activityDevices",e.target.checked?[...value.activityDevices,device.id]:value.activityDevices.filter(id=>id!==device.id))}/></label>)}</div>
           <p>Aparecem só quando estão em atividade. As máquinas toleram pausas de consumo até 5 minutos. O tempo de funcionamento conta desde a deteção pela app.</p>
         </div></details>
         <section>

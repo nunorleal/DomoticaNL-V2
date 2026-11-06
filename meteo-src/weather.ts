@@ -6,7 +6,7 @@ export const scenes: Record<Scene, string> = {
   cold: "Frio",
   night: "Noite",
   rain: "Chuva",
-  storm: "Trovoada",
+  storm: "Trovoada / temporal",
   fog: "Nevoeiro",
   sunset: "Pôr do sol",
 };

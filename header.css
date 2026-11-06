@@ -1,0 +1,26 @@
+/* Casa Condados header presentation, adapted to the existing T2 action IDs. */
+:root{--plan-top:calc(96px + env(safe-area-inset-top))}
+.topbar{height:var(--plan-top);padding:calc(20px + env(safe-area-inset-top)) calc(34px + env(safe-area-inset-right)) 20px calc(34px + env(safe-area-inset-left));display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:16px;background:linear-gradient(#17282be0,transparent)}
+.topbar>.brand{display:flex;align-items:center;justify-self:start;gap:12px;padding:0;min-width:0;min-height:46px;background:transparent;text-align:left;color:var(--banner-text,#ecf0df);font-size:25px;letter-spacing:-.8px;font-weight:400}
+.topbar>.brand>div{display:block;white-space:nowrap}.brand b{font-weight:350;color:var(--banner-muted,#c3d0c4)}
+.topbar>.brand>.brand-mark{display:grid;place-items:center;flex:none;width:43px;height:46px;border-radius:13px;background:#426e8c;font-size:34px;color:inherit;box-shadow:none}
+.topbar .brand .brand-version{display:block;font-size:9px;letter-spacing:1px;font-weight:400;margin-top:5px;color:var(--banner-muted,#c3d0c4)}
+.header-information{display:flex;align-items:center;justify-content:center;gap:28px;min-width:0}
+.header-information .weather-widget{justify-content:center;gap:10px;padding:0;min-width:0;min-height:48px}
+.header-information .weather-widget strong{font-size:26px;font-weight:400;letter-spacing:normal;line-height:normal}
+.header-information .weather-widget small{font-size:10px;margin-top:3px;color:var(--banner-muted,#c3d0c4)}
+.header-information .weather-widget svg{width:30px;height:30px}
+.header-information .header-clock{gap:0;min-width:0;text-align:center;flex:none;color:var(--banner-text,#ecf0df);font-variant-numeric:tabular-nums;text-shadow:none}
+.header-information .header-clock time{font-size:27px;line-height:1.15;font-weight:400;letter-spacing:.5px}
+.header-information .header-clock>span{display:block;margin-top:5px;font-size:9px;line-height:1.3;white-space:nowrap;color:var(--banner-muted,#c3d0c4)}
+.clock-actions{justify-self:end;margin:0;min-width:0}
+.topbar .header-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;border:0;border-radius:0;background:transparent;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+.topbar .header-actions :is(button,.cameras-link){appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;margin:0;border:1px solid #ffffff1b;border-radius:50%;background:#ffffff0b;color:#ffffffc0;line-height:1;transition:background .2s}
+.topbar .header-actions :is(button,.cameras-link):hover{background:#ffffff24}
+.topbar .header-actions svg{display:block;width:21px;height:21px;pointer-events:none;flex:none}
+@media(max-width:750px){.topbar{gap:10px;padding-left:19px;padding-right:19px}.topbar>.brand{font-size:21px;gap:8px}.topbar>.brand>.brand-mark{width:34px;height:38px;font-size:28px}}
+@media(max-width:650px){.header-information{gap:12px}.header-information .header-clock time{font-size:23px}.header-information .header-clock>span{font-size:8px}.header-information .weather-widget small{font-size:8px;max-width:100px}.header-information .weather-widget strong{font-size:23px}.header-information .weather-widget svg{width:25px;height:25px}}
+@media(max-width:550px){:root{--plan-top:calc(110px + env(safe-area-inset-top))}.topbar{grid-template-columns:minmax(0,1fr) auto auto;gap:5px;padding:calc(12px + env(safe-area-inset-top)) 12px 12px}.topbar>.brand{font-size:16px;gap:6px}.topbar>.brand>.brand-mark{width:30px;height:36px;font-size:26px}.header-information{flex-direction:column;gap:6px}.header-information .header-clock time{font-size:22px}.header-information .header-clock>span{font-size:8px;margin-top:2px}.header-information .weather-widget{min-height:30px;gap:4px}.header-information .weather-widget strong{font-size:18px}.header-information .weather-widget small{margin-top:0}.header-information .weather-widget svg{width:18px;height:18px}.topbar .header-actions{gap:4px}.topbar .header-actions :is(button,.cameras-link){width:40px;min-width:40px;height:40px;min-height:40px}}
+@media(max-width:400px){.topbar>.brand>.brand-mark{display:none}}
+@media(max-width:360px){.topbar{padding-left:9px;padding-right:9px}.topbar .header-actions{gap:2px}.topbar .header-actions :is(button,.cameras-link){width:36px;min-width:36px}}
+@media(max-height:650px) and (min-width:551px){:root{--plan-top:calc(75px + env(safe-area-inset-top))}.topbar{padding-top:calc(10px + env(safe-area-inset-top));padding-bottom:10px}}

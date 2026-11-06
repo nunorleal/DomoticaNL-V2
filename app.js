@@ -184,17 +184,18 @@ document.getElementById('hotspots').addEventListener('keydown',e=>{if(e.target.m
 window.addEventListener('environmentchange',()=>{drawRoomLighting();const caption=document.querySelector('.room-light-caption');if(caption)caption.textContent=isCloudLight(current().id)?window.CasaShelly.lightCaption(current().id):window.CasaEnvironment.roomDescription(current(),rooms)});
 window.addEventListener('pagehide',persist);restoreRoomLayout();setMode('lights');
 
-// Device-local clock; Intl respects the iPad's configured timezone.
+// Match Casa Condados: Portuguese weekday/date and the house time zone.
 function updateHeaderClock(){
  const now=new Date();
  const time=document.getElementById('header-clock');
- time.textContent=new Intl.DateTimeFormat('pt-PT',{hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(now);
+ time.textContent=new Intl.DateTimeFormat('pt-PT',{timeZone:'Europe/Lisbon',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(now);
  time.dateTime=now.toISOString();
- document.getElementById('header-clock-date').textContent=new Intl.DateTimeFormat('pt-PT',{day:'numeric',month:'short'}).format(now);
+ document.getElementById('header-clock-date').textContent=new Intl.DateTimeFormat('pt-PT',{timeZone:'Europe/Lisbon',weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}).format(now);
 }
 updateHeaderClock();
-setInterval(updateHeaderClock,1000);
+setInterval(()=>{if(!document.hidden)updateHeaderClock()},1000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateHeaderClock()});
+window.addEventListener('pageshow',updateHeaderClock);
 
 // Badge clicks are delayed briefly to distinguish them from rename double-clicks.
 let bannerClickTimer,renameRoomId=null,bannerDrag=null,suppressBannerClickUntil=0;
