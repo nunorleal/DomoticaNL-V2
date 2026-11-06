@@ -13,8 +13,8 @@
  function draw(){const d=window.CasaShelly?.evSnapshot();if(!d)return;
   const charging=d.charging===true,feed=d.feed===true;park.classList.toggle('ev-charging',charging);park.classList.toggle('ev-powered',feed);park.classList.toggle('ev-feed-unknown',d.feed===null);
   const caption=!d.configured?'Associar Shelly EM':d.charging===true?'A carregar':d.charging===false?'Sem carregamento':d.lastReading?'Última leitura':'Consumo por confirmar';
-  $('ev-plan-state').textContent=caption;$('ev-plan-power').innerHTML=power(d.powerKW??d.lastReading?.powerKW)+' <small>kW</small>';$('ev-plan-total').textContent=fmt(d.energyKWh,1);$('ev-plan-total-label').textContent=d.energyStale?'Último total':'Total';badge.classList.toggle('ev-stale',d.energyStale);badge.title=d.energyStale?'Total da última leitura disponível':caption;
-  $('ev-power').textContent=power(d.powerKW??d.lastReading?.powerKW);$('ev-total').textContent=fmt(d.energyKWh);$('ev-total-label').textContent=d.energyStale?'Último total disponível':'Total acumulado';
+  $('ev-plan-state').textContent=caption;$('ev-plan-power').innerHTML=power(d.powerKW??d.lastReading?.powerKW)+' <small>kW</small>';window.CasaDailyEnergy?.show($('ev-plan-total'),'ev',window.CasaShelly.consumptionSnapshot('ev','totalMeter').configured?'totalMeter':'meter',false);$('ev-plan-total-label').textContent='Hoje · parcial';badge.classList.toggle('ev-stale',d.energyStale);badge.title=d.energyStale?'Total da última leitura disponível':caption;
+  $('ev-power').textContent=power(d.powerKW??d.lastReading?.powerKW);window.CasaDailyEnergy?.show($('ev-total'),'ev',window.CasaShelly.consumptionSnapshot('ev','totalMeter').configured?'totalMeter':'meter',false);$('ev-total-label').textContent='Consumo registado hoje';
   $('ev-charge-caption').textContent=caption+(d.inconsistent?' · consumo medido com relé reportado desligado':'');
   $('ev-feed-caption').textContent=d.feed===null?(d.roles.includes('relay')?'Estado por confirmar':'Interruptor por associar'):d.feed?'Ponto ligado · estado do relé':'Ponto desligado · estado do relé';
   dialog.classList.toggle('ev-powered',feed);dialog.classList.toggle('ev-feed-unknown',d.feed===null);

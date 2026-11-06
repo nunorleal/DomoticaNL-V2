@@ -1,0 +1,9 @@
+# Consumo registado hoje — 2026-11-06
+
+Por autorização do utilizador, os cartões passam do contador acumulado do aparelho para deltas observados no dia Europe/Lisbon. Não são estatísticas oficiais da Shelly Cloud nem valores reconstruídos desde janeiro. A primeira amostra estabelece referência; só a seguinte confirma consumo, incluindo zero observado. O dia é sempre identificado como registo parcial: início a meio do dia, períodos não observados e reposições não são inventados. Intervalos que atravessam a meia-noite não são distribuídos por estimativa. Dentro do mesmo dia, diferenças monotónicas entre contadores podem recuperar consumo durante uma pausa, mas não garantem detetar reposições intermédias.
+
+Sem consultas novas ou integração da potência. Os totais nativos continuam inalterados nos normalizadores e snapshots; só muda a apresentação. daily-energy-core.js é o registo puro e a validação; daily-energy.js gere a persistência e associações próprias de cada casa. Guarda até400dias por identidade e128identidades. Chaves Cloud nunca entram neste histórico. Sem novos gráficos.
+
+O aparelho de recolha deve manter a app aberta e ativa. Apenas estar ligado à corrente não impede o iPad/Safari de suspender a app. Depois de exportar/importar o JSON da mesma app noutro dispositivo, seguem o histórico e a referência do último contador; a próxima leitura continua sem duplicar. Não há sincronização automática entre dispositivos ou fusão de históricos paralelos. A importação substitui o registo incluído no backup; cópias antigas sem diário preservam o diário já existente. Exportações não recuperam meses que a app nunca observou.
+
+A persistência é diferida1s e concluída no pagehide/export; cancelada antes de importar para não sobrescrever o backup com dados antigos. O backup T2 inclui também o snapshot em memória na exportação. Todas as atuações e leituras de validação são fictícias.

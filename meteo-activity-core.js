@@ -8,6 +8,7 @@
   function update(samples){const time=now(),rows=[];
    for(const sample of samples){const {id}=sample;if(!IDS.includes(id))continue;
     if(!sample.configured||!sample.identity){delete records[id];continue}
+    if(id==='boiler')sample.active=Number.isFinite(sample.powerWatts)&&sample.powerWatts>=0?sample.powerWatts>30:null;
     const manual=id==='heater'||id==='dehumidifier';
     if(manual){
      if(sample.on===true&&(sample.timerActive===true||sample.timerEstimated===true)&&Number.isFinite(sample.remaining)&&sample.remaining>0){delete records[id];rows.push({id,name:NAMES[id],kind:'timer',remaining:Math.ceil(sample.remaining),estimated:sample.timerEstimated===true});continue}

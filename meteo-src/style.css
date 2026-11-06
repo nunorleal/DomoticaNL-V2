@@ -132,15 +132,6 @@ svg {
   opacity: calc(var(--effect) * 0.5);
   animation: fog 40s ease-in-out infinite alternate;
 }
-.lightning {
-  position: absolute;
-  inset: 0;
-  background: #d7e7ff;
-  opacity: 0;
-}
-.animated .lightning {
-  animation: lightning 23s infinite;
-}
 .stars {
   position: absolute;
   inset: 0;
@@ -796,21 +787,6 @@ main {
   50% {
     opacity: 0.25;
     transform: scale(1.03);
-  }
-}
-@keyframes lightning {
-  0%,
-  88%,
-  89%,
-  90%,
-  100% {
-    opacity: 0;
-  }
-  88.3% {
-    opacity: 0.12;
-  }
-  89.3% {
-    opacity: 0.08;
   }
 }
 @media (min-height: 1100px) and (min-width: 650px) {
@@ -1680,9 +1656,9 @@ html.red-night,html.red-night body{background:#000}
 
 /* Activity rows share the indoor panel's glass surface and existing React clock. */
 .hero .meteo-activity{width:100%;margin:8px auto 0;display:flex;flex-direction:column;gap:7px;flex-shrink:0}
-.meteo-activity-row{display:grid;grid-template-columns:1fr 1fr;padding:0 8px;border-radius:17px;color:#fff}
-.meteo-activity-device{min-width:0;display:grid;grid-template-columns:19px minmax(0,1fr) auto;gap:8px;align-items:center;min-height:46px;padding:9px 10px;text-align:left}
-.meteo-activity-device+.meteo-activity-device{border-left:1px solid #d2e6f32b}.meteo-activity-device>svg{width:18px;height:18px;color:#8bd5ff;flex:none}.meteo-activity-device[data-kind=timer]>svg{color:#ffd481}
+.meteo-activity-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;color:#fff}
+.meteo-activity-device{border-radius:17px;min-width:0;display:grid;grid-template-columns:19px minmax(0,1fr) auto;gap:8px;align-items:center;min-height:46px;padding:9px 10px;text-align:left}
+.meteo-activity-device>svg{width:18px;height:18px;color:#8bd5ff;flex:none}.meteo-activity-device[data-kind=timer]>svg{color:#ffd481}
 .meteo-activity-name{font-size:13px;line-height:1.25}.meteo-activity-name small{display:block;font-size:10px;color:#d0dce6;margin-top:3px}.meteo-activity-time{font-size:14px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
 .activity-device-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}.activity-device-options label{margin:0}.activity-device-options input{flex-shrink:0}
 .focus-view .hero.has-activity{--activity-clock:18dvh;--activity-temperature:11dvh;--activity-symbol:20dvh;gap:0}
@@ -1693,8 +1669,8 @@ html.red-night,html.red-night body{background:#000}
 .focus-view .hero.has-activity .current-summary{margin-top:1dvh;gap:clamp(14px,2.5vw,30px)}
 .focus-view .hero.has-activity .current-summary>.current-weather-symbol{height:min(var(--weather-reading-height,160px),var(--activity-symbol));width:min(var(--weather-reading-height,160px),var(--activity-symbol),36vw)}
 .focus-view .hero.has-activity .sun-times{margin-top:.6dvh}.focus-view .hero.has-activity .bedroom-climate{padding:10px 13px 9px;margin-top:.6dvh}.focus-view .hero.has-activity .bedroom-climate-heading{margin-bottom:7px}.focus-view .hero.has-activity .bedroom-climate-value{padding:9px 7px}
-.red-night .meteo-activity-row{background:#000}.red-night .meteo-activity-device>svg{color:inherit}
-@media(max-width:580px){.meteo-activity-device{grid-template-columns:17px minmax(0,1fr);gap:3px 6px;padding:7px 5px;min-height:49px}.meteo-activity-device>svg{grid-row:1 / 3;width:16px;height:16px}.meteo-activity-time{grid-column:2;font-size:12px}.meteo-activity-name{font-size:11px}.meteo-activity-row{padding:0 5px}.activity-device-options{grid-template-columns:1fr}}
+.red-night .meteo-activity-device>svg{color:inherit}
+@media(max-width:580px){.meteo-activity-device{grid-template-columns:17px minmax(0,1fr);gap:3px 6px;padding:7px 5px;min-height:49px}.meteo-activity-device>svg{grid-row:1 / 3;width:16px;height:16px}.meteo-activity-time{grid-column:2;font-size:12px}.meteo-activity-name{font-size:11px}.meteo-activity-row{gap:7px}.activity-device-options{grid-template-columns:1fr}}
 @media(max-height:650px){.focus-view .hero.has-activity .date>span{font-size:clamp(17px,3dvh,24px)}.focus-view .hero.has-activity .date p{font-size:12px}.focus-view .hero.has-activity .clock{font-size:clamp(44px,var(--activity-clock),110px)}.focus-view .hero.has-activity .bedroom-climate-value{padding:5px}.focus-view .hero.has-activity .bedroom-climate-heading{font-size:12px;margin-bottom:5px}.focus-view .hero.has-activity .meteo-activity-device{min-height:32px;padding-top:5px;padding-bottom:5px}.focus-view .hero.has-activity .condition h2{font-size:17px}.focus-view .hero.has-activity .condition p{font-size:12px}}
 /* Remove legacy clock minimum heights: font size alone cannot release that space. */
 .focus-view .hero.has-activity .clock{min-height:0}
@@ -1724,3 +1700,42 @@ html.red-night,html.red-night body{background:#000}
 .settings .activity-settings label.check{width:100%;text-align:left;box-sizing:border-box}
 .settings .activity-settings label.check>span{min-width:0;flex:1}
 .settings .activity-settings label.check>input{flex:none;margin:0 0 0 auto}
+
+/* Same device pictograms in settings and live activity; countdown is additional. */
+.settings .activity-device-options label.check>svg{width:20px;height:20px;flex:none;color:#93cae4;margin-right:10px}
+.meteo-activity-time{display:inline-flex;align-items:center;justify-content:flex-end;gap:4px}
+.meteo-activity-time>svg{width:13px;height:13px;flex:none;color:#93cae4}
+
+/* Water on the glass: bounded, non-interactive and transform-only movement. */
+.screen-rain{position:fixed;inset:0;z-index:30;overflow:hidden;pointer-events:none;contain:strict}
+.screen-raindrop{position:absolute;display:block;border-radius:48% 52% 46% 54% / 56% 53% 47% 44%;
+ background:radial-gradient(ellipse at 28% 21%,#ffffffb8 0%,#ffffff38 12%,transparent 32%),radial-gradient(ellipse at 57% 68%,transparent 30%,#081b3373 68%,#e0f6ff94 88%,transparent 100%);
+ border:1px solid #def4ff70;box-shadow:inset 1px 1px 2px #ffffff88,inset -1px -2px 3px #061c3566,1px 2px 3px #06132666;opacity:.8}
+.screen-raindrop:after{content:"";position:absolute;left:23%;top:14%;width:28%;height:12%;border-radius:50%;background:#ffffffbf;transform:rotate(-32deg)}
+.screen-rain.is-animated .screen-raindrop{animation:glass-drop var(--drop-duration) ease-in-out var(--drop-delay) infinite}
+@keyframes glass-drop{0%,12%{opacity:0;transform:translateY(-8px) scale(.75)}24%,55%{opacity:.8;transform:translateY(0) scale(1)}84%{opacity:.7;transform:translateY(26px) scale(.98,1.08)}100%{opacity:0;transform:translateY(65px) scale(.95,1.15)}}
+.red-night .screen-rain{display:none}
+@media(prefers-reduced-motion:reduce){.screen-rain.is-animated .screen-raindrop{animation:none}}
+
+/* Atlantic storm: all effects stay behind the weather content. */
+.landscape.storm .landscape-image{background-position:68% 56%}
+.storm-atmosphere{position:absolute;inset:0;overflow:hidden;contain:strict;pointer-events:none}
+.storm-cloud-drift{position:absolute;inset:-15% -30% 18%;background:radial-gradient(ellipse at 22% 30%,#09152170,transparent 55%),radial-gradient(ellipse at 75% 50%,#99abc324,transparent 50%);opacity:0}
+.animated.storm .storm-cloud-drift{opacity:calc(var(--effect)*.65);animation:storm-cloud-drift 28s ease-in-out infinite alternate}
+.storm-wind{position:absolute;inset:0;opacity:0}
+.animated.storm .storm-wind{opacity:calc(var(--effect)*.28)}
+.storm-wind i{position:absolute;left:-55%;width:45%;height:18px;border-top:1px solid #d1e6f254;border-radius:50%;background:linear-gradient(90deg,transparent,#bed9e61c,transparent);opacity:0}
+.animated.storm .storm-wind i{animation:storm-gust var(--gust-duration) linear var(--gust-delay) infinite}
+.storm-strike{position:absolute;inset:0;opacity:0;animation:storm-strike 1.4s linear both}
+.storm-cloud-flash{position:absolute;inset:0 0 28%;background:radial-gradient(ellipse at var(--bolt-x) 32%,#c1dbff70,transparent 48%);opacity:calc(.35 + var(--effect)*.45)}
+.storm-bolt{position:absolute;inset:0;width:100%;height:64%;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.storm-bolt-halo{stroke:#85b6ed;stroke-width:7;opacity:.22;filter:blur(3px)}
+.storm-bolt-main{stroke:#e2edff;stroke-width:1.5;opacity:calc(.4 + var(--effect)*.5)}
+.storm-bolt-branches{stroke:#bdd8fa;stroke-width:.7;opacity:.55}
+.animated.storm .rain-particles{opacity:calc(var(--effect)*.72)}
+.storm .rain-particles i{height:100px;background:linear-gradient(transparent,#c6e0fa9c);animation-name:storm-rain}
+@keyframes storm-rain{to{transform:translate(-42vw,145vh) rotate(26deg)}}
+@keyframes storm-gust{0%{transform:translate(0,0) rotate(-8deg);opacity:0}18%,65%{opacity:.8}100%{transform:translate(160vw,12vh) rotate(-8deg);opacity:0}}
+@keyframes storm-cloud-drift{to{transform:translate(9%,3%) scale(1.03)}}
+@keyframes storm-strike{0%,4%{opacity:0}12%{opacity:.8}28%{opacity:.1}44%{opacity:.55}75%,100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.storm-atmosphere{display:none}.storm .rain-particles{display:none}}

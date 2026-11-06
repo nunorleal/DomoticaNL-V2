@@ -1,3 +1,5 @@
+import { StormAtmosphere } from "./StormAtmosphere";
+import { ScreenRain } from "./ScreenRain";
 import { bridge, openCasaSettings } from "./bridge";
 import { ActivityDevices, type ActivityRow } from "./ActivityDevices";
 import { BedroomClimate } from "./BedroomClimate";
@@ -61,7 +63,7 @@ function Landscape({
   useEffect(() => {
     let active = true;
     const im = new Image();
-    im.src = assetUrl(`weather-backgrounds/${scene}.webp`);
+    im.src = assetUrl(scene === "storm" ? "weather-backgrounds/storm-v2.png" : `weather-backgrounds/${scene}.webp`);
     im.onload = () => {
       if (active) setVisible(scene);
     };
@@ -80,15 +82,16 @@ function Landscape({
           key={s}
           className={"landscape-image " + (visible === s ? "visible" : "")}
           style={{
-            backgroundImage: `url("${assetUrl(`weather-backgrounds/${s}.webp`)}")`,
+            backgroundImage: `url("${assetUrl(s === "storm" ? "weather-backgrounds/storm-v2.png" : `weather-backgrounds/${s}.webp`)}")`,
           }}
         />
       ))}
       <div className="atmosphere" />
       <div className="light-glow" />
+      {visible === "storm" && <StormAtmosphere animate={animate} intensity={intensity} />}
       {(visible === "rain" || visible === "storm") && (
         <div className="rain-particles">
-          {Array.from({ length: 32 }, (_, i) => (
+          {Array.from({ length: visible === "storm" ? 48 : 32 }, (_, i) => (
             <i
               key={i}
               style={{
@@ -102,7 +105,7 @@ function Landscape({
       )}
       {visible === "fog" && <div className="fog-layer" />}
       {visible === "night" && <div className="stars" />}
-      {visible === "storm" && <div className="lightning" />}
+
     </div>
   );
 }
@@ -662,6 +665,7 @@ export default function App() {
           onClose={() => setOpen(false)}
         />
       )}
+      {!red && prefs.effects > 0 && (scene === "rain" || scene === "storm") && <ScreenRain animate={motion} intensity={prefs.effects} />}
       {red && <div className="night-red-filter" aria-hidden="true" style={{backgroundColor: `rgb(${Math.round(255 * (1 - prefs.dim / 500))}, ${Math.round(76 * (1 - prefs.dim / 500))}, ${Math.round(64 * (1 - prefs.dim / 500))})`}} />}
     </>
   );

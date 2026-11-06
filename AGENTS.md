@@ -1071,3 +1071,45 @@ Validação: 325 testes aprovados, incluindo consumo manual ON/zero/OFF/desconhe
 Adicionar boiler à seleção validada, sem mudar seleções guardadas ou associações. Usar kitchenBindings.boiler/mediaSnapshot na T2 e balconyMeters.boiler/balconyApplianceSnapshot na Duplex. Potência atual positiva começa cronómetro crescente desde deteção; zero/OFF termina imediatamente, sem tolerância de pausa das máquinas; desconhecido/antigo/offline oculta. Preservar locais/consumos por divisão e configuração; nenhum novo polling/comando.
 
 Caldeira representada por Flame (gás), mantendo tempo crescente emMM:SS/H:MM:SS. Validação: 327 testes aprovados, build Safari15 válido. UI fictícia T2 confirma lucide-flame e tempo00:00→00:30; fonte de apresentação comum nas duas apps. Captura review/meteo-boiler-2.87.jpg. Nenhum aparelho real usado.
+
+# Ícones de atividade / limite caldeira — 2.123 / Meteo2.88
+
+ActivityIcon partilhado por definições e banner, com símbolo próprio para todos os15 equipamentos (Heater termoventilador, Droplets desumidificador, Flame caldeira). Temporizador mantém ícone adicional Timer junto ao tempo restante, sem substituir pictograma do aparelho. Caldeira só ativa com potência atual estritamente >30W; <=30 termina/reinicia sessão. Reutilizar leituras/fila e seleções, sem comandos/polls novos. Apenas testes fictícios.
+
+Validação: 328 testes aprovados, limites30/30,1/31W e reinício do cronómetro incluídos. Build Safari15 válido. UI T2 com bridge fictícia confirmou15 ícones em definições, Heater+Timer em contagem decrescente e Droplets em funcionamento manual; fontes ActivityIcon/ActivityDevices/Settings partilhadas idênticas nas duas apps. Nenhum equipamento real consultado/comandado. Capturas review/meteo-activity-icons-*-2.88.jpg.
+
+# Banners de atividade separados — 2.124 / Meteo2.89
+
+Cada aparelho tem superfície glass própria, cantos arredondados e8px de espaço entre duas colunas iguais (7px móvel). Linha incompleta mantém metade direita vazia e sem superfície. Remover separador vertical e padding da antiga superfície conjunta. Preservar regras de compactação por número de linhas, cores/transparência e modo vermelho preto, ícones, contagens e leituras. Alteração só de apresentação; nenhum novo pedido/comando.
+
+Validação: build Safari15 aprovado nas duas apps; UI com bridge fictícia mostra dois cartões independentes356,95px com8px de intervalo numa linha721,91px. Selecionar um só mantém338px numa linha684px, com fundo do contentor transparente e segunda coluna vazia. Contadores/ícones preservados. Captura review/meteo-separate-cards-2.89.jpg. Sem aparelhos reais, consultas ou comandos novos.
+
+# Consumo registado hoje — 2.125
+
+Nova autorização substitui a regra de não recolher histórico: recolher deltas dos contadores nas leituras existentes, sem novas consultas, potência integrada ou gráficos. Dias Europe/Lisbon, até400dias/128identidades por casa, armazenamento local sem chave. Primeiro valor estabelece baseline, não consumo; zero só após intervalo confirmado. Reposições não subtraem/inventam; intervalo que atravessa meia-noite não é distribuído/estimado. Mostrar registo parcial, sem equivaler a histórico oficial Cloud. Exportar/importar o ledger validado com baseline para continuidade entre dispositivos; sem sincronização automática. Preservar totais nativos em snapshots e toda a atuação. Flush diferido1s/pagehide/export, suspender antes de importação para evitar sobrescrita. Testar só com aparelhos fictícios.
+
+Ver CONSUMO-DIARIO.md: até400dias/128identidades, sem sincronização. Testes de cálculo/backup335T2 e369Duplex aprovados. Exportação real da interface com transportes fictícios incluiu20identidades T2 e1Duplex, baseline em todas, sem authKey no ledger. UI confirmou0,8kWh diário para contador fictício6949,6kWh e termoventilador0,564kWh. O erro transitório de carregamento da fixture Duplex desapareceu após reload; última página sem novos erros. Captura review/daily-energy.jpg. Nenhum dispositivo real contactado/comandado.
+
+# Histórico por dispositivo — 2.126
+
+Nova autorização para gráfico/lista do registo diário local: botão Histórico junto a Consumo, abre dialog independente com Dia/Semana/Mês/Ano, datas anteriores, total do período e soma desde primeiro registo disponível. Dia é agregado diário, sem inventar horas; semana inicia segunda, mês por dias, ano por meses. Distinguir zero observado/sem registo/futuro, indicar parcial. Contador geral usa a sua identidade; não somar aparelhos. Ler ledger existente, sem comandos/polls ou alterações de configurações/backups/retenção400dias. Manter popup de origem aberto e excluir dialog local do seletor de âmbito Cloud para preservar fila/foco ao abrir/fechar. Ícone de gráfico SVG local, CSS comum; Duplex inclui acesso nos equipamentos multimédia do inventário. Testar exclusivamente com dados fictícios.
+
+Validação do histórico:341 testesT2 e375Duplex aprovados, só dados fictícios. Dia/semana/mês/ano e tabelas, somas separadas, zero/lacunas/futuro, calendários/leapyear e cópias imutáveis. UI768×1024 nas duas e375×812Duplex sem overflow horizontal. T2 transporte6/0 antes/depois, Duplex2/0 (leituras/comandos) ao abrir/navegar. Contador geral e termoventilador verificados, fecho restitui origem, sem errosJS. Ver CONSUMO-HISTORICO.md e review/energy-history-week.jpg.
+
+# Ícone de Cenários — 2.127
+
+Só T2: ícone do cabeçalho substituído pelo mesmo SVG de varinha com estrelas da Casa Condados. Manter botão open-controls, texto Cenários e handler existente. Referência apenas lida; sem alterações na Duplex ou MeteoNL.
+
+Verificação: mesmo SVG da referência, diff sem erros; fixture fictícia confirmou ícone no cabeçalho e abertura do menu Cenários. Sem atuações. Captura review/scenarios-icon-2.127.jpg.
+
+# Gotas no vidro — 2.128 / Meteo2.90
+
+ScreenRain acrescenta18gotas locais por período de chuva/trovoada, estáveis entre renders, sem eventos ou rede. Camada não interativa acima do conteúdo; animação CSS apenas com movimento ativo, respeita reduced-motion e efeitos0. Modo vermelho mantém preto e oculta gotas. Preservar preferências, leituras, configurações e comandos. Cabeçalho T2 agrupa meteorologia/relógio ao centro como Condados, mantendo IDs e acessos. Testar exclusivamente com dados fictícios.
+
+Validação: build Safari15 aprovado nas duas apps; fixture Meteo isolada confirmou18gotas em chuva, zero fora da chuva e no vermelho, e animação desativada pela preferência. Camada pointer-events:none permite abrir definições. T2 cabeçalho centrado em768px (centro384px) e1440px (centro720px), sem overflow em375px. Sem testes em equipamentos reais. Provas em review/meteo-rain-glass-2.90.jpg e, naT2, review/header-centered-2.128.jpg.
+
+# Cabeçalho igual à Condados — 2.131
+
+SóT2: apresentação CasaLeal+versão, meteorologia/relógio centrais, data com weekday/day/month/year emEurope/Lisbon e três acessos circulares sem legendas, mantendo aria-label e IDs/handlers. header.css adapta dimensões/responsividade e reserva altura da planta. Preservar câmaras, cenários, definições, configurações e todos os equipamentos; Condados apenas consultada. Testar com fixture fictícia.
+
+Validação do cabeçalho2.131: fixture isolada confirmou data sexta,06/11/2026, versão interna2.131 sem prefixo e apresentação v2.131; grupo central emx384 no iPad768px. Vista375px sem overflow/sobreposição. Cenários e Definições abrem, ligação das câmaras preservada; zero comandos na fixture. Sintaxe app.js e gitdiffcheck válidos. Prova review/header-condados-2.131.jpg. SóT2 alterada nesta tarefa.
