@@ -1119,3 +1119,7 @@ Validação do cabeçalho2.131: fixture isolada confirmou data sexta,06/11/2026,
 SóT2: remover padding safe-area do contentor meteo-view em modo standalone, que encolhia iframe e criava bandas pretas. Fundo passa a ocupar todo o viewport como Duplex; manter viewport-fit=cover, status-bar black-translucent, layout interno e restantes insets da casa/popups. Não alterar Duplex, Meteo2.91, preferências ou transportes. Testar exclusivamente com equipamentos fictícios.
 
 Validação: fixture isolada em393×852, regras standalone ativadas na folha servida e insets fictícios47px/34px. Contentor/iframe medidos em0,0,393,852 com padding0; fundo ocupa ambas as extremidades. Dados Shelly/previsão fictícios; captura review/meteo-fullscreen-2.132.jpg. Verificação no iPhone instalado ainda necessária para barras nativas do iOS; nenhuma alteração emDuplex ou código Meteo.
+
+# Regeneração TV5–25W — 2.133
+
+Por pedido do utilizador, substituir limite superior35W por25W inclusive. TV regeneração5≤W≤25, em utilização acima25W, standby abaixo5W, preservando guardas de leitura/online/frescura e estimativa. Indicadores/reflexos/MeteoNL reutilizam estado existente. Sem alterações de associações, credenciais, consultas ou comandos. Validar só com dados fictícios.
