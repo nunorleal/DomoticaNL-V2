@@ -4,10 +4,10 @@
 
 1. Publicar o conteúdo desta pasta num endereço HTTPS, por exemplo GitHub Pages. Manter `manifest.webmanifest`, `pwa.css` e `assets/icons/` ao lado dos restantes recursos. Funciona na raiz de um domínio ou numa subpasta de projeto.
 2. No Safari do iPad, abrir o endereço HTTPS da aplicação, sem parâmetros de demonstração/teste.
-3. Tocar em Partilhar → Adicionar ao ecrã principal. Confirmar o nome «Domótica». Se aparecer a opção «Abrir como app web», mantê-la ativa.
+3. Tocar em Partilhar → Adicionar ao ecrã principal. Confirmar o nome «Casa Leal T2». Se aparecer a opção «Abrir como app web», mantê-la ativa.
 4. Abrir pelo novo ícone. A navegação do Safari deixa de fazer parte da janela; a barra de estado e o indicador de início do iPadOS podem continuar visíveis. Rodar o iPad mantém o layout responsivo.
 
-O lançamento usa `./`, com identidade e scope `./`, relativos ao manifesto. Não copia query strings de ensaio para o ícone. A orientação é `any`; não há bloqueio de retrato/paisagem. Ícone Apple opaco180×180 e ícones do manifesto192/512, incluindo variante maskable.
+No Safari 26 ou posterior em iPhone e iPad, o Safari instala a página diretamente, como na Casa Condados. Em versões anteriores e nos restantes navegadores, o manifesto declara o modo standalone e usa `./` para o início, a identidade e o âmbito. O ícone Apple é de 180 × 180. Os ícones do manifesto são de 192 × 192 e 512 × 512.
 
 ## Configurações e Shelly
 
@@ -17,7 +17,7 @@ Os serviços Shelly e meteorológicos continuam a necessitar de Internet. Não f
 
 ## Ecrã e áreas de segurança
 
-`display: standalone`, meta tags Apple e `viewport-fit=cover` preparam a abertura sem barra de endereço, separadores ou navegação Safari. `black-translucent` permite ocupar o ecrã até às áreas de segurança. Os ajustes em `pwa.css` só se aplicam ao modo instalado: cabeçalho, rodapé, planta, popups e Meteo respeitam os insets do iPadOS. O iframe Meteo recebe um viewport já protegido, pois os insets dentro de iframes podem ser zero. O desenho no Safari normal fica inalterado.
+A página usa `viewport-fit=cover`. Em modo instalado, `pwa.css` reserva as áreas seguras para os controlos da casa. A MeteoNL ocupa toda a altura disponibilizada pelo navegador. Para comparar a instalação atual com a nova configuração, adiciona um novo ícone pelo Safari depois de publicar a versão 2.135. Guarda o ícone anterior e exporta a cópia JSON para manter acesso aos dados da instalação existente.
 
 ## Verificações e limites do ensaio
 

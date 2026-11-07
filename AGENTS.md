@@ -1129,3 +1129,7 @@ Por pedido do utilizador, substituir limite superior35W por25W inclusive. TV reg
 Depois de retirar padding na2.132, utilizador ainda observa barra inferior. Alinhar documento com Duplex: body min-height100vh/100dvh, sem height100% conjunto html/body nem min-height standalone emhtml. Remover status-bar-style black-translucent exclusivo T2, usando omissão iOS como Condados; manter manifest, capacidade instalada e ícones. Meteo-view tem altura explícita100vh com melhoria100dvh, iframe mantém100%, sem margens. Não alterar Duplex, fontes/bundle Meteo ou configurações. Verificação local não substitui confirmação no iPhone/iPad instalado.
 
 Validação local com ficheiros atuais e transporte fictício: iframe começa0,0 e mede393×852 emtelefone e768×1024 emtablet; regresso Casa restitui planta. Fixture ativa regras standalone com insets47/34px. Diffcheck válido. Prova review/meteo-viewport-2.134.jpg. Não confirmado em WebApp nativa iOS.
+
+# Instalação iOS alinhada com Condados — 2.135
+
+No Safari 26 ou posterior em iPhone/iPad, usar instalação direta sem manifesto nem metas capable. Em Safari anterior e restantes plataformas, preservar manifesto, modo standalone, identidade relativa e ícones. Não alterar o armazenamento nem os controlos. Os 5 testes PWA passaram. Para validar a faixa nativa, adicionar novo ícone em Safari com Abrir como app web após publicar, preservando a instalação anterior e a cópia JSON.
