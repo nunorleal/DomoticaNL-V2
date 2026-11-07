@@ -1,6 +1,5 @@
 /* Only the installed web app: retain the Safari layout and respect iPadOS insets. */
 @media (display-mode: standalone) {
-  html,body{min-height:100dvh}
   .topbar{padding-left:calc(30px + env(safe-area-inset-left));padding-right:calc(30px + env(safe-area-inset-right))}
   #house-view,#basement-view{left:env(safe-area-inset-left);right:env(safe-area-inset-right)}
   .plan-stage{max-width:100%}

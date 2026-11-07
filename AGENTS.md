@@ -1123,3 +1123,9 @@ Validação: fixture isolada em393×852, regras standalone ativadas na folha ser
 # Regeneração TV5–25W — 2.133
 
 Por pedido do utilizador, substituir limite superior35W por25W inclusive. TV regeneração5≤W≤25, em utilização acima25W, standby abaixo5W, preservando guardas de leitura/online/frescura e estimativa. Indicadores/reflexos/MeteoNL reutilizam estado existente. Sem alterações de associações, credenciais, consultas ou comandos. Validar só com dados fictícios.
+
+# Preenchimento do viewport iOS — 2.134
+
+Depois de retirar padding na2.132, utilizador ainda observa barra inferior. Alinhar documento com Duplex: body min-height100vh/100dvh, sem height100% conjunto html/body nem min-height standalone emhtml. Remover status-bar-style black-translucent exclusivo T2, usando omissão iOS como Condados; manter manifest, capacidade instalada e ícones. Meteo-view tem altura explícita100vh com melhoria100dvh, iframe mantém100%, sem margens. Não alterar Duplex, fontes/bundle Meteo ou configurações. Verificação local não substitui confirmação no iPhone/iPad instalado.
+
+Validação local com ficheiros atuais e transporte fictício: iframe começa0,0 e mede393×852 emtelefone e768×1024 emtablet; regresso Casa restitui planta. Fixture ativa regras standalone com insets47/34px. Diffcheck válido. Prova review/meteo-viewport-2.134.jpg. Não confirmado em WebApp nativa iOS.
