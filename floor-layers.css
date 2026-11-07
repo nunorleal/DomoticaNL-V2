@@ -27,16 +27,12 @@
 body[data-floor="-1"]{--rail-fit-top:calc(var(--plan-top) + (var(--plan-fit-space) - var(--basement-fit-width)/.72)/2 + var(--basement-fit-width)/.72*.108)}
 @media(max-height:600px){:root{--floor-stack-gap:4px}}
 
-/* Fill the existing capsules with larger symbols; scale down only on short screens. */
-.plan-status-rails .house-summary-button{--summary-count-line:15px;--summary-symbol:min(calc(var(--plan-rail-width)*.64),calc((var(--house-rail-height) - 12px)/3 - var(--summary-count-line) - 1px));display:grid;grid-template-rows:repeat(3,minmax(0,1fr));padding:4px 3px;gap:2px}
-.plan-status-rails .house-summary-button>span{width:100%;gap:1px}
-.plan-status-rails .house-summary-button svg{width:var(--summary-symbol);height:var(--summary-symbol)}
-.plan-status-rails .house-summary-button b{font-size:13px;line-height:var(--summary-count-line);font-weight:550}
+/* Keep the wider scale for the energy gauge only. */
 .plan-status-rails .energy-mini-gauge{width:calc(var(--plan-rail-width)*.42)}
 .plan-status-rails .energy-mini-gauge i{width:calc(var(--plan-rail-width)*.7)}
 .plan-status-rails .energy-rail strong{font-size:12px;font-weight:550}
-@media(max-width:550px){.plan-status-rails .house-summary-button b{font-size:12px}.plan-status-rails .energy-rail strong{font-size:10px}}
-@media(max-height:600px){.plan-status-rails .house-summary-button{--summary-count-line:11px}.plan-status-rails .house-summary-button b{font-size:10px}.plan-status-rails .energy-rail strong{font-size:10px}}
+@media(max-width:550px){.plan-status-rails .energy-rail strong{font-size:10px}}
+@media(max-height:600px){.plan-status-rails .energy-rail strong{font-size:10px}}
 
 /* Bring the floor faces closer while retaining both existing selection buttons. */
 .floor-layers button+button{margin-top:-10px}
