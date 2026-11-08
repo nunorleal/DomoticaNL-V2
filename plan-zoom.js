@@ -40,6 +40,31 @@
   s.view.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
  }
  document.addEventListener('click',e=>{if(performance.now()<suppressUntil&&e.target.closest('.floor-scene')){e.preventDefault();e.stopImmediatePropagation()}},true);
- window.addEventListener('floorchange',reset);window.addEventListener('resize',reset);
+ const standalone = window.navigator?.standalone || window.matchMedia?.('(display-mode: standalone)').matches;
+ const viewport = window.visualViewport;
+ let viewportHeight = 0;
+ function fitViewport() {
+  if (!standalone) return;
+  if (viewport && Math.abs(viewport.scale - 1) > 0.01) return;
+  if (document.activeElement?.matches('input, textarea, [contenteditable="true"]')) return;
+  const height = Math.round(viewport?.height ?? window.innerHeight);
+  if (!Number.isFinite(height) || height <= 0 || height === viewportHeight) return;
+  viewportHeight = height;
+  document.documentElement.style.setProperty('--app-viewport-height', height + 'px');
+ }
+ function fitFloor() {
+  fitViewport();
+  reset();
+ }
+ window.addEventListener('floorchange', fitFloor);
+ window.addEventListener('resize', fitFloor);
+ if (standalone) {
+  fitViewport();
+  window.requestAnimationFrame(fitViewport);
+  window.addEventListener('pageshow', fitViewport);
+  document.addEventListener('visibilitychange', fitViewport);
+  document.addEventListener('focusout', () => window.requestAnimationFrame(fitViewport));
+  viewport?.addEventListener('resize', fitViewport);
+ }
  window.CasaPlanZoom={reset,state:()=>({...active()?.state})};reset();
 })();

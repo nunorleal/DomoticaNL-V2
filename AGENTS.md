@@ -1133,3 +1133,7 @@ Validação local com ficheiros atuais e transporte fictício: iframe começa0,0
 # Instalação iOS alinhada com Condados — 2.135
 
 No Safari 26 ou posterior em iPhone/iPad, usar instalação direta sem manifesto nem metas capable. Em Safari anterior e restantes plataformas, preservar manifesto, modo standalone, identidade relativa e ícones. Não alterar o armazenamento nem os controlos. Os 5 testes PWA passaram. Para validar a faixa nativa, adicionar novo ícone em Safari com Abrir como app web após publicar, preservando a instalação anterior e a cópia JSON.
+
+# Energia e Tarifários — 2.137
+
+Custos abaixo dos kWh nos cartões e histórico. Reutilizar diferenças do ledger existente com detalhe de meias horas em Europe/Lisbon e limite global de 48 000 registos horários. Preservar totais diários, associações, fila e comandos. Vigências e IVA confirmados no editor. Usar IVA normal quando faltar consumo global suficiente e assinalar estimativa. PDF.js local com confirmação e sem persistir PDF. Preferências e horários no backup. Ver ENERGIA-TARIFARIOS.md e tests/energy-cost.test.cjs. Testar só com dados fictícios.

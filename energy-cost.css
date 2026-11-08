@@ -1,0 +1,57 @@
+.energy-tariff-dialog {
+  width: min(580px, calc(100vw - 24px));
+  max-height: calc(100vh - 28px);
+  max-height: calc(100dvh - 28px);
+  overflow: auto;
+}
+.energy-tariff-dialog h2 { padding-right: 40px; }
+.energy-tariff-close {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  min-width: 44px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: #dfeaf1;
+  color: #2d5670;
+  font-size: 24px;
+}
+.energy-tariff-access { margin-top: 12px; }
+.energy-field-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+.energy-tariff-dialog label { display: block; font-size: 12px; }
+.energy-tariff-dialog input:not([type=checkbox]) {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  margin: 4px 0;
+  padding: 6px;
+  border: 1px solid #a7bdcb;
+  border-radius: 6px;
+  color: #24465a;
+  background: #f7fbfd;
+  font: inherit;
+  font-size: 16px;
+}
+.energy-tariff-dialog .energy-check { display: flex; align-items: center; gap: 7px; margin: 10px 0; }
+.energy-hint { font-size: 12px; white-space: pre-line; overflow-wrap: anywhere; }
+#energy-tariff-status { font-size: 13px; }
+.energy-cost-value {
+  display: block;
+  width: fit-content;
+  padding: 3px 1px 0;
+  border: 0;
+  background: transparent;
+  color: #416b83;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: left;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+.energy-tariff-dialog [hidden], .energy-cost-value[hidden] { display: none !important; }
+.energy-tariff-dialog dl { display: grid; grid-template-columns: 1fr auto; gap: 8px; font-size: 13px; }
+.energy-tariff-dialog dd { margin: 0; text-align: right; }
