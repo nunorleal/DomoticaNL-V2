@@ -36,6 +36,7 @@
   if(Object.hasOwn(data,'casa-nl-window-ids-associated-v1')&&typeof data['casa-nl-window-ids-associated-v1']!=='boolean')fail();
   if(Object.hasOwn(data,'casa-nl-gui-ids-associated-v1')&&typeof data['casa-nl-gui-ids-associated-v1']!=='boolean')fail();
   if(Object.hasOwn(data,'casa-nl-cellar-temperature-added-v1')&&typeof data['casa-nl-cellar-temperature-added-v1']!=='boolean')fail();
+  if(Object.hasOwn(data,'casa-nl-electricity-tariffs-v1')){const core=typeof module==='object'&&module.exports?require('./energy-cost-core.js'):globalThis.CasaEnergyCostCore;data['casa-nl-electricity-tariffs-v1']=core.validate(data['casa-nl-electricity-tariffs-v1'])}
   if(Object.hasOwn(data,'casa-nl-daily-energy-v1')){const core=typeof module==='object'&&module.exports?require('./daily-energy-core.js'):globalThis.CasaDailyEnergyCore;data['casa-nl-daily-energy-v1']=core.validate(data['casa-nl-daily-energy-v1'])}
   if(Object.hasOwn(data,'casa-nl-consumption-history-v1')){try{const core=typeof module==='object'&&module.exports?require('./consumption-core.js'):globalThis.CasaConsumptionCore;data['casa-nl-consumption-history-v1']=core.validate(data['casa-nl-consumption-history-v1'])}catch{fail()}}
   if(Object.hasOwn(data,'casa-nl-show-sensor-readings')&&typeof data['casa-nl-show-sensor-readings']!=='boolean')fail();
@@ -67,7 +68,7 @@
   validateStorage(out.data);return {backup:out,preserved:Math.max(0,associationCount(out.data[CLOUD])-before)};
  }
  function restore(storage,backup,{restoreCredentials=false,decrypted=null}={}){
-  const clean=JSON.parse(JSON.stringify(backup));if(!Object.hasOwn(clean.data,'casa-nl-daily-energy-v1')){const old=storage.getItem('casa-nl-daily-energy-v1');if(old)clean.data['casa-nl-daily-energy-v1']=JSON.parse(old)}const data=validateStorage(clean.data),included=credentials(clean),config=data[CLOUD];
+  const clean=JSON.parse(JSON.stringify(backup));if(!Object.hasOwn(clean.data,'casa-nl-daily-energy-v1')){const old=storage.getItem('casa-nl-daily-energy-v1');if(old)clean.data['casa-nl-daily-energy-v1']=JSON.parse(old)}if(!Object.hasOwn(clean.data,'casa-nl-electricity-tariffs-v1')){const old=storage.getItem('casa-nl-electricity-tariffs-v1');if(old)clean.data['casa-nl-electricity-tariffs-v1']=JSON.parse(old)}const data=validateStorage(clean.data),included=credentials(clean),config=data[CLOUD];
   if(config){
    let current=null;try{current=JSON.parse(storage.getItem(CLOUD)||'null')}catch{}
    config.authKey='';config.rememberKey=false;

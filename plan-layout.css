@@ -1,3 +1,5 @@
+:root{--app-viewport-height:100vh}
+@supports(height:100dvh){:root{--app-viewport-height:100dvh}}
 /* Header actions replace the dock; only the plan content is magnified. */
 :root{--plan-rail-width:44px;--plan-rail-left:env(safe-area-inset-left);--plan-top:calc(80px + env(safe-area-inset-top));--plan-bottom:calc(26px + env(safe-area-inset-bottom))}
 .topbar{gap:12px}
@@ -7,11 +9,11 @@
 .header-actions :is(button,.cameras-link):hover{background:#8dbbdb23}
 .header-actions svg{width:20px;height:20px}
 .brand-home{display:grid;place-items:center;width:41px;height:43px;padding:0;border-radius:13px 13px 13px 4px;background:#426e8c;color:#fff;flex:none}
-#house-view,#basement-view{top:var(--plan-top);bottom:var(--plan-bottom);overflow:hidden}
-#house-view .plan-stage{width:min(calc(100vw - 20px - env(safe-area-inset-left) - env(safe-area-inset-right)),calc((100dvh - var(--plan-top) - var(--plan-bottom))*1024/1180));max-width:100%;max-height:none;flex-shrink:0}
-#basement-view .basement-plan{width:min(calc(100vw - 88px - env(safe-area-inset-left) - env(safe-area-inset-right)),calc((100dvh - var(--plan-top) - var(--plan-bottom))*.72));max-height:none;flex-shrink:0}
+#house-view,#basement-view{top:var(--plan-top);bottom:auto;height:calc(var(--app-viewport-height) - var(--plan-top) - var(--plan-bottom));overflow:hidden}
+#house-view .plan-stage{width:min(calc(100vw - 20px - env(safe-area-inset-left) - env(safe-area-inset-right)),calc((var(--app-viewport-height) - var(--plan-top) - var(--plan-bottom))*1024/1180));max-width:100%;max-height:none;flex-shrink:0}
+#basement-view .basement-plan{width:min(calc(100vw - 88px - env(safe-area-inset-left) - env(safe-area-inset-right)),calc((var(--app-viewport-height) - var(--plan-top) - var(--plan-bottom))*.72));max-height:none;flex-shrink:0}
 .plan-stage,.basement-plan{transform-origin:center;will-change:transform}
-.floor-indicator{position:fixed;bottom:calc(7px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);pointer-events:none;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--banner-text);text-shadow:0 1px 4px #001b25;z-index:3}
+.floor-indicator{position:fixed;top:calc(var(--app-viewport-height) - 7px - env(safe-area-inset-bottom));left:50%;transform:translate(-50%,-100%);pointer-events:none;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--banner-text);text-shadow:0 1px 4px #001b25;z-index:3}
 .floor-dots{left:var(--plan-rail-left);width:var(--plan-rail-width)}
 .toast{bottom:calc(38px + env(safe-area-inset-bottom))}
 @media(max-width:1000px){.brand{font-size:17px;gap:8px}.clock-actions{gap:10px}.topbar{gap:10px}}

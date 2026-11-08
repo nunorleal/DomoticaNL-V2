@@ -127,9 +127,7 @@ export default function App() {
   const [blindSent,setBlindSent] = useState(false);
   const [blindMessage,setBlindMessage] = useState("");
   const blindClickLock = useRef(false);
-  const focus = useFocusView(prefs.focusSeconds, open);
   const dismissFocus = useRef<HTMLButtonElement>(null);
-  useEffect(() => { if (focus.expanded) dismissFocus.current?.focus({ preventScroll: true }); }, [focus.expanded]);
   useEffect(() => {
     save("casa-nl-meteo-v1", prefs);
   }, [prefs]);
@@ -224,7 +222,9 @@ export default function App() {
     (prefs.night === "auto" &&
       isNightSchedule(localMinutes, prefs.start, prefs.end));
   const scheduledRed = redActive(prefs, localMinutes, scheduledNight);
-  const { red, night, blind, requestMorning } = useBedsideMode(prefs, scheduledNight, scheduledRed, tz, {now,sunrise,sunset});
+  const { red, night, blind, requestMorning, morningReleased } = useBedsideMode(prefs, scheduledNight, scheduledRed, tz, {now,sunrise,sunset});
+  const focus = useFocusView(prefs.focusSeconds, open || morningReleased);
+  useEffect(() => { if (focus.expanded) dismissFocus.current?.focus({ preventScroll: true }); }, [focus.expanded]);
   useLayoutEffect(() => {
     document.documentElement.classList.toggle("red-night", red);
     return () => document.documentElement.classList.remove("red-night");

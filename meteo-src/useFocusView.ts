@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createFocus } from "../meteo-focus-core.js";
 import { bridge } from "./bridge";
 
-export function useFocusView(seconds: number, settingsOpen: boolean) {
+export function useFocusView(seconds: number, blocked: boolean) {
   const [expanded, setExpanded] = useState(false);
   const timer = useRef<ReturnType<typeof createFocus> | null>(null);
   useEffect(() => {
@@ -15,8 +15,8 @@ export function useFocusView(seconds: number, settingsOpen: boolean) {
     for (const event of events) document.addEventListener(event, activity, { passive: true });
     document.addEventListener("visibilitychange", visibility);
     const interval = window.setInterval(() => {
-      const blocked = settingsOpen || document.hidden || bridge?.visible?.() === false;
-      setExpanded(controller.tick(blocked));
+      const inactive = blocked || document.hidden || bridge?.visible?.() === false;
+      setExpanded(controller.tick(inactive));
     }, 250);
     return () => {
       window.clearInterval(interval);
@@ -24,7 +24,7 @@ export function useFocusView(seconds: number, settingsOpen: boolean) {
       document.removeEventListener("visibilitychange", visibility);
       if (timer.current === controller) timer.current = null;
     };
-  }, [seconds, settingsOpen]);
+  }, [seconds, blocked]);
   const wake = () => { timer.current?.wake(); setExpanded(false); };
-  return { expanded, wake };
+  return { expanded: !blocked && expanded, wake };
 }

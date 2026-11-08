@@ -15,3 +15,6 @@
   .topbar{height:calc(72px + env(safe-area-inset-top));padding-left:calc(17px + env(safe-area-inset-left));padding-right:calc(17px + env(safe-area-inset-right))}
   .shelly-activity{right:calc(17px + env(safe-area-inset-right))}
 }
+
+/* Keep the street texture behind both floors as the installed viewport settles. */
+body::before{min-height:calc(var(--app-viewport-height) + 10px)}
