@@ -33,6 +33,13 @@
       <button class="primary-action">Iniciar sessão</button>
     </form>
     <div data-signed-in hidden>
+      <div class="history-sync-warning" hidden>
+        <div role="alert">
+          <strong>Já existe um emissor nesta casa</strong>
+          <p>O Supabase recusou o envio deste dispositivo. Podes continuar a consultar o histórico.</p>
+        </div>
+        <button type="button" data-dismiss-writer-warning class="secondary-action">Dispensar aviso</button>
+      </div>
       <label class="energy-check"><input type="checkbox"> Usar este dispositivo para recolher e enviar o histórico</label>
       <p class="energy-hint">Ativa esta opção apenas no dispositivo que guarda o histórico desta casa. Ao ativar, envias os registos de consumo para o Supabase.</p>
       <button type="button" data-refresh class="secondary-action">Sincronizar agora</button>
@@ -46,6 +53,7 @@
   const writerBox = dialog.querySelector('[type=checkbox]');
   const userControls = dialog.querySelector('[data-signed-in]');
   const feedback = dialog.querySelector('[role=status]');
+  const writerWarning = dialog.querySelector('.history-sync-warning');
   const writerStorage = () => storageKey + '-writer-' + session.user.id;
   function writerSettings() {
     if (!session) return null;
@@ -57,7 +65,9 @@
     status = message;
     form.hidden = Boolean(session);
     userControls.hidden = !session;
-    writerBox.checked = writerSettings()?.enabled === true;
+    const writer = writerSettings();
+    writerBox.checked = writer?.enabled === true;
+    writerWarning.hidden = writer?.conflict !== true;
     feedback.textContent = status;
   }
 
@@ -117,11 +127,12 @@
         if (!stillSignedIn()) return;
         if (error) throw error;
         if (data === 'other_writer') {
-          localStorage.setItem(writerStorage(), JSON.stringify({...writer, enabled:false}));
-          paint('Já existe um dispositivo a enviar o histórico desta casa. Este dispositivo ficou em modo de consulta.');
+          localStorage.setItem(writerStorage(), JSON.stringify({...writer, enabled:false, conflict:true}));
+          paint('Modo de consulta ativo.');
           syncAgain = true;
           return;
         }
+        if (writerSettings()?.conflict === true) dismissWriterWarning();
         sent = readingAt;
         paint('Histórico disponível para consulta nos outros dispositivos.');
         return;
@@ -191,7 +202,7 @@
     try {
       const current = writerSettings();
       const key = current?.key ?? crypto.randomUUID();
-      localStorage.setItem(writerStorage(), JSON.stringify({key, enabled:writerBox.checked}));
+      localStorage.setItem(writerStorage(), JSON.stringify({...current, key, enabled:writerBox.checked}));
       if (writerBox.checked) {
         daily.setSharedHistory(null);
         downloaded = 0;
@@ -202,6 +213,18 @@
       paint('Não foi possível guardar a opção neste navegador.');
     }
   });
+  function dismissWriterWarning() {
+    const current = writerSettings();
+    if (!current?.conflict) return;
+    try {
+      localStorage.setItem(writerStorage(), JSON.stringify({...current, conflict:false}));
+      paint();
+    } catch {
+      paint('Não foi possível dispensar o aviso neste navegador.');
+    }
+  }
+
+  dialog.querySelector('[data-dismiss-writer-warning]').addEventListener('click', dismissWriterWarning);
   dialog.querySelector('[data-refresh]').addEventListener('click', sync);
   dialog.querySelector('[data-sign-out]').addEventListener('click', async () => {
     const {error} = await client.auth.signOut({scope:'local'});
