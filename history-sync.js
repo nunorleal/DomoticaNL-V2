@@ -12,7 +12,6 @@
   let downloaded = 0, sent = 0;
   let syncAgain = false;
   let manualSyncQueued = false;
-  let confirmationTimer;
   let pendingRelease;
   let status = 'Inicia sessão para consultar o histórico partilhado.';
 
@@ -28,19 +27,18 @@
   indicator.hidden = true;
   indicator.className = 'history-sync-indicator';
   indicator.innerHTML = `<span class="cloud-rail-track" aria-hidden="true"><i></i></span>
-    <small class="cloud-rail-heading">Sinc.</small>
+    <small class="cloud-rail-heading"></small>
     <svg class="history-sync-check" viewBox="0 0 16 16" aria-hidden="true"
       fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="m3 8 3 3 7-7"/>
     </svg>
-    <strong></strong>
     <svg class="history-sync-disconnected" viewBox="0 0 16 16" aria-hidden="true"
       fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
       <path d="M2 2l12 12M1 6a11 11 0 0 1 2-1.4M7 3.4A11 11 0 0 1 15 6M3.5 8.5a7 7 0 0 1 2.4-1.3M9.4 7.1a7 7 0 0 1 3.1 1.4M6 11a3 3 0 0 1 2.4-.6M8 13.3h.01"/>
     </svg>`;
   const shellyCounter = document.getElementById('shelly-activity');
   shellyCounter?.after(indicator);
-  const roleLabel = indicator.querySelector('strong');
+  const roleLabel = indicator.querySelector('small');
 
   const dialog = document.createElement('dialog');
   dialog.className = 'energy-tariff-dialog popup';
@@ -87,6 +85,7 @@
   }
 
   let noWriterConfirmed = false;
+  let connectionLost = false;
 
   function paint(message = status) {
     status = message;
@@ -104,11 +103,13 @@
     if (session) {
       const role = writerBox.checked ? 'Emissor' : 'Recetor';
       indicator.dataset.role = role;
-      indicator.dataset.noWriter = String(showNoWriter);
-      roleLabel.textContent = showNoWriter ? 'Sem emissor' : role;
+      const disconnected = connectionLost || !navigator.onLine;
+      indicator.dataset.disconnected = String(disconnected);
+      roleLabel.textContent = role;
       const action = writerBox.checked ? 'Enviar histórico para o Supabase' : 'Atualizar histórico do Supabase';
-      indicator.setAttribute('aria-label', (showNoWriter ? noWriter : role) + ' · ' + action);
-      indicator.title = [action, showNoWriter ? noWriter : '', status].filter(Boolean).join(' · ');
+      const confirmation = !disconnected && indicator.dataset.syncOk === 'true' ? 'Sincronizado com sucesso' : '';
+      indicator.setAttribute('aria-label', [role, disconnected ? 'Sem ligação' : '', showNoWriter ? noWriter : '', confirmation, action].filter(Boolean).join(' · '));
+      indicator.title = [action, confirmation, showNoWriter ? noWriter : '', status].filter(Boolean).join(' · ');
     }
   }
 
@@ -132,6 +133,7 @@
           pendingRelease = null;
           clearSyncConfirmation();
           noWriterConfirmed = false;
+          connectionLost = false;
           daily.setSharedHistory(null);
           status = session ? 'A ligar ao histórico…' : 'Sessão terminada.';
         }
@@ -143,21 +145,20 @@
   }
 
   function clearSyncConfirmation() {
-    clearTimeout(confirmationTimer);
     delete indicator.dataset.syncOk;
   }
 
-  function signalTransfer() {
-    clearSyncConfirmation();
-    indicator.dataset.syncOk = 'true';
-    confirmationTimer = setTimeout(clearSyncConfirmation, 1500);
+  function syncResult({data, error, status}) {
+    connectionLost = Boolean(error) && (status === 0 || status === 502 || status === 503 || status === 504);
+    if (error) throw error;
+    return data;
   }
 
   async function sync(manual = false) {
     manual = manual === true;
-    if (manual) clearSyncConfirmation();
     if (!session) return;
     if (!navigator.onLine) {
+      clearSyncConfirmation();
       noWriterConfirmed = false;
       paint('Sem ligação à Internet. O histórico local continua disponível.');
       return;
@@ -174,9 +175,9 @@
     try {
       if (pendingRelease) {
         const release = pendingRelease;
-        const {error} = await client.rpc('casa_release_energy_writer', {p_house:house, p_writer:release});
+        const response = await client.rpc('casa_release_energy_writer', {p_house:house, p_writer:release});
         if (!stillSignedIn()) return;
-        if (error) throw error;
+        syncResult(response);
         if (pendingRelease === release) pendingRelease = null;
       }
       const writer = writerSettings();
@@ -184,18 +185,20 @@
         const snapshot = daily.snapshot();
         const readingAt = Math.max(0, ...Object.values(snapshot.entries).map(entry => entry.last[0]));
         if (!readingAt) {
+          clearSyncConfirmation();
           paint('À espera dos primeiros dados de consumo neste dispositivo.');
           return;
         }
         const heartbeat = readingAt === sent;
-        const {data, error} = await client.rpc('casa_publish_energy_history', {
+        const response = await client.rpc('casa_publish_energy_history', {
           p_house:house, p_writer:writer.key, p_reading_at:heartbeat ? null : readingAt,
           p_snapshot:heartbeat ? null : snapshot,
         });
         if (!stillSignedIn()) return;
-        if (error) throw error;
+        const data = syncResult(response);
         if (!writerSettings()?.enabled) return;
         if (data === 'other_writer') {
+          clearSyncConfirmation();
           localStorage.setItem(writerStorage(), JSON.stringify({...writer, enabled:false, conflict:true}));
           paint('Modo de consulta ativo.');
           syncAgain = true;
@@ -203,36 +206,38 @@
         }
         if (writerSettings()?.conflict === true) dismissWriterWarning();
         sent = readingAt;
+        if (data === 'saved' || data === 'unchanged') indicator.dataset.syncOk = 'true';
         paint('Histórico disponível para consulta nos outros dispositivos.');
-        if (data === 'saved' || (manual && data === 'unchanged')) signalTransfer();
         return;
       }
 
-      const {data:row, error} = await client.from('casa_energy_history')
+      const response = await client.from('casa_energy_history')
         .select('reading_at,updated_at,writer_expires_at').eq('house', house).maybeSingle();
       if (!stillSignedIn()) return;
-      if (error) throw error;
+      const row = syncResult(response);
+      if (writerSettings()?.enabled) return;
       noWriterConfirmed = !row?.writer_expires_at || Date.parse(row.writer_expires_at) <= Date.now();
       if (!row) {
+        clearSyncConfirmation();
         daily.setSharedHistory(null);
         downloaded = 0;
         paint('À espera do primeiro envio do dispositivo de recolha.');
         return;
       }
       if (row.reading_at !== downloaded) {
-        const {data:record, error:downloadError} = await client.from('casa_energy_history')
+        const response = await client.from('casa_energy_history')
           .select('reading_at,snapshot').eq('house', house).single();
         if (!stillSignedIn()) return;
-        if (downloadError) throw downloadError;
+        const record = syncResult(response);
+        if (writerSettings()?.enabled) return;
         daily.setSharedHistory(record.snapshot);
         downloaded = record.reading_at;
-        if (manual || !writer?.conflict) signalTransfer();
-      } else if (manual) {
-        signalTransfer();
       }
+      if (manual || !writer?.conflict) indicator.dataset.syncOk = 'true';
       paint('Histórico partilhado atualizado em ' + new Date(row.updated_at).toLocaleString('pt-PT', {timeZone:'Europe/Lisbon'}) + '.');
     } catch {
       if (stillSignedIn()) {
+        clearSyncConfirmation();
         noWriterConfirmed = false;
         paint('Não foi possível sincronizar. O histórico local continua disponível.');
       }
@@ -290,6 +295,7 @@
       localStorage.setItem(writerStorage(), JSON.stringify({...current, key, enabled:writerBox.checked, conflict:false}));
       noWriterConfirmed = false;
       if (!writerBox.checked && current?.enabled) pendingRelease = key;
+      clearSyncConfirmation();
       paint();
       if (writerBox.checked) {
         daily.setSharedHistory(null);
@@ -319,6 +325,7 @@
     if (error) paint('Não foi possível terminar a sessão.');
   });
   window.addEventListener('online', sync);
+  window.addEventListener('offline', sync);
   window.addEventListener('pageshow', sync);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
   window.setInterval(() => { if (!document.hidden) sync(); }, cadence);
