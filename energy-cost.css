@@ -4,19 +4,7 @@
   max-height: calc(100dvh - 28px);
   overflow: auto;
 }
-.energy-tariff-dialog h2 { padding-right: 40px; }
-.energy-tariff-close {
-  position: absolute;
-  right: 12px;
-  top: 10px;
-  min-width: 44px;
-  min-height: 44px;
-  border: 0;
-  border-radius: 50%;
-  background: #dfeaf1;
-  color: #2d5670;
-  font-size: 24px;
-}
+.energy-tariff-dialog h2 { padding-inline-end: 52px; }
 .energy-tariff-access { margin-top: 12px; }
 .energy-field-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
 .energy-tariff-dialog label { display: block; font-size: 12px; }
@@ -66,3 +54,42 @@
   color: #752719;
 }
 .history-sync-warning p { margin: 6px 0 10px; }
+
+.history-sync-indicator {
+  --cloud-progress: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.history-sync-indicator i { background: var(--shelly-activity-blue); }
+.history-sync-indicator[data-role="Emissor"] i { background: var(--shelly-ready-green); }
+.history-sync-indicator[aria-busy="true"] { opacity: .75; }
+.history-sync-indicator[hidden],
+.meteo-visible .history-sync-indicator,
+body.room-power-mode .history-sync-indicator { display: none; }
+.history-sync-indicator:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.history-sync-indicator svg {
+  display: none;
+  position: relative;
+  z-index: 1;
+  width: 12px;
+  height: 12px;
+  filter: drop-shadow(0 1px 2px #102f3b);
+}
+.history-sync-indicator[data-no-writer="true"] strong,
+.history-sync-indicator[data-sync-ok="true"] small { display: none; }
+.history-sync-indicator[data-no-writer="true"] .history-sync-disconnected,
+.history-sync-indicator[data-sync-ok="true"] .history-sync-check { display: block; }
+@media (max-width:550px), (max-height:450px) {
+  .history-sync-indicator strong { font-size: 8px; }
+}
+
+body.history-sync-active { --history-sync-rail-space: calc(var(--plan-rail-width) + var(--rail-gap)); }
+@media (max-height:450px) {
+  body.history-sync-active {
+    --plan-rail-width: 34px;
+    --house-rail-height: 62px;
+    --rail-energy-height: 45px;
+    --rail-gap: 3px;
+  }
+}

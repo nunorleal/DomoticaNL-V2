@@ -1,15 +1,21 @@
 /* Translucent side rails, independently from room banners and device state. */
-body :is(.energy-pin.energy-rail,.energy-rail,.house-summary-button,.shelly-activity,.room-power-toggle){
+body :is(.energy-pin.energy-rail,.energy-rail,.house-summary-button,.shelly-activity,.history-sync-indicator,.room-power-toggle){
  background:linear-gradient(135deg,#ffffff18,#b9e2ff08 48%,#06151d24);
  border-color:#d5edff38;
  box-shadow:inset 0 1px 1px #ffffff26,inset 0 -1px 1px #6c9dbf14,0 4px 12px #00101824;
  backdrop-filter:blur(5px) saturate(135%);-webkit-backdrop-filter:blur(5px) saturate(135%);
  color:#f4f8fc;
 }
-body :is(.energy-rail,.house-summary-button,.shelly-activity,.room-power-toggle):hover{background:linear-gradient(135deg,#ffffff23,#b9e2ff12 48%,#06151d30)}
+body :is(.energy-rail,.house-summary-button,.shelly-activity,.history-sync-indicator,.room-power-toggle):hover{background:linear-gradient(135deg,#ffffff23,#b9e2ff12 48%,#06151d30)}
+body :is(.shelly-activity,.history-sync-indicator){
+ background:linear-gradient(135deg,#ffffff18,#ffffff08 48%,#00000024);
+ border-color:#ffffff38;
+ box-shadow:inset 0 1px 1px #ffffff26,inset 0 -1px 1px #ffffff14,0 4px 12px #00000024;
+}
+body :is(.shelly-activity,.history-sync-indicator):hover{background:linear-gradient(135deg,#ffffff23,#ffffff12 48%,#00000030)}
 body .room-power-toggle[aria-pressed=true]{background:linear-gradient(135deg,#8ac6e733,#376c8938);border-color:#f3d773;color:#fff3b0}
-body .shelly-activity :is(.shelly-activity-track,.cloud-rail-track){background:#b9d8e512}
-body .shelly-activity :is(.shelly-activity-track,.cloud-rail-track)>i{opacity:.78}
+body :is(.shelly-activity,.history-sync-indicator) :is(.shelly-activity-track,.cloud-rail-track){background:#b9d8e512}
+body :is(.shelly-activity,.history-sync-indicator) :is(.shelly-activity-track,.cloud-rail-track)>i{opacity:.78}
 body .floor-nav .floor-layer-face,body .floor-layers button path{fill:#bad8e5;fill-opacity:.13;stroke:#d0e4edbd}
 body .floor-nav [aria-current=page] .floor-layer-face,body .floor-layers button[aria-current=page] path{fill:#6abde8;fill-opacity:.48;stroke:#e3f5ff;stroke-width:2}
 body .floor-nav button:hover .floor-layer-face,body .floor-layers button:hover path{fill:#a5d7ec;fill-opacity:.29}

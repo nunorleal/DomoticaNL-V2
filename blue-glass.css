@@ -85,3 +85,42 @@
 .popup .shelly-power-toggle[data-power=on]:disabled{opacity:.75}
 .popup .shelly-power-toggle:focus-visible,.popup .shelly-light-power:focus-visible{outline:3px solid #87b8d8;outline-offset:3px}
 .ev-actions .shelly-power-toggle,.alarm-actions .shelly-power-toggle{flex-grow:0}
+
+/* Use the popup corner for closing controls, including nested energy dialogs. */
+dialog { --popup-close-inset: 13px; }
+@media (max-width: 550px) { dialog { --popup-close-inset: 9px; } }
+dialog :is(.popup-close,.energy-tariff-close,.energy-history-close,.room-power-close) {
+  box-sizing: border-box;
+  top: var(--popup-close-inset);
+  right: var(--popup-close-inset);
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #e9eff5;
+  color: #637f95;
+}
+dialog :is(.energy-tariff-close,.energy-history-close,.room-power-close) {
+  position: absolute;
+  font-size: 0;
+}
+dialog :is(.energy-tariff-close,.energy-history-close,.room-power-close)::before,
+dialog :is(.energy-tariff-close,.energy-history-close,.room-power-close)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+dialog :is(.energy-tariff-close,.energy-history-close,.room-power-close)::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+dialog .room-power-close svg { display: none; }
+dialog > .popup-close ~ :is(h2,.eyebrow) { padding-inline-end: 34px; }
