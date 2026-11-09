@@ -11,6 +11,9 @@
   let client, session, busy = false;
   let downloaded = 0, sent = 0;
   let syncAgain = false;
+  let manualSyncQueued = false;
+  let confirmationTimer;
+  let pendingRelease;
   let status = 'Inicia sessão para consultar o histórico partilhado.';
 
   const settings = document.getElementById('settings-dialog');
@@ -19,6 +22,25 @@
   access.className = 'secondary-action energy-tariff-access';
   access.textContent = 'Sincronizar histórico';
   settings.append(access);
+
+  const indicator = document.createElement('button');
+  indicator.type = 'button';
+  indicator.hidden = true;
+  indicator.className = 'history-sync-indicator';
+  indicator.innerHTML = `<span class="cloud-rail-track" aria-hidden="true"><i></i></span>
+    <small class="cloud-rail-heading">Sinc.</small>
+    <svg class="history-sync-check" viewBox="0 0 16 16" aria-hidden="true"
+      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m3 8 3 3 7-7"/>
+    </svg>
+    <strong></strong>
+    <svg class="history-sync-disconnected" viewBox="0 0 16 16" aria-hidden="true"
+      fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <path d="M2 2l12 12M1 6a11 11 0 0 1 2-1.4M7 3.4A11 11 0 0 1 15 6M3.5 8.5a7 7 0 0 1 2.4-1.3M9.4 7.1a7 7 0 0 1 3.1 1.4M6 11a3 3 0 0 1 2.4-.6M8 13.3h.01"/>
+    </svg>`;
+  const shellyCounter = document.getElementById('shelly-activity');
+  shellyCounter?.after(indicator);
+  const roleLabel = indicator.querySelector('strong');
 
   const dialog = document.createElement('dialog');
   dialog.className = 'energy-tariff-dialog popup';
@@ -36,7 +58,7 @@
       <div class="history-sync-warning" hidden>
         <div role="alert">
           <strong>Já existe um emissor nesta casa</strong>
-          <p>O Supabase recusou o envio deste dispositivo. Podes continuar a consultar o histórico.</p>
+          <p>O Supabase recusou o envio deste dispositivo. Desativa a recolha no outro dispositivo ou tenta novamente após 6 minutos sem contacto do emissor.</p>
         </div>
         <button type="button" data-dismiss-writer-warning class="secondary-action">Dispensar aviso</button>
       </div>
@@ -45,6 +67,7 @@
       <button type="button" data-refresh class="secondary-action">Sincronizar agora</button>
       <button type="button" data-sign-out class="secondary-action">Terminar sessão</button>
     </div>
+    <p data-writer-status aria-live="polite" hidden></p>
     <p role="status"></p>`;
   document.body.append(dialog);
   const form = dialog.querySelector('form');
@@ -53,6 +76,8 @@
   const writerBox = dialog.querySelector('[type=checkbox]');
   const userControls = dialog.querySelector('[data-signed-in]');
   const feedback = dialog.querySelector('[role=status]');
+  const writerStatus = dialog.querySelector('[data-writer-status]');
+  const noWriter = 'Nenhum dispositivo está a enviar o histórico.';
   const writerWarning = dialog.querySelector('.history-sync-warning');
   const writerStorage = () => storageKey + '-writer-' + session.user.id;
   function writerSettings() {
@@ -61,14 +86,30 @@
     catch { return null; }
   }
 
+  let noWriterConfirmed = false;
+
   function paint(message = status) {
     status = message;
     form.hidden = Boolean(session);
     userControls.hidden = !session;
     const writer = writerSettings();
     writerBox.checked = writer?.enabled === true;
-    writerWarning.hidden = writer?.conflict !== true;
+    writerWarning.hidden = writer?.conflict !== true || noWriterConfirmed;
+    const showNoWriter = Boolean(session) && !writerBox.checked && noWriterConfirmed;
+    writerStatus.hidden = !showNoWriter;
+    writerStatus.textContent = showNoWriter ? noWriter : '';
     feedback.textContent = status;
+    indicator.hidden = !session;
+    document.body.classList.toggle('history-sync-active', Boolean(session));
+    if (session) {
+      const role = writerBox.checked ? 'Emissor' : 'Recetor';
+      indicator.dataset.role = role;
+      indicator.dataset.noWriter = String(showNoWriter);
+      roleLabel.textContent = showNoWriter ? 'Sem emissor' : role;
+      const action = writerBox.checked ? 'Enviar histórico para o Supabase' : 'Atualizar histórico do Supabase';
+      indicator.setAttribute('aria-label', (showNoWriter ? noWriter : role) + ' · ' + action);
+      indicator.title = [action, showNoWriter ? noWriter : '', status].filter(Boolean).join(' · ');
+    }
   }
 
   function connect() {
@@ -88,6 +129,9 @@
         if (changedUser) {
           downloaded = 0;
           sent = 0;
+          pendingRelease = null;
+          clearSyncConfirmation();
+          noWriterConfirmed = false;
           daily.setSharedHistory(null);
           status = session ? 'A ligar ao histórico…' : 'Sessão terminada.';
         }
@@ -98,20 +142,43 @@
     return client;
   }
 
-  async function sync() {
+  function clearSyncConfirmation() {
+    clearTimeout(confirmationTimer);
+    delete indicator.dataset.syncOk;
+  }
+
+  function signalTransfer() {
+    clearSyncConfirmation();
+    indicator.dataset.syncOk = 'true';
+    confirmationTimer = setTimeout(clearSyncConfirmation, 1500);
+  }
+
+  async function sync(manual = false) {
+    manual = manual === true;
+    if (manual) clearSyncConfirmation();
     if (!session) return;
     if (!navigator.onLine) {
+      noWriterConfirmed = false;
       paint('Sem ligação à Internet. O histórico local continua disponível.');
       return;
     }
     if (busy) {
       syncAgain = true;
+      manualSyncQueued ||= manual;
       return;
     }
     busy = true;
+    indicator.setAttribute('aria-busy', 'true');
     const owner = session.user.id;
     const stillSignedIn = () => session?.user.id === owner;
     try {
+      if (pendingRelease) {
+        const release = pendingRelease;
+        const {error} = await client.rpc('casa_release_energy_writer', {p_house:house, p_writer:release});
+        if (!stillSignedIn()) return;
+        if (error) throw error;
+        if (pendingRelease === release) pendingRelease = null;
+      }
       const writer = writerSettings();
       if (writer?.enabled) {
         const snapshot = daily.snapshot();
@@ -120,12 +187,14 @@
           paint('À espera dos primeiros dados de consumo neste dispositivo.');
           return;
         }
-        if (readingAt === sent) return;
+        const heartbeat = readingAt === sent;
         const {data, error} = await client.rpc('casa_publish_energy_history', {
-          p_house:house, p_writer:writer.key, p_reading_at:readingAt, p_snapshot:snapshot,
+          p_house:house, p_writer:writer.key, p_reading_at:heartbeat ? null : readingAt,
+          p_snapshot:heartbeat ? null : snapshot,
         });
         if (!stillSignedIn()) return;
         if (error) throw error;
+        if (!writerSettings()?.enabled) return;
         if (data === 'other_writer') {
           localStorage.setItem(writerStorage(), JSON.stringify({...writer, enabled:false, conflict:true}));
           paint('Modo de consulta ativo.');
@@ -135,13 +204,15 @@
         if (writerSettings()?.conflict === true) dismissWriterWarning();
         sent = readingAt;
         paint('Histórico disponível para consulta nos outros dispositivos.');
+        if (data === 'saved' || (manual && data === 'unchanged')) signalTransfer();
         return;
       }
 
       const {data:row, error} = await client.from('casa_energy_history')
-        .select('reading_at,updated_at').eq('house', house).maybeSingle();
+        .select('reading_at,updated_at,writer_expires_at').eq('house', house).maybeSingle();
       if (!stillSignedIn()) return;
       if (error) throw error;
+      noWriterConfirmed = !row?.writer_expires_at || Date.parse(row.writer_expires_at) <= Date.now();
       if (!row) {
         daily.setSharedHistory(null);
         downloaded = 0;
@@ -155,20 +226,34 @@
         if (downloadError) throw downloadError;
         daily.setSharedHistory(record.snapshot);
         downloaded = record.reading_at;
+        if (manual || !writer?.conflict) signalTransfer();
+      } else if (manual) {
+        signalTransfer();
       }
       paint('Histórico partilhado atualizado em ' + new Date(row.updated_at).toLocaleString('pt-PT', {timeZone:'Europe/Lisbon'}) + '.');
     } catch {
-      if (stillSignedIn()) paint('Não foi possível sincronizar. O histórico local continua disponível.');
+      if (stillSignedIn()) {
+        noWriterConfirmed = false;
+        paint('Não foi possível sincronizar. O histórico local continua disponível.');
+      }
     } finally {
       busy = false;
+      indicator.removeAttribute('aria-busy');
       if (syncAgain) {
         syncAgain = false;
-        setTimeout(sync, 0);
+        const queuedManual = manualSyncQueued;
+        manualSyncQueued = false;
+        setTimeout(() => sync(queuedManual), 0);
       }
     }
   }
 
-  access.addEventListener('click', () => { dialog.showModal(); if (connect()) sync(); });
+  function openSyncDialog() {
+    dialog.showModal();
+    if (connect()) sync();
+  }
+  access.addEventListener('click', openSyncDialog);
+  indicator.addEventListener('click', () => sync(true));
   dialog.querySelector('.energy-tariff-close').addEventListener('click', () => dialog.close());
   function signInError(error) {
     if (!navigator.onLine) return 'Sem ligação à Internet. Tenta novamente quando estiveres online.';
@@ -202,7 +287,10 @@
     try {
       const current = writerSettings();
       const key = current?.key ?? crypto.randomUUID();
-      localStorage.setItem(writerStorage(), JSON.stringify({...current, key, enabled:writerBox.checked}));
+      localStorage.setItem(writerStorage(), JSON.stringify({...current, key, enabled:writerBox.checked, conflict:false}));
+      noWriterConfirmed = false;
+      if (!writerBox.checked && current?.enabled) pendingRelease = key;
+      paint();
       if (writerBox.checked) {
         daily.setSharedHistory(null);
         downloaded = 0;
@@ -225,7 +313,7 @@
   }
 
   dialog.querySelector('[data-dismiss-writer-warning]').addEventListener('click', dismissWriterWarning);
-  dialog.querySelector('[data-refresh]').addEventListener('click', sync);
+  dialog.querySelector('[data-refresh]').addEventListener('click', () => sync(true));
   dialog.querySelector('[data-sign-out]').addEventListener('click', async () => {
     const {error} = await client.auth.signOut({scope:'local'});
     if (error) paint('Não foi possível terminar a sessão.');
