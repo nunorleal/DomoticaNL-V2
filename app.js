@@ -174,7 +174,6 @@ document.getElementById('toggle-sensor-readings').addEventListener('click',()=>{
 document.getElementById('toggle-blind-labels').addEventListener('click',()=>{showBlindBanners=!showBlindBanners;updateBlindBannerVisibility();try{localStorage.setItem('casa-nl-show-blind-banners',JSON.stringify(showBlindBanners))}catch{}});
 document.getElementById('settings').addEventListener('click',()=>showPopup('settings-dialog'));
 document.getElementById('close-settings').addEventListener('click',()=>document.getElementById('settings-dialog').close());
-document.getElementById('reset').addEventListener('click',()=>{for(const id of [...motions.keys()])stopMotion(id);rooms=structuredClone(defaults);restoreRoomLayout();window.CasaShelly?.reapply();selected='living';setMode('lights');document.getElementById('settings-dialog').close();notify('Demonstração reposta')});
 document.getElementById('open-controls').addEventListener('click',()=>showPopup('controls-dialog'));
 document.getElementById('open-overview').addEventListener('click',()=>showPopup('controls-dialog'));
 document.getElementById('home-button').addEventListener('click',()=>document.querySelectorAll('dialog[open]').forEach(d=>d.close()));

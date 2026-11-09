@@ -5,7 +5,7 @@
   overflow: auto;
 }
 .energy-tariff-dialog h2 { padding-inline-end: 52px; }
-.energy-tariff-access { margin-top: 12px; }
+#energy-settings-actions { margin: 12px 0; }
 .energy-field-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
 .energy-tariff-dialog label { display: block; font-size: 12px; }
 .energy-tariff-dialog input:not([type=checkbox]) {

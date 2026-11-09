@@ -15,10 +15,10 @@
   let pendingRelease;
   let status = 'Inicia sessão para consultar o histórico partilhado.';
 
-  const settings = document.getElementById('settings-dialog');
+  const settings = document.getElementById('energy-settings-actions');
   const access = document.createElement('button');
   access.type = 'button';
-  access.className = 'secondary-action energy-tariff-access';
+  access.className = 'secondary-action';
   access.textContent = 'Sincronizar histórico';
   settings.append(access);
 
