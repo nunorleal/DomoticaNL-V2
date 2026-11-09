@@ -37,9 +37,9 @@
   font-weight: 600;
   line-height: 1.25;
   text-align: left;
-  text-decoration: underline dotted;
-  text-underline-offset: 2px;
+  text-decoration: none;
 }
+[data-daily-energy-units="false"]:empty + small { display: none; }
 .energy-tariff-dialog [hidden], .energy-cost-value[hidden] { display: none !important; }
 .energy-tariff-dialog dl { display: grid; grid-template-columns: 1fr auto; gap: 8px; font-size: 13px; }
 .energy-tariff-dialog dd { margin: 0; text-align: right; }

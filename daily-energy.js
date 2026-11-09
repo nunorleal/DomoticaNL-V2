@@ -23,8 +23,9 @@
   if(ledger.record(key,r.energyKWh,r.fetchedAt)){dirty=true;if(pending===null)pending=setTimeout(flush,1000)}
  }
  function binding(role,id){let c={};try{c=JSON.parse(localStorage.getItem('casa-nl-shelly-cloud-v1')||'{}')}catch{}let b=role==='energy'?window.CasaEnergyCore.binding(c):role==='cover'?c.bindings?.[id]:role==='light'?c.lightBindings?.[id]:role==='media'?{...c.mediaBindings,...c.officeBindings,...c.kitchenBindings}[id]:role==='ev'?c.ev?.[id||'meter']:role==='alarm'?c.alarm?.[id]:c[role];if(b)b={...b,...(role==='energy'?{component:'emeter'}:['cover','light'].includes(role)?{kind:role}:{})};return {server:c.server,b}}
- function today(role,id=''){const {server,b}=binding(role,id),key=C.identity(server,b);const remote=shared?.today(key);
-  return {...(remote?.kWh!=null?remote:ledger.today(key)),persistent:!failed}}
+ function today(role,id=''){const {server,b}=binding(role,id),key=C.identity(server,b);const now=Date.now(),remote=shared?.today(key,now);
+  const reading=remote?.from!=null?remote:ledger.today(key,now);
+  return {...reading,kWh:reading.unavailable?null:reading.kWh,persistent:!failed}}
  function power(role,id='',now=Date.now()){
   const source=binding(role,id);
   const reading=currentPower.get(C.identity(source.server,source.b));
@@ -33,16 +34,23 @@
  function history(role,id='',start,end,timed=false){
   const {server,b}=binding(role,id),key=C.identity(server,b);
   const local=ledger.history(key,start,end,timed);
-  if(!shared)return local;
-  const remote=shared.history(key,start,end,timed);
-  for(const [date,row] of Object.entries(remote.days)){
-   if(row.observed||!local.days[date])local.days[date]=row;
+  const now=Date.now(),today=C.day(now);
+  if(shared){
+   const remote=shared.history(key,start,end,timed);
+   for(const [date,row] of Object.entries(remote.days)){
+    if(date===today||row.observed||row.interrupted||!local.days[date])local.days[date]=row;
+   }
+  }
+  const current=shared?.today(key,now);
+  const latest=current?.from!=null?current:ledger.today(key,now);
+  for(const [date,row] of Object.entries(local.days)){
+   if(row.interrupted||(date===today&&latest.unavailable))delete local.days[date];
   }
   return local;
  }
  function timedHistory(role,id,start,end){return history(role,id,start,end,true)}
- function text(role,id='',units=true){const d=today(role,id);return d.kWh===null?'A iniciar registo':d.kWh.toLocaleString('pt-PT',{maximumFractionDigits:3})+(units?' kWh':'')+' · parcial'}
- function show(node,role,id='',units=true){if(!node)return;node.dataset.dailyEnergyUnits=String(units);if(node.dataset.dailyHistoryRole!==role)node.dataset.dailyHistoryRole=role;if(node.dataset.dailyHistoryId!==id)node.dataset.dailyHistoryId=id;window.CasaEnergyHistory?.attach(node,role,id);const d=today(role,id),value=d.kWh===null?'A iniciar':d.kWh.toLocaleString('pt-PT',{maximumFractionDigits:3})+(units?' kWh':'');if(node.textContent!==value)node.textContent=value;window.CasaEnergyCost?.today(node,role,id);node.title='Consumo registado hoje (Europe/Lisbon). Registo parcial desde a primeira leitura; intervalos que atravessam a meia-noite e reposições do contador não são estimados.';const label=node.parentElement?.querySelector('span');if(label&&/acumulad|Energia acumulada|Consumo registado hoje/.test(label.textContent)&&label.textContent!=='Consumo registado hoje · parcial')label.textContent='Consumo registado hoje · parcial'}
+ function text(role,id='',units=true){const d=today(role,id);return d.kWh===null?'':d.kWh.toLocaleString('pt-PT',{maximumFractionDigits:3})+(units?' kWh':'')}
+ function show(node,role,id='',units=true){if(!node)return;node.dataset.dailyEnergyUnits=String(units);if(node.dataset.dailyHistoryRole!==role)node.dataset.dailyHistoryRole=role;if(node.dataset.dailyHistoryId!==id)node.dataset.dailyHistoryId=id;window.CasaEnergyHistory?.attach(node,role,id);const d=today(role,id),value=d.kWh===null?'':d.kWh.toLocaleString('pt-PT',{maximumFractionDigits:3})+(units?' kWh':'');if(node.textContent!==value)node.textContent=value;window.CasaEnergyCost?.today(node,role,id);node.title='Consumo registado hoje até à última leitura. O valor fica em branco quando faltam leituras.';const label=node.parentElement?.querySelector('span');if(label&&/acumulad|Energia acumulada|Consumo registado hoje/.test(label.textContent)&&label.textContent!=='Consumo registado hoje')label.textContent='Consumo registado hoje'}
  function suspend(){suspended=true;if(pending!==null)clearTimeout(pending);pending=null}
  window.addEventListener('pagehide',flush);window.CasaDailyEnergy={record,today,power,history,timedHistory,text,show,setSharedHistory,flush,suspend,resume:()=>{suspended=false},snapshot:()=>ledger.snapshot()};
 })();
