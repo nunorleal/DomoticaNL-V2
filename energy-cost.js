@@ -110,7 +110,7 @@
     const days = D.timedHistory(role,id,start,end).days;
     const result = C.calculate({days,start,end,config:{dailyRates:rates},today});
     if (result.total !== null) return result;
-    if (today < start || today > end) return result;
+    if (today < start || today > end || D.today(role,id).unavailable) return result;
     const watts = D.power(role,id) ?? (role === 'ev' && id === 'totalMeter' ? D.power('ev','meter') : null);
     if (watts === null) return result;
     return {quality:'estimated', total:watts / 1000 * C.dailyAverage(rates), hourly:true, watts, rates};
@@ -143,8 +143,7 @@
       }
       const notes = document.createElement('p');
       notes.textContent = 'Só energia, sem IVA, IEC ou encargos fixos.'
-        + (result.unknown ? ' O consumo sem hora usa o preço médio de 10 horas em vazio e 14 horas fora de vazio.' : '')
-        + (result.partial ? ' Registo parcial.' : '');
+        + (result.unknown ? ' O consumo sem hora usa o preço médio de 10 horas em vazio e 14 horas fora de vazio.' : '');
       detailBody.append(table,notes);
     }
     detail.showModal();
@@ -153,7 +152,9 @@
     target.hidden = !config.enabled;
     if (!config.enabled) return;
     const result = cost(role,id,start,end);
-    const amount = result.total === null ? 'Sem registo' : formatCost(result);
+    target.hidden = result.total === null;
+    if (target.hidden) return;
+    const amount = formatCost(result);
     target.textContent = (result.quality === 'estimated' ? '≈ ' : '') + amount
       + (result.hourly ? ' ao ritmo atual' : '');
     target.setAttribute('aria-label','Custo estimado de consumo · ' + (result.reason || amount));
