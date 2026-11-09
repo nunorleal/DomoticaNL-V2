@@ -1,0 +1,216 @@
+(function () {
+  'use strict';
+
+  const house = document.currentScript.dataset.house;
+  const fromFile = window.location?.protocol === 'file:';
+  const projectUrl = 'https://xnxkezilascdouyueukm.supabase.co';
+  const publishableKey = 'sb_publishable_AUt0AI1NArlh2NJsuUrweQ_TkhOjaf1';
+  const daily = window.CasaDailyEnergy;
+  const storageKey = 'casa-history-sync-' + house;
+  const cadence = 120000;
+  let client, session, busy = false;
+  let downloaded = 0, sent = 0;
+  let syncAgain = false;
+  let status = 'Inicia sessão para consultar o histórico partilhado.';
+
+  const settings = document.getElementById('settings-dialog');
+  const access = document.createElement('button');
+  access.type = 'button';
+  access.className = 'secondary-action energy-tariff-access';
+  access.textContent = 'Sincronizar histórico';
+  settings.append(access);
+
+  const dialog = document.createElement('dialog');
+  dialog.className = 'energy-tariff-dialog popup';
+  dialog.setAttribute('aria-labelledby', 'history-sync-title');
+  dialog.innerHTML = `
+    <button type="button" class="energy-tariff-close" aria-label="Fechar">×</button>
+    <h2 id="history-sync-title">Sincronizar histórico</h2>
+    <form>
+      ${fromFile ? '<p class="energy-hint">Neste ficheiro local, a sessão dura enquanto a página estiver aberta. Para guardar a sessão, abre a app por HTTPS ou localhost.</p>' : ''}
+      <label>Email <input type="email" autocomplete="username" required></label>
+      <label>Palavra-passe <input type="password" autocomplete="current-password" required></label>
+      <button class="primary-action">Iniciar sessão</button>
+    </form>
+    <div data-signed-in hidden>
+      <label class="energy-check"><input type="checkbox"> Usar este dispositivo para recolher e enviar o histórico</label>
+      <p class="energy-hint">Ativa esta opção apenas no dispositivo que guarda o histórico desta casa. Ao ativar, envias os registos de consumo para o Supabase.</p>
+      <button type="button" data-refresh class="secondary-action">Sincronizar agora</button>
+      <button type="button" data-sign-out class="secondary-action">Terminar sessão</button>
+    </div>
+    <p role="status"></p>`;
+  document.body.append(dialog);
+  const form = dialog.querySelector('form');
+  const email = form.querySelector('[type=email]');
+  const password = form.querySelector('[type=password]');
+  const writerBox = dialog.querySelector('[type=checkbox]');
+  const userControls = dialog.querySelector('[data-signed-in]');
+  const feedback = dialog.querySelector('[role=status]');
+  const writerStorage = () => storageKey + '-writer-' + session.user.id;
+  function writerSettings() {
+    if (!session) return null;
+    try { return JSON.parse(localStorage.getItem(writerStorage())); }
+    catch { return null; }
+  }
+
+  function paint(message = status) {
+    status = message;
+    form.hidden = Boolean(session);
+    userControls.hidden = !session;
+    writerBox.checked = writerSettings()?.enabled === true;
+    feedback.textContent = status;
+  }
+
+  function connect() {
+    if (client) return client;
+    if (!window.supabase) {
+      paint('Não foi possível carregar a ligação ao Supabase.');
+      return null;
+    }
+    client = window.supabase.createClient(projectUrl, publishableKey, {
+      auth: {storageKey, detectSessionInUrl:false, persistSession:!fromFile},
+    });
+    client.auth.onAuthStateChange((_event, nextSession) => {
+      const changedUser = session?.user.id !== nextSession?.user.id;
+      session = nextSession;
+      // Keep app rendering out of the SDK's sign-in callback.
+      setTimeout(() => {
+        if (changedUser) {
+          downloaded = 0;
+          sent = 0;
+          daily.setSharedHistory(null);
+          status = session ? 'A ligar ao histórico…' : 'Sessão terminada.';
+        }
+        paint();
+        if (session) sync();
+      }, 0);
+    });
+    return client;
+  }
+
+  async function sync() {
+    if (!session) return;
+    if (!navigator.onLine) {
+      paint('Sem ligação à Internet. O histórico local continua disponível.');
+      return;
+    }
+    if (busy) {
+      syncAgain = true;
+      return;
+    }
+    busy = true;
+    const owner = session.user.id;
+    const stillSignedIn = () => session?.user.id === owner;
+    try {
+      const writer = writerSettings();
+      if (writer?.enabled) {
+        const snapshot = daily.snapshot();
+        const readingAt = Math.max(0, ...Object.values(snapshot.entries).map(entry => entry.last[0]));
+        if (!readingAt) {
+          paint('À espera dos primeiros dados de consumo neste dispositivo.');
+          return;
+        }
+        if (readingAt === sent) return;
+        const {data, error} = await client.rpc('casa_publish_energy_history', {
+          p_house:house, p_writer:writer.key, p_reading_at:readingAt, p_snapshot:snapshot,
+        });
+        if (!stillSignedIn()) return;
+        if (error) throw error;
+        if (data === 'other_writer') {
+          localStorage.setItem(writerStorage(), JSON.stringify({...writer, enabled:false}));
+          paint('Já existe um dispositivo a enviar o histórico desta casa. Este dispositivo ficou em modo de consulta.');
+          syncAgain = true;
+          return;
+        }
+        sent = readingAt;
+        paint('Histórico disponível para consulta nos outros dispositivos.');
+        return;
+      }
+
+      const {data:row, error} = await client.from('casa_energy_history')
+        .select('reading_at,updated_at').eq('house', house).maybeSingle();
+      if (!stillSignedIn()) return;
+      if (error) throw error;
+      if (!row) {
+        daily.setSharedHistory(null);
+        downloaded = 0;
+        paint('À espera do primeiro envio do dispositivo de recolha.');
+        return;
+      }
+      if (row.reading_at !== downloaded) {
+        const {data:record, error:downloadError} = await client.from('casa_energy_history')
+          .select('reading_at,snapshot').eq('house', house).single();
+        if (!stillSignedIn()) return;
+        if (downloadError) throw downloadError;
+        daily.setSharedHistory(record.snapshot);
+        downloaded = record.reading_at;
+      }
+      paint('Histórico partilhado atualizado em ' + new Date(row.updated_at).toLocaleString('pt-PT', {timeZone:'Europe/Lisbon'}) + '.');
+    } catch {
+      if (stillSignedIn()) paint('Não foi possível sincronizar. O histórico local continua disponível.');
+    } finally {
+      busy = false;
+      if (syncAgain) {
+        syncAgain = false;
+        setTimeout(sync, 0);
+      }
+    }
+  }
+
+  access.addEventListener('click', () => { dialog.showModal(); if (connect()) sync(); });
+  dialog.querySelector('.energy-tariff-close').addEventListener('click', () => dialog.close());
+  function signInError(error) {
+    if (!navigator.onLine) return 'Sem ligação à Internet. Tenta novamente quando estiveres online.';
+    if (error?.code === 'email_not_confirmed') return 'O email deste utilizador ainda não foi confirmado no Supabase.';
+    if (error?.code === 'invalid_credentials') return 'Email ou palavra-passe incorretos. Usa a conta criada em Authentication → Users.';
+    if (error?.status === 429) return 'Demasiadas tentativas. Aguarda um pouco e volta a tentar.';
+    if (fromFile) return 'O navegador não conseguiu iniciar sessão a partir deste ficheiro. Abre a app por HTTPS ou localhost e tenta de novo.';
+    if (error?.name === 'AuthRetryableFetchError' || error?.name === 'TypeError') {
+      return 'Não foi possível contactar o Supabase. Verifica a ligação e tenta de novo.';
+    }
+    return 'Não foi possível concluir o início de sessão. Reabre a app e tenta de novo.';
+  }
+
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = form.querySelector('button');
+    button.disabled = true;
+    try {
+      if (!connect()) return;
+      const {error} = await client.auth.signInWithPassword({email:email.value.trim(), password:password.value});
+      if (error) paint(signInError(error));
+    } catch (error) {
+      paint(signInError(error));
+    } finally {
+      password.value = '';
+      button.disabled = false;
+    }
+  });
+  writerBox.addEventListener('change', () => {
+    if (!session) return;
+    try {
+      const current = writerSettings();
+      const key = current?.key ?? crypto.randomUUID();
+      localStorage.setItem(writerStorage(), JSON.stringify({key, enabled:writerBox.checked}));
+      if (writerBox.checked) {
+        daily.setSharedHistory(null);
+        downloaded = 0;
+        sent = 0;
+      }
+      sync();
+    } catch {
+      paint('Não foi possível guardar a opção neste navegador.');
+    }
+  });
+  dialog.querySelector('[data-refresh]').addEventListener('click', sync);
+  dialog.querySelector('[data-sign-out]').addEventListener('click', async () => {
+    const {error} = await client.auth.signOut({scope:'local'});
+    if (error) paint('Não foi possível terminar a sessão.');
+  });
+  window.addEventListener('online', sync);
+  window.addEventListener('pageshow', sync);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
+  window.setInterval(() => { if (!document.hidden) sync(); }, cadence);
+  try { if (!fromFile && localStorage.getItem(storageKey)) connect(); }
+  catch { paint('O armazenamento da sessão está indisponível neste navegador.'); }
+})();
