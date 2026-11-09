@@ -76,13 +76,8 @@ body.room-power-mode .history-sync-indicator { display: none; }
   height: 12px;
   filter: drop-shadow(0 1px 2px #102f3b);
 }
-.history-sync-indicator[data-no-writer="true"] strong,
-.history-sync-indicator[data-sync-ok="true"] small { display: none; }
-.history-sync-indicator[data-no-writer="true"] .history-sync-disconnected,
-.history-sync-indicator[data-sync-ok="true"] .history-sync-check { display: block; }
-@media (max-width:550px), (max-height:450px) {
-  .history-sync-indicator strong { font-size: 8px; }
-}
+.history-sync-indicator[data-disconnected="true"] .history-sync-disconnected,
+.history-sync-indicator[data-sync-ok="true"]:not([data-disconnected="true"]) .history-sync-check { display: block; }
 
 body.history-sync-active { --history-sync-rail-space: calc(var(--plan-rail-width) + var(--rail-gap)); }
 @media (max-height:450px) {
