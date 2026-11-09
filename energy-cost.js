@@ -92,8 +92,8 @@
   $('energy-show-euros').addEventListener('change', event => {
     if (!save({...config, enabled:event.target.checked}, 'Preferência guardada.')) event.target.checked = config.enabled;
   });
-  const access = button('Energia e Tarifários','secondary-action energy-tariff-access');
-  const settings = document.querySelector('#settings-dialog');
+  const access = button('Energia e Tarifários','secondary-action');
+  const settings = document.querySelector('#energy-settings-actions');
   settings?.append(access);
   access.addEventListener('click', () => {
     $('energy-show-euros').checked = config.enabled;
