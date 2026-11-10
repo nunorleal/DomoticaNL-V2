@@ -30,3 +30,25 @@
 @media(prefers-reduced-motion:reduce){.cloud-rail-track i{transition:none}}
 
 .light-audit{margin-top:18px;border-top:1px solid #c9dae3;padding-top:12px}.light-audit summary{cursor:pointer;font-weight:600}.light-audit p{font-size:.8rem;line-height:1.4}.light-audit ol{padding-left:20px;font-size:.8rem;line-height:1.5;max-height:260px;overflow:auto}.light-audit li{margin:8px 0}
+
+.cloud-activity-popup > .eyebrow {
+  display: block;
+  padding-inline-end: 102px;
+}
+.cloud-activity-popup #cloud-activity-refresh {
+  position: absolute;
+  top: var(--popup-close-inset);
+  right: calc(var(--popup-close-inset) + 58px);
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid #c8dbe5;
+  border-radius: 50%;
+  background: #e9eff5;
+  color: #426e8c;
+}
+.cloud-activity-popup #cloud-activity-refresh svg { width: 22px; height: 22px; }
+.cloud-activity-popup #cloud-activity-refresh:disabled { opacity: .55; }
