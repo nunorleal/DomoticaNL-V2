@@ -13,7 +13,12 @@
 
 @media(prefers-reduced-motion:reduce){.office-desk-graphic>svg{transition:none}}
 
-body.window-master-open .window-closed-master,body.window-bedroom2-open .window-closed-bedroom2,body.window-living-open .window-closed-living,body.window-kitchen-open .window-closed-kitchen{display:none}.window-room-status{margin-top:14px}.window-room-status button{margin:4px 8px 0 0}#shelly-windows-group .primary-action{margin-top:16px}
+body.window-master-open .window-closed-master,body.window-bedroom2-open .window-closed-bedroom2,body.window-living-open .window-closed-living,body.window-kitchen-open .window-closed-kitchen{display:none}.window-open-mark{display:none}
+body.window-master-open .window-open-master,
+body.window-bedroom2-open .window-open-bedroom2,
+body.window-living-open .window-open-living,
+body.window-kitchen-open .window-open-kitchen{display:inline}
+.window-room-status{margin-top:14px}.window-room-status button{margin:4px 8px 0 0}#shelly-windows-group .primary-action{margin-top:16px}
 
 /* Keep the furniture in its own scene layer: hovering the hit target never filters it. */
 .office-desk-graphic{position:absolute;z-index:2;left:53.8%;top:30.7%;width:18.2%;height:4.8%;pointer-events:none}.office-desk-trigger{z-index:3;display:flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:8px;color:#eff9f5}.office-desk-trigger>.office-desk-icon{width:20px;height:20px;padding:3px;border-radius:5px;background:#173738bc;box-shadow:0 1px 5px #0004;pointer-events:none}.office-desk-trigger:hover,.office-desk-trigger:focus-visible{background:var(--plan-highlight-bg);border-color:var(--plan-highlight-border);outline:2px solid var(--plan-highlight-outline);outline-offset:2px}.media-console-trigger:hover,.office-desk-trigger:hover{filter:none}.console-icons-hidden .media-console-trigger>svg,.console-icons-hidden .office-desk-icon{visibility:hidden}
