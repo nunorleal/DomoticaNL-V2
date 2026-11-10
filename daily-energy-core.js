@@ -61,7 +61,7 @@
    // Cross-midnight deltas cannot be assigned to either day without estimation.
    e.last=[at,total];r.to=at;const days=Object.keys(e.days).sort();for(const old of days.slice(0,-MAX_DAYS)){slotCount-=slotsIn(e.days[old]);delete e.days[old]}pruneSlots();return true;
   }
-  function today(key,at=Date.now()){const r=state.entries[key]?.days[day(at)];return {kWh:r?.observed?r.kWh:null,partial:true,unavailable:!r||at-r.to>GAP,from:r?.from??null,to:r?.to??null,stale:!r||at-r.to>45000}}
+  function today(key,at=Date.now()){const r=state.entries[key]?.days[day(at)];return {kWh:r?.observed?r.kWh:null,observed:r?.observed===true,partial:true,unavailable:!r||at-r.to>GAP,from:r?.from??null,to:r?.to??null,stale:!r||at-r.to>45000}}
   function history(key,start='',end='9999-12-31',timed=false){
    const days={};
    const dayNow=day(Date.now());
