@@ -44,7 +44,7 @@
   const current=shared?.today(key,now);
   const latest=current?.from!=null?current:ledger.today(key,now);
   for(const [date,row] of Object.entries(local.days)){
-   if(row.interrupted||(date===today&&latest.unavailable))delete local.days[date];
+   if(date===today?latest.unavailable:row.interrupted)delete local.days[date];
   }
   return local;
  }
