@@ -66,7 +66,8 @@
       <button type="button" data-sign-out class="secondary-action">Terminar sessão</button>
     </div>
     <p data-writer-status aria-live="polite" hidden></p>
-    <p role="status"></p>`;
+    <p role="status"></p>
+    <p data-continuity class="energy-hint" aria-live="polite" hidden></p>`;
   document.body.append(dialog);
   const form = dialog.querySelector('form');
   const email = form.querySelector('[type=email]');
@@ -75,6 +76,7 @@
   const userControls = dialog.querySelector('[data-signed-in]');
   const feedback = dialog.querySelector('[role=status]');
   const writerStatus = dialog.querySelector('[data-writer-status]');
+  const continuity = dialog.querySelector('[data-continuity]');
   const noWriter = 'Nenhum dispositivo está a enviar o histórico.';
   const writerWarning = dialog.querySelector('.history-sync-warning');
   const writerStorage = () => storageKey + '-writer-' + session.user.id;
@@ -91,6 +93,7 @@
     status = message;
     form.hidden = Boolean(session);
     userControls.hidden = !session;
+    continuity.hidden = !session;
     const writer = writerSettings();
     writerBox.checked = writer?.enabled === true;
     writerWarning.hidden = writer?.conflict !== true || noWriterConfirmed;
@@ -131,6 +134,7 @@
           downloaded = 0;
           sent = 0;
           pendingRelease = null;
+          continuity.textContent = '';
           clearSyncConfirmation();
           noWriterConfirmed = false;
           connectionLost = false;
@@ -154,12 +158,30 @@
     return data;
   }
 
+  async function showContinuity(owner) {
+    const {data, error} = await client.from('casa_energy_history')
+      .select('continuous_since,updated_at').eq('house', house).maybeSingle();
+    if (session?.user.id !== owner || !dialog.open || !navigator.onLine) return;
+    if (error) {
+      continuity.textContent = 'Não foi possível consultar a sequência de gravações.';
+    } else if (!data) {
+      continuity.textContent = 'Ainda não há dados guardados no Supabase.';
+    } else if (!data.continuous_since) {
+      continuity.textContent = 'A sequência de gravações começa no próximo envio de dados novos.';
+    } else {
+      const format = value => new Date(value).toLocaleString('pt-PT', {timeZone:'Europe/Lisbon'});
+      continuity.textContent = 'Última sequência de gravações: ' + format(data.continuous_since)
+        + ' a ' + format(data.updated_at) + '.';
+    }
+  }
+
   async function sync(manual = false) {
     manual = manual === true;
     if (!session) return;
     if (!navigator.onLine) {
       clearSyncConfirmation();
       noWriterConfirmed = false;
+      continuity.textContent = 'Sem ligação para consultar a sequência de gravações.';
       paint('Sem ligação à Internet. O histórico local continua disponível.');
       return;
     }
@@ -242,6 +264,15 @@
         paint('Não foi possível sincronizar. O histórico local continua disponível.');
       }
     } finally {
+      if (dialog.open && stillSignedIn()) {
+        try {
+          await showContinuity(owner);
+        } catch {
+          if (dialog.open && stillSignedIn() && navigator.onLine) {
+            continuity.textContent = 'Não foi possível consultar a sequência de gravações.';
+          }
+        }
+      }
       busy = false;
       indicator.removeAttribute('aria-busy');
       if (syncAgain) {
@@ -254,6 +285,7 @@
   }
 
   function openSyncDialog() {
+    continuity.textContent = 'A consultar a sequência de gravações…';
     dialog.showModal();
     if (connect()) sync();
   }
