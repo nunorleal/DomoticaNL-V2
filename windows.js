@@ -9,11 +9,21 @@
  function frame(room,variant){const r=frameRects[room];if(!r)return '';const [x,y,w,h]=r;return `<svg class="window-frame-patch window-frame-${variant}" x="${x}" y="${y}" width="${w}" height="${h}" viewBox="${x} ${y} ${w} ${h}" overflow="hidden" pointer-events="none"><image href="assets/planta-realista-sofa-v2.png" x="0" y="0" width="1024" height="1536" preserveAspectRatio="none"/></svg>`}
  function patch(room,variant){const r=rects[room];if(!r)return '';const [x,y,w,h]=r;return `<svg class="window-closed-patch window-closed-${room}" x="${x}" y="${y}" width="${w}" height="${h}" viewBox="${x} ${y} ${w} ${h}" overflow="hidden" pointer-events="none"><image href="${assets[variant]}" x="0" y="0" width="1024" height="1536" preserveAspectRatio="none"/></svg>`+frame(room,variant)}
 
+ function openMarker(room){
+  const [,leafY,,leafHeight]=rects[room];
+  const [frameX,frameY,,frameHeight]=frameRects[room];
+  // Mark only the part of the glazing occupied by the moving leaf.
+  const x=frameX+6, width=11;
+  const y=Math.max(leafY,frameY)+3;
+  const height=Math.min(leafY+leafHeight,frameY+frameHeight)-y-3;
+  return `<rect class="window-open-mark window-open-${room}" x="${x}" y="${y}" width="${width}" height="${height}" rx="3" fill="#d92937" fill-opacity=".14" stroke="#e94754" stroke-width="1.5" vector-effect="non-scaling-stroke" pointer-events="none" aria-hidden="true"/>`;
+ }
+
  function fill(bindings){for(const id of C.IDS)CasaDoor.fill(bindings?.[id],'window-'+id)}
  function read(previous){const out={};for(const id of C.IDS){const b=CasaDoor.read(previous?.[id],'window-'+id);if(b)out[id]=b}return previous===undefined&&!Object.keys(out).length?undefined:out}
  function dirty(bindings){return C.IDS.some(id=>CasaDoor.dirty(bindings?.[id],'window-'+id))}
  function caption(d){return !d.configured?'Janela · sensor por associar':d.open===true?'Janela aberta · Cloud':d.open===false?'Janela fechada · Cloud':d.reading?.missing?'Janela · ID não encontrado':d.reading?.error?'Janela · consulta indisponível':d.reading&&!d.reading.online?'Janela · offline, estado por confirmar':d.reading&&!d.reading.hasSensor?'Janela · contacto não disponibilizado pela Cloud':'Janela · estado por confirmar'}
  function sync(){for(const id of C.IDS){const d=window.CasaShelly?.windowSnapshot(id)||{configured:false,open:null};document.body.classList.toggle('window-'+id+'-open',d.open===true);document.querySelectorAll('[data-window-reading="'+id+'"]').forEach(el=>el.textContent=caption(d))}document.querySelectorAll('.window-refresh').forEach(b=>b.disabled=!!window.CasaShelly?.isBusy())}
  function decorateRoom(room){if(!C.IDS.includes(room.id))return;const host=$('detail-card'),wrap=document.createElement('section');wrap.className='window-room-status';wrap.innerHTML='<p class="settings-explanation" data-window-reading="'+room.id+'"></p><button type="button" class="secondary-action window-refresh">Atualizar janela</button><button type="button" class="secondary-action window-settings">Sensor da janela</button>';wrap.querySelector('.window-refresh').addEventListener('click',()=>CasaShelly.windowEnsureFresh(room.id));wrap.querySelector('.window-settings').addEventListener('click',()=>{$('open-shelly').click();group.open=true;const input=$('window-'+room.id+'-device');input.closest('details').open=true;input.scrollIntoView({block:'center'});input.focus()});host.append(wrap);sync()}
- window.CasaWindows={patch,fill,read,dirty,sync,caption,decorateRoom,names};window.addEventListener('doorchange',sync);setInterval(sync,5000);
+ window.CasaWindows={patch,openMarker,fill,read,dirty,sync,caption,decorateRoom,names};window.addEventListener('doorchange',sync);setInterval(sync,5000);
 })();
