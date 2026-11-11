@@ -13,6 +13,8 @@
   let syncAgain = false;
   let manualSyncQueued = false;
   let pendingRelease;
+  let activitySchemaAvailable = true;
+  const setSharedActivity = row => window.CasaMeteoActivity?.setShared(row);
   let status = 'Inicia sessão para consultar o histórico partilhado.';
 
   const settings = document.getElementById('energy-settings-actions');
@@ -128,6 +130,7 @@
     client.auth.onAuthStateChange((_event, nextSession) => {
       const changedUser = session?.user.id !== nextSession?.user.id;
       session = nextSession;
+      if (changedUser) setSharedActivity(null);
       // Keep app rendering out of the SDK's sign-in callback.
       setTimeout(() => {
         if (changedUser) {
@@ -212,10 +215,23 @@
           return;
         }
         const heartbeat = readingAt === sent;
-        const response = await client.rpc('casa_publish_energy_history', {
+        const args = {
           p_house:house, p_writer:writer.key, p_reading_at:heartbeat ? null : readingAt,
           p_snapshot:heartbeat ? null : snapshot,
-        });
+        };
+        let response;
+        if (activitySchemaAvailable) {
+          const activity = window.CasaMeteoActivity?.exportShared();
+          if (activity) {
+            response = await client.rpc('casa_publish_energy_and_activity', {...args, p_activity:activity});
+            if (!stillSignedIn() || !writerSettings()?.enabled) return;
+            if (['PGRST202','42883'].includes(response.error?.code)) {
+              activitySchemaAvailable = false;
+              response = null;
+            }
+          }
+        }
+        response ??= await client.rpc('casa_publish_energy_history', args);
         if (!stillSignedIn()) return;
         const data = syncResult(response);
         if (!writerSettings()?.enabled) return;
@@ -233,11 +249,18 @@
         return;
       }
 
-      const response = await client.from('casa_energy_history')
-        .select('reading_at,updated_at,writer_expires_at').eq('house', house).maybeSingle();
+      const fields = 'reading_at,updated_at,writer_expires_at';
+      const selectHistory = columns => client.from('casa_energy_history').select(columns).eq('house', house).maybeSingle();
+      let response = await selectHistory(activitySchemaAvailable ? fields + ',meteo_activity,meteo_activity_at' : fields);
+      if (!stillSignedIn() || writerSettings()?.enabled) return;
+      if (activitySchemaAvailable && ['42703','PGRST204'].includes(response.error?.code)) {
+        activitySchemaAvailable = false;
+        response = await selectHistory(fields);
+      }
       if (!stillSignedIn()) return;
       const row = syncResult(response);
       if (writerSettings()?.enabled) return;
+      setSharedActivity(row);
       noWriterConfirmed = !row?.writer_expires_at || Date.parse(row.writer_expires_at) <= Date.now();
       if (!row) {
         clearSyncConfirmation();
@@ -330,6 +353,7 @@
       clearSyncConfirmation();
       paint();
       if (writerBox.checked) {
+        setSharedActivity(null);
         daily.setSharedHistory(null);
         downloaded = 0;
         sent = 0;

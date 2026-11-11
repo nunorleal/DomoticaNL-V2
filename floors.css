@@ -63,3 +63,8 @@ body.basement-banner-dragging .basement-movable{cursor:grabbing}
 @media(prefers-reduced-motion:reduce){.floor-layers path{transition:none}}
 
 /* Garage camera marker; no inferred connection or power state. */
+
+.labels-hidden .basement-view :is(.parking-caption,.ev-badge),
+.labels-hidden .cellar-pin > strong {
+  display: none;
+}

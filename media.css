@@ -28,11 +28,12 @@ body.window-kitchen-open .window-open-kitchen{display:inline}
 .missing-ids-warning{margin:12px 0;padding:12px 14px;border:1px solid #d69a86;border-radius:12px;background:#fff1eb;color:#a33f26;font-size:12px;line-height:1.5}.missing-ids-warning[hidden]{display:none}.missing-ids-warning summary{cursor:pointer;font-weight:600}.missing-ids-warning p{font-size:11px;margin:8px 0}.missing-ids-links{display:flex;flex-wrap:wrap;gap:6px}.missing-ids-links button{font-size:11px;padding:6px 9px;border-radius:7px;background:#ffe2d5;color:#8d331e;text-align:left}#shelly-form .shelly-id-missing{border-color:#b9583a;box-shadow:0 0 0 1px #b9583a33}.missing-id-hint{display:block;color:#aa432b;font-size:11px;margin:3px 0 8px}.missing-id-hint[hidden]{display:none}
 
 /* Low consumption is an estimate of panel maintenance, never a command or confirmed TV mode. */
-.media-tv-regeneration{position:absolute;z-index:2;left:42.2%;top:25.3%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;color:#b6d9f0;text-shadow:0 1px 4px #000;pointer-events:none}
+.media-image-stage[data-tv-regenerating=true] .media-tv-off-screen{fill:url(#media-tv-maintenance)}
+.media-tv-regeneration{position:absolute;z-index:2;left:42.2%;top:25.3%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;color:#ffdc9b;text-shadow:0 1px 4px #000;pointer-events:none}
 .media-tv-regeneration[hidden]{display:none}
-.media-tv-regeneration svg{width:clamp(22px,4vw,36px);height:clamp(22px,4vw,36px);filter:drop-shadow(0 0 5px #74b4e680)}
+.media-tv-regeneration svg{width:clamp(22px,4vw,36px);height:clamp(22px,4vw,36px);filter:drop-shadow(0 0 5px #e2aa5e80)}
 .media-tv-regeneration small{font-size:clamp(9px,1.5vw,12px);font-weight:400}
-.media-image-stage[data-tv-regenerating=true] .media-device-banner[data-media-device=tv] small{color:#b6d9f0}
+.media-image-stage[data-tv-regenerating=true] .media-device-banner[data-media-device=tv] small{color:#ffdc9b}
 
 /* Physical device targets remain available when the optional name banners are hidden. */
 .media-device-hit{position:absolute;z-index:2;display:block;margin:0;padding:0;border:1px solid transparent;border-radius:7px;background:transparent;appearance:none;-webkit-appearance:none;cursor:pointer;touch-action:manipulation;color:var(--plan-highlight-border,#b9d9ed)}

@@ -23,13 +23,14 @@
   if(!host.hidden)return;
   lastFocus=document.activeElement;savedDialogs=[...document.querySelectorAll('dialog[open]')];savedDialogs.forEach(d=>d.close());
   document.getElementById('casa-app')?.setAttribute('inert','');
+  window.CasaPlanMove?.lock();
   host.hidden=false;document.documentElement.classList.add('meteo-visible');idle.setActive(false);
   if(!loaded){
    loading.hidden=false;loadTimer=setTimeout(()=>{loadMessage.textContent='Não foi possível carregar a MeteoNL. Volte à casa e atualize a página.'},15000);
    if(location.protocol==='file:'){
     const base=new URL('meteo/',document.baseURI).href.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-    frame.srcdoc=`<!doctype html><html lang="pt"><head><meta charset="utf-8"><base href="${base}"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MeteoNL · Casa NL</title><link rel="stylesheet" href="assets/app-2.92.css?v=2.92-morning"></head><body><div id="root"></div><script src="assets/app-2.92.js?v=2.92-morning"><\/script></body></html>`;
-   }else frame.src='meteo/index.html?v=2.92';
+    frame.srcdoc=`<!doctype html><html lang="pt"><head><meta charset="utf-8"><base href="${base}"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MeteoNL · Casa NL</title><link rel="stylesheet" href="assets/app-2.93.css?v=2.93-morning"></head><body><div id="root"></div><script src="assets/app-2.93.js?v=2.93-morning"><\/script></body></html>`;
+   }else frame.src='meteo/index.html?v=2.93';
    loaded=true;
   }
   window.CasaShelly?.ensureFresh('master');window.CasaShelly?.ensureFresh('balcony');refreshIndoorSensor();frame.focus();

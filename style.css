@@ -138,3 +138,8 @@ body:before{background:linear-gradient(var(--street-shade-top),var(--street-shad
 
 /* Empty normal confirmations do not reserve space in device popups. */
 dialog p[id$="-message"]:empty{display:none}
+
+/* A single item can be repositioned after a long press. */
+.plan-movable{-webkit-touch-callout:none}
+:root .plan-movable:not(.plan-move-unlocked){cursor:pointer}
+:root .plan-movable.plan-move-unlocked:not(.dragging){cursor:grab;outline:2px dashed #ffc86c;outline-offset:4px}
