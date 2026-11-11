@@ -28,5 +28,33 @@
   }
   return {update};
  }
- return {IDS,DEFAULTS,NAMES,GRACE,create};
+ const SHARED_FRESH=270000, SHARED_MAX_AGE=900000;
+ const KINDS=['timer','manual','machine','charging','tv','device'];
+ function encodeShared(rows,time=Date.now()){
+  return rows.map(row=>{
+   const {id,kind}=row;
+   if(kind==='timer')return {id,kind,endsAt:time+row.remaining*1000,estimated:row.estimated===true};
+   return {id,kind,startedAt:time-row.elapsed*1000,paused:row.paused===true,powerWatts:row.powerWatts};
+  });
+ }
+ function readShared(rows,updatedAt,expiresAt,time=Date.now()){
+  if(!Array.isArray(rows)||rows.length>IDS.length||!Number.isFinite(updatedAt))return null;
+  if(time-updatedAt>=SHARED_MAX_AGE)return null;
+  const stale=time-updatedAt>=SHARED_FRESH||!(expiresAt>time);
+  const observedAt=stale?Math.min(time,updatedAt):time;
+  const devices=new Map();
+  for(const row of rows){
+   if(!IDS.includes(row?.id)||!KINDS.includes(row.kind)||devices.has(row.id))continue;
+   const {id,kind}=row, name=NAMES[id];
+   if(kind==='timer'){
+    if(!['heater','dehumidifier'].includes(id)||!Number.isSafeInteger(row.endsAt)||row.endsAt<=time)continue;
+    devices.set(id,{id,name,kind,remaining:Math.ceil((row.endsAt-time)/1000),estimated:row.estimated===true,stale});
+   }else if(Number.isSafeInteger(row.startedAt)&&row.startedAt>0&&row.startedAt<=time){
+    devices.set(id,{id,name,kind,elapsed:Math.max(0,Math.floor((observedAt-row.startedAt)/1000)),
+     paused:row.paused===true,powerWatts:Number.isFinite(row.powerWatts)?row.powerWatts:null,stale});
+   }
+  }
+  return Array.from(devices.values());
+ }
+ return {IDS,DEFAULTS,NAMES,GRACE,create,encodeShared,readShared};
 });

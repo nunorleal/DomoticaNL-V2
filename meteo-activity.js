@@ -6,5 +6,16 @@ function collect(){const c=configuration(),map=bindings(c);const api=window.Casa
 const identity=id=>map[id]?JSON.stringify([c.server,map[id].deviceId,map[id].channel]):'';
 const sample=(id,d,active)=>({id,configured:!!map[id],identity:identity(id),active,stopped:d.on===false,fetchedAt:d.reading?.fetchedAt??d.fetchedAt??d.readings?.meter?.fetchedAt,powerWatts:d.powerWatts??(Number.isFinite(d.powerKW)?d.powerKW*1000:null)});
 return [...['heater','dehumidifier'].map(id=>{const d=timer(id),meter=api?.consumptionSnapshot?.(id)||{},r=meter.reading;return {id,configured:!!map[id],identity:identity(id),on:d.on,timerActive:d.timerActive,timerEstimated:d.timerEstimated,remaining:d.timerRemainingSeconds,fetchedAt:r?.fetchedAt,powerWatts:meter.fresh===true?r?.power:null}}),sample('washer',washer,washer.activity),sample('dishwasher',dishwasher,dishwasher.activity),sample('tv',tv,tv.activity===true?true:tv.activity===false?false:null),sample('ev',ev,ev.charging),sample('boiler',boiler,Number.isFinite(boiler.powerWatts)&&boiler.powerWatts>=0?boiler.powerWatts>30:null),...['playstation','soundbar','vodafone','unifi','monitor','apollo','terramaster','blackdrive'].map(id=>{const d=api?.mediaSnapshot(id)||{};return sample(id,d,d.activity===true?true:d.activity===false?false:null)})];}
-function snapshot(){return tracker.update(collect())}let scheduled=false;function changed(){if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;snapshot()})}
-['mediachange','evchange','heaterchange','dehumidifierchange'].forEach(e=>window.addEventListener(e,changed));window.CasaMeteoActivity={snapshot,devices:()=>{const b=bindings(configuration());return C.IDS.map(id=>({id,name:C.NAMES[id],configured:!!b[id]}))}};snapshot();})();
+let shared=null;
+function localSnapshot(){return tracker.update(collect())}
+function sharedSnapshot(){return shared&&C.readShared(shared.rows,shared.updatedAt,shared.expiresAt)}
+function snapshot(){
+ const remote=sharedSnapshot();
+ return remote===null?localSnapshot().map(row=>({...row,source:'local'})):remote.map(row=>({...row,source:'emitter'}));
+}
+function setShared(row){
+ shared=Array.isArray(row?.meteo_activity)&&Number.isFinite(Date.parse(row.meteo_activity_at))
+  ?{rows:row.meteo_activity,updatedAt:Date.parse(row.meteo_activity_at),expiresAt:Date.parse(row.writer_expires_at)}
+  :null;
+}let scheduled=false;function changed(){if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;localSnapshot()})}
+['mediachange','evchange','heaterchange','dehumidifierchange'].forEach(e=>window.addEventListener(e,changed));window.CasaMeteoActivity={snapshot,setShared,exportShared:()=>C.encodeShared(localSnapshot()),devices:()=>{const b=bindings(configuration()),remote=sharedSnapshot();return C.IDS.map(id=>({id,name:C.NAMES[id],configured:!!b[id]||remote?.some(row=>row.id===id)===true}))}};snapshot();})();
