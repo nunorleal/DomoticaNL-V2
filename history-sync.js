@@ -14,6 +14,8 @@
   let manualSyncQueued = false;
   let pendingRelease;
   let activitySchemaAvailable = true;
+  let tariffSchemaAvailable = true;
+  const setSharedRates = rates => window.CasaEnergyCost?.setSharedRates(rates);
   const setSharedActivity = row => window.CasaMeteoActivity?.setShared(row);
   let status = 'Inicia sessão para consultar o histórico partilhado.';
 
@@ -130,7 +132,10 @@
     client.auth.onAuthStateChange((_event, nextSession) => {
       const changedUser = session?.user.id !== nextSession?.user.id;
       session = nextSession;
-      if (changedUser) setSharedActivity(null);
+      if (changedUser) {
+        setSharedActivity(null);
+        setSharedRates(null);
+      }
       // Keep app rendering out of the SDK's sign-in callback.
       setTimeout(() => {
         if (changedUser) {
@@ -223,7 +228,17 @@
         if (activitySchemaAvailable) {
           const activity = window.CasaMeteoActivity?.exportShared();
           if (activity) {
-            response = await client.rpc('casa_publish_energy_and_activity', {...args, p_activity:activity});
+            const activityArgs = {...args, p_activity:activity};
+            const rates = window.CasaEnergyCost?.snapshot().dailyRates;
+            if (tariffSchemaAvailable && rates) {
+              response = await client.rpc('casa_publish_energy_activity_tariff', {...activityArgs, p_tariff:rates});
+              if (!stillSignedIn() || !writerSettings()?.enabled) return;
+              if (['PGRST202','42883'].includes(response.error?.code)) {
+                tariffSchemaAvailable = false;
+                response = null;
+              }
+            }
+            response ??= await client.rpc('casa_publish_energy_and_activity', activityArgs);
             if (!stillSignedIn() || !writerSettings()?.enabled) return;
             if (['PGRST202','42883'].includes(response.error?.code)) {
               activitySchemaAvailable = false;
@@ -251,7 +266,13 @@
 
       const fields = 'reading_at,updated_at,writer_expires_at';
       const selectHistory = columns => client.from('casa_energy_history').select(columns).eq('house', house).maybeSingle();
-      let response = await selectHistory(activitySchemaAvailable ? fields + ',meteo_activity,meteo_activity_at' : fields);
+      const activityFields = fields + ',meteo_activity,meteo_activity_at';
+      let response = await selectHistory(activitySchemaAvailable ? activityFields + (tariffSchemaAvailable ? ',daily_tariff' : '') : fields);
+      if (!stillSignedIn() || writerSettings()?.enabled) return;
+      if (activitySchemaAvailable && tariffSchemaAvailable && ['42703','PGRST204'].includes(response.error?.code)) {
+        tariffSchemaAvailable = false;
+        response = await selectHistory(activityFields);
+      }
       if (!stillSignedIn() || writerSettings()?.enabled) return;
       if (activitySchemaAvailable && ['42703','PGRST204'].includes(response.error?.code)) {
         activitySchemaAvailable = false;
@@ -261,6 +282,7 @@
       const row = syncResult(response);
       if (writerSettings()?.enabled) return;
       setSharedActivity(row);
+      setSharedRates(row?.daily_tariff ?? null);
       noWriterConfirmed = !row?.writer_expires_at || Date.parse(row.writer_expires_at) <= Date.now();
       if (!row) {
         clearSyncConfirmation();
@@ -354,6 +376,7 @@
       paint();
       if (writerBox.checked) {
         setSharedActivity(null);
+        setSharedRates(null);
         daily.setSharedHistory(null);
         downloaded = 0;
         sent = 0;
@@ -380,6 +403,7 @@
     const {error} = await client.auth.signOut({scope:'local'});
     if (error) paint('Não foi possível terminar a sessão.');
   });
+  window.addEventListener('energytariffsave', () => { if (writerSettings()?.enabled) sync(); });
   window.addEventListener('online', sync);
   window.addEventListener('offline', sync);
   window.addEventListener('pageshow', sync);

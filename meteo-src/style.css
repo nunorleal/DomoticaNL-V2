@@ -1659,7 +1659,10 @@ html.red-night,html.red-night body{background:#000}
 .meteo-activity-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;color:#fff}
 .meteo-activity-device{border-radius:17px;min-width:0;display:grid;grid-template-columns:19px minmax(0,1fr) auto;gap:8px;align-items:center;min-height:46px;padding:9px 10px;text-align:left}
 .meteo-activity-device>svg{width:18px;height:18px;color:#8bd5ff;flex:none}.meteo-activity-device[data-kind=timer]>svg{color:#ffd481}
-.meteo-activity-name{font-size:13px;line-height:1.25}.meteo-activity-name small{display:block;font-size:10px;color:#d0dce6;margin-top:3px}.meteo-activity-time{font-size:14px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.meteo-activity-name{display:flex;align-items:center;min-width:0;gap:4px;font-size:13px;line-height:1.25}
+.meteo-activity-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meteo-activity-name>svg{width:12px;height:12px;flex:none;color:inherit;opacity:.85}
+.meteo-activity-time{font-size:14px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
 .activity-device-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}.activity-device-options label{margin:0}.activity-device-options input{flex-shrink:0}
 .focus-view .hero.has-activity{--activity-clock:18dvh;--activity-temperature:11dvh;--activity-symbol:20dvh;gap:0}
 .focus-view .hero.has-activity[data-activity-rows="2"]{--activity-clock:16dvh;--activity-temperature:10dvh;--activity-symbol:18dvh}
@@ -1670,7 +1673,7 @@ html.red-night,html.red-night body{background:#000}
 .focus-view .hero.has-activity .current-summary>.current-weather-symbol{height:min(var(--weather-reading-height,160px),var(--activity-symbol));width:min(var(--weather-reading-height,160px),var(--activity-symbol),36vw)}
 .focus-view .hero.has-activity .sun-times{margin-top:.6dvh}.focus-view .hero.has-activity .bedroom-climate{padding:10px 13px 9px;margin-top:.6dvh}.focus-view .hero.has-activity .bedroom-climate-heading{margin-bottom:7px}.focus-view .hero.has-activity .bedroom-climate-value{padding:9px 7px}
 .red-night .meteo-activity-device>svg{color:inherit}
-@media(max-width:580px){.meteo-activity-device{grid-template-columns:17px minmax(0,1fr);gap:3px 6px;padding:7px 5px;min-height:49px}.meteo-activity-device>svg{grid-row:1 / 3;width:16px;height:16px}.meteo-activity-time{grid-column:2;font-size:12px}.meteo-activity-name{font-size:11px}.meteo-activity-row{gap:7px}.activity-device-options{grid-template-columns:1fr}}
+@media(max-width:580px){.meteo-activity-device{grid-template-columns:17px minmax(0,1fr);gap:2px 5px;padding:5px 6px;min-height:38px}.meteo-activity-device>svg{width:16px;height:16px}.meteo-activity-time{grid-column:1 / -1;min-width:0;font-size:11px;white-space:normal;text-align:right}.meteo-activity-name{font-size:11px}.meteo-activity-row{gap:7px}.activity-device-options{grid-template-columns:1fr}}
 @media(max-height:650px){.focus-view .hero.has-activity .date>span{font-size:clamp(17px,3dvh,24px)}.focus-view .hero.has-activity .date p{font-size:12px}.focus-view .hero.has-activity .clock{font-size:clamp(44px,var(--activity-clock),110px)}.focus-view .hero.has-activity .bedroom-climate-value{padding:5px}.focus-view .hero.has-activity .bedroom-climate-heading{font-size:12px;margin-bottom:5px}.focus-view .hero.has-activity .meteo-activity-device{min-height:32px;padding-top:5px;padding-bottom:5px}.focus-view .hero.has-activity .condition h2{font-size:17px}.focus-view .hero.has-activity .condition p{font-size:12px}}
 /* Remove legacy clock minimum heights: font size alone cannot release that space. */
 .focus-view .hero.has-activity .clock{min-height:0}
