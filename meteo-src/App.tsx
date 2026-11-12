@@ -464,7 +464,9 @@ export default function App() {
             </span>
           </div>
           <BedroomClimate unit={prefs.temp} now={now} />
-          <ActivityDevices rows={activityRows} />
+          <ActivityDevices rows={activityRows} onOpen={bridge?.openActivityDevice ? (id) => {
+            if (bridge.openActivityDevice(id)) focus.wake();
+          } : undefined} />
           {prefs.demo !== "auto" && (
             <button
               className="demo-badge"
@@ -648,6 +650,7 @@ export default function App() {
             Open-Meteo <ArrowUpRight size={11} />
           </a>
         </footer>
+        {focus.expanded && <button ref={dismissFocus} className="focus-dismiss" aria-label="Voltar à vista normal" onClick={(event) => { event.preventDefault(); event.stopPropagation(); focus.wake(); }} onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); focus.wake(); } }}><span>Toque para voltar</span></button>}
       </main>
       {showMorningBlind && <div className="morning-blind-control">
         <button type="button" className="morning-blind-button" onClick={openMorningBlind}
@@ -657,7 +660,6 @@ export default function App() {
         </button>
         {blindMessage && <p role="status">{blindMessage}</p>}
       </div>}
-      {focus.expanded && <button ref={dismissFocus} className="focus-dismiss" aria-label="Voltar à vista normal" onClick={(event) => { event.preventDefault(); event.stopPropagation(); focus.wake(); }} onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); focus.wake(); } }}><span>Toque para voltar</span></button>}
       {open && (
         <Settings
           value={prefs}
