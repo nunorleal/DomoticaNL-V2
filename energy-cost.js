@@ -19,6 +19,8 @@
       peak: previous.prices.peak * multiplier,
     } : C.referenceRates;
   }
+  let sharedRates = null;
+  const activeRates = () => sharedRates ?? config.dailyRates;
   const button = (text, className) => {
     const el = document.createElement('button');
     el.type = 'button';
@@ -60,12 +62,14 @@
       <p class="energy-hint">Vazio das 22:00 às 08:00 e fora de vazio das 08:00 às 22:00, pela hora de Portugal continental.</p>
       <button type="submit" class="primary-action">Guardar preços</button>
     </form>
+    <p id="energy-tariff-source" class="energy-hint" hidden>Preços enviados pelo emissor desta casa.</p>
     <p id="energy-tariff-status" role="status"></p>`;
   editor.append(panel);
   const $ = id => editor.querySelector('#' + id);
   const status = text => { $('energy-tariff-status').textContent = text; };
   $('energy-daily-form').addEventListener('submit', event => {
     event.preventDefault();
+    if (sharedRates) return;
     const offPeak = $('energy-daily-offpeak').value.trim();
     const peak = $('energy-daily-peak').value.trim();
     const validRate = /^\d{1,3}(?:[,.]\d{1,8})?$/;
@@ -74,7 +78,9 @@
       return;
     }
     const rates = {offPeak:Number(offPeak.replace(',', '.')), peak:Number(peak.replace(',', '.'))};
-    save({...config, dailyRates:rates}, 'Preços guardados.');
+    if (save({...config, dailyRates:rates}, 'Preços guardados.')) {
+      window.dispatchEvent(new Event('energytariffsave'));
+    }
   });
   function save(next, message) {
     try {
@@ -97,16 +103,36 @@
   settings?.append(access);
   access.addEventListener('click', () => {
     $('energy-show-euros').checked = config.enabled;
-    const rates = config.dailyRates;
-    $('energy-daily-offpeak').value = rateFormat.format(rates.offPeak);
-    $('energy-daily-peak').value = rateFormat.format(rates.peak);
+    paintRates();
     status('');
     editor.showModal();
   });
 
+  function paintRates() {
+    const rates = activeRates();
+    $('energy-daily-offpeak').value = rateFormat.format(rates.offPeak);
+    $('energy-daily-peak').value = rateFormat.format(rates.peak);
+    $('energy-daily-offpeak').readOnly = Boolean(sharedRates);
+    $('energy-daily-peak').readOnly = Boolean(sharedRates);
+    $('energy-daily-form').querySelector('[type=submit]').hidden = Boolean(sharedRates);
+    $('energy-tariff-source').hidden = !sharedRates;
+  }
+
+  function setSharedRates(rates) {
+    let next = null;
+    if (rates != null) {
+      try { next = C.validate({schemaVersion:1, enabled:true, versions:[], globalTotals:[], dailyRates:rates}).dailyRates; }
+      catch { return; }
+    }
+    if (next?.offPeak === sharedRates?.offPeak && next?.peak === sharedRates?.peak) return;
+    sharedRates = next;
+    if (editor.open) paintRates();
+    window.dispatchEvent(new Event('energycostchange'));
+  }
+
   function cost(role,id,start,end) {
     const today = window.CasaDailyEnergyCore.day(Date.now());
-    const rates = config.dailyRates;
+    const rates = activeRates();
     const days = D.timedHistory(role,id,start,end).days;
     const result = C.calculate({days,start,end,config:{dailyRates:rates},today});
     if (result.total !== null) return result;
@@ -181,5 +207,5 @@
   window.addEventListener('energycostchange', () => {
     document.querySelectorAll('[data-energy-cost-role]').forEach(node => today(node,node.dataset.energyCostRole,node.dataset.energyCostId));
   });
-  window.CasaEnergyCost = {today, display, snapshot:() => config};
+  window.CasaEnergyCost = {today, display, snapshot:() => config, setSharedRates};
 })();

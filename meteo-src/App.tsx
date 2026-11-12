@@ -222,8 +222,8 @@ export default function App() {
     (prefs.night === "auto" &&
       isNightSchedule(localMinutes, prefs.start, prefs.end));
   const scheduledRed = redActive(prefs, localMinutes, scheduledNight);
-  const { red, night, blind, requestMorning, morningReleased } = useBedsideMode(prefs, scheduledNight, scheduledRed, tz, {now,sunrise,sunset});
-  const focus = useFocusView(prefs.focusSeconds, open || morningReleased);
+  const { red, night, blind, requestMorning } = useBedsideMode(prefs, scheduledNight, scheduledRed, tz, {now,sunrise,sunset});
+  const focus = useFocusView(prefs.focusSeconds, open);
   useEffect(() => { if (focus.expanded) dismissFocus.current?.focus({ preventScroll: true }); }, [focus.expanded]);
   useLayoutEffect(() => {
     document.documentElement.classList.toggle("red-night", red);
