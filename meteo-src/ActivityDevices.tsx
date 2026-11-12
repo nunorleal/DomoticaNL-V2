@@ -17,7 +17,9 @@ function remaining(seconds=0) {
   return hours ? `${hours}:${minutes}:${rest}` : `${minutes}:${rest}`;
 }
 
-function ActivityCard({row}:{row:ActivityRow}) {
+type OpenActivity = (id:string) => void;
+
+function ActivityCard({row,onOpen}:{row:ActivityRow;onOpen?:OpenActivity}) {
   const countdown=row.kind==="timer";
   let value=`há ${elapsed(row.elapsed)}`;
   if(countdown) value=`${row.estimated?"≈ ":""}${remaining(row.remaining)}`;
@@ -33,7 +35,11 @@ function ActivityCard({row}:{row:ActivityRow}) {
   const description=countdown ? `${row.estimated?"Tempo restante previsto":"Tempo restante"}: ${value}` : value;
   const title=[row.name,description,source,state].filter(Boolean).join(" · ");
 
-  return <div className="glass meteo-activity-device" data-kind={row.kind} role="group" title={title} aria-label={title}>
+  const Card=onOpen ? "button" : "div";
+  return <Card className="glass meteo-activity-device" data-kind={row.kind}
+    type={onOpen ? "button" : undefined} role={onOpen ? undefined : "group"}
+    title={title} aria-label={onOpen ? `Abrir controlos de ${title}` : title}
+    onClick={onOpen ? () => onOpen(row.id) : undefined}>
     <ActivityIcon id={row.id}/>
     <span className="meteo-activity-name">
       <span className="meteo-activity-label">{row.name}</span>
@@ -45,15 +51,15 @@ function ActivityCard({row}:{row:ActivityRow}) {
       )}
     </span>
     <span className="meteo-activity-time">{countdown&&<Timer aria-hidden="true"/>}{value}</span>
-  </div>;
+  </Card>;
 }
 
-export function ActivityDevices({rows}:{rows:ActivityRow[]}) {
+export function ActivityDevices({rows,onOpen}:{rows:ActivityRow[];onOpen?:OpenActivity}) {
   if(!rows.length)return null;
   return <section className="meteo-activity" aria-label="Dispositivos em atividade">
     {Array.from({length:Math.ceil(rows.length/2)},(_,index)=>
       <div className="meteo-activity-row" key={index}>
-        {rows.slice(index*2,index*2+2).map(row=><ActivityCard row={row} key={row.id}/>)}
+        {rows.slice(index*2,index*2+2).map(row=><ActivityCard row={row} key={row.id} onOpen={onOpen}/>)}
       </div>
     )}
   </section>;

@@ -47,14 +47,10 @@
     const localDay=local.days[date];
     if(date===today){
      if(preferSharedToday(localDay,row))local.days[date]=row;
-    }else if(row.observed||row.interrupted||!localDay){
+    }else if(row.observed||!localDay?.observed){
      local.days[date]=row;
     }
    }
-  }
-  // Keep today's observed total visible between updates.
-  for(const [date,row] of Object.entries(local.days)){
-   if(date!==today&&row.interrupted)delete local.days[date];
   }
   return local;
  }
