@@ -29,3 +29,11 @@ A caldeira Bosch usa agora o mesmo limiar estrito de >10 W e as mesmas regras de
 ## Paleta azul — 1.96
 
 Realce de hover/foco e símbolos de atividade das máquinas de lavar e caldeira passam a tons azuis dos banners, incluindo a indicação A trabalhar no popup. Preservar limiar >10W, disponibilidade, animações e comandos existentes. A mudança de realces também abrange consola, secretária e os novos acessos aos estores pelas janelas.
+
+## Placa de indução e forno AEG
+
+A T2 usa o mesmo Shelly EM nos dois equipamentos. O canal 0 mede a placa e o canal 1 mede o forno/micro-ondas. A migração acrescenta as associações uma vez e preserva os valores já configurados. Cada canal tem potência, consumo diário e histórico próprios. A fila consulta o ID físico uma vez por lote.
+
+Os acessos na bancada estão alinhados na vertical, com a placa em cima e o forno por baixo. Os ícones aparecem com atividade confirmada ou ao passar o rato ou dar foco. Cada acesso abre o popup com a fotografia correspondente. A placa indica atividade acima de 0 W e o forno acima de 10 W para ignorar o consumo em repouso. Os canais são apenas de medição e não controlam o relé do Shelly EM.
+
+Em MeteoNL → Definições → Dispositivos em atividade, a placa e o forno podem ser ativados individualmente. O banner apresenta a duração da atividade e abre o popup correspondente.

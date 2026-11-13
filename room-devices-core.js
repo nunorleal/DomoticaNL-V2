@@ -9,7 +9,7 @@
   if(['master','bedroom2','living','kitchen'].includes(room)){add('cover',room);add('window',room)}
   if(room==='living'){for(const id of ['tv','soundbar','playstation','vodafone','unifi'])add('media',id);add('door','entrance')}
   if(room==='bedroom2')for(const id of ['monitor','apollo','terramaster','blackdrive'])add('office',id);
-  if(room==='kitchen')for(const id of ['dishwasher','washer','boiler'])add('kitchen',id);
+  if(room==='kitchen')for(const id of ['dishwasher','washer','boiler','hob','oven'])add('kitchen',id);
   if(heaterRoom===room)add('heater','');if(dehumidifierRoom===room)add('dehumidifier','');
   return out;
  }

@@ -17,7 +17,7 @@ test('unknown readings hide activity; charging stops immediately; elapsed restor
 });
 test('adapter consumes only cached readers, uses each house association, and exposes no identity or credentials',()=>{
  const source=fs.readFileSync(require.resolve('../meteo-activity.js'),'utf8'),now=Date.now(),b={deviceId:'deadbeef0011',channel:0},setup={server:'https://example.test',authKey:'SECRET',heater:b,dehumidifier:b,kitchenBindings:{washer:b,dishwasher:b},mediaBindings:{tv:b,playstation:b},ev:{meter:b},balconyMeters:{washer:b},dishwasherMeter:b,tvMeter:b,evMeter:b};const storage=disk();storage.setItem('casa-nl-shelly-cloud-v1',JSON.stringify(setup));const meter={configured:true,activity:true,fresh:true,powerWatts:200,fetchedAt:now,reading:{fetchedAt:now}},api={heaterSnapshot:()=>({on:true,timerActive:true,timerRemainingSeconds:120}),dehumidifierSnapshot:()=>({on:false}),mediaSnapshot:()=>meter,evSnapshot:()=>({charging:true,powerKW:3.5,reading:{fetchedAt:now},readings:{meter:{fetchedAt:now}}}),balconyApplianceSnapshot:()=>meter,dishwasherSnapshot:()=>meter,tvSnapshot:()=>({...meter,activity:'on'})};
- const window={CasaMeteoActivityCore:C,CasaShelly:api,CasaCloudRead:api,CasaShellySetup:{snapshot:()=>setup},addEventListener:()=>{}};vm.runInNewContext(source,{window,localStorage:storage,queueMicrotask:fn=>fn()});const rows=window.CasaMeteoActivity.snapshot();assert.deepEqual(Array.from(rows,r=>r.id),['heater','washer','dishwasher','tv','ev','playstation']);assert(!JSON.stringify(rows).includes('SECRET'));assert(!JSON.stringify(rows).includes('deadbeef'));assert.equal(window.CasaMeteoActivity.devices().length,15);
+ const window={CasaMeteoActivityCore:C,CasaShelly:api,CasaCloudRead:api,CasaShellySetup:{snapshot:()=>setup},addEventListener:()=>{}};vm.runInNewContext(source,{window,localStorage:storage,queueMicrotask:fn=>fn()});const rows=window.CasaMeteoActivity.snapshot();assert.deepEqual(Array.from(rows,r=>r.id),['heater','washer','dishwasher','tv','ev','playstation']);assert(!JSON.stringify(rows).includes('SECRET'));assert(!JSON.stringify(rows).includes('deadbeef'));assert.equal(window.CasaMeteoActivity.devices().length,17);
  const activity=window.CasaMeteoActivity;
  assert(rows.every(row=>row.source==='local'));
  const remote=C.encodeShared([{id:'washer',kind:'machine',elapsed:9120,powerWatts:800}],now);
@@ -120,4 +120,12 @@ test('an empty shared snapshot clears activity and invalid input does not invent
  assert.equal(C.readShared(null,time,time,time),null);
  assert.deepEqual(C.readShared([],time,time+360000,time),[]);
  assert.deepEqual(C.readShared([null,{id:'not-a-device',kind:'device',startedAt:time-1000},{id:'tv',kind:'timer',endsAt:time+1000}],time,time+360000,time),[]);
+});
+test('the AEG circuits are independently selectable and retain activity on the receiver',()=>{
+ assert.deepEqual(M.preferences({activityDevices:C.IDS}).activityDevices,C.IDS);
+ const now=Date.now(),tracker=C.create({now:()=>now});
+ const rows=tracker.update([{...sample('hob',now),powerWatts:950},{...sample('oven',now),powerWatts:450}]);
+ assert.deepEqual(rows.map(r=>r.id),['hob','oven']);
+ const synced=C.readShared(C.encodeShared(rows,now),now,now+30000,now+2000);
+ assert.deepEqual(synced.map(r=>[r.id,r.elapsed,r.powerWatts]),[['hob',2,950],['oven',2,450]]);
 });

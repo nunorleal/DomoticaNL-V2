@@ -21,6 +21,7 @@
   data['casa-nl-realistic-v2']=states.map(r=>({id:r.id,light:r.light,...(BLINDS.includes(r.id)?{blind:r.blind}:{})}));
   const layout=data['casa-nl-room-layout-v1'];if(!object(layout)||Object.keys(layout).length!==IDS.length)fail();
   for(const [id,r]of Object.entries(layout)){if(!IDS.includes(id)||!object(r)||!(r.name===null||(typeof r.name==='string'&&r.name.trim()&&r.name.length<=40))||!Number.isFinite(r.lx)||!Number.isFinite(r.ly)||r.lx<0||r.lx>100||r.ly<0||r.ly>100)fail()}
+  if(Object.hasOwn(data,'casa-nl-kitchen-aeg-associated-v1')&&typeof data['casa-nl-kitchen-aeg-associated-v1']!=='boolean')fail();
   if(Object.hasOwn(data,'casa-nl-kitchen-ids-associated-v1')&&typeof data['casa-nl-kitchen-ids-associated-v1']!=='boolean')fail();
   if(Object.hasOwn(data,'casa-nl-dehumidifier-added-v1')&&typeof data['casa-nl-dehumidifier-added-v1']!=='boolean')fail();
   if(Object.hasOwn(data,'casa-nl-dehumidifier-layout-v1')){try{const core=typeof module==='object'&&module.exports?require('./dehumidifier-core.js'):globalThis.CasaDehumidifierCore;data['casa-nl-dehumidifier-layout-v1']=core.layout(data['casa-nl-dehumidifier-layout-v1'])}catch{fail()}}

@@ -23,7 +23,7 @@ function ActivityCard({row,onOpen}:{row:ActivityRow;onOpen?:OpenActivity}) {
   const countdown=row.kind==="timer";
   let value=`há ${elapsed(row.elapsed)}`;
   if(countdown) value=`${row.estimated?"≈ ":""}${remaining(row.remaining)}`;
-  else if(row.kind==="manual"||row.id==="boiler") value=`há ${remaining(row.elapsed)}`;
+  else if(row.kind==="manual"||["boiler","hob","oven"].includes(row.id)) value=`há ${remaining(row.elapsed)}`;
   else if(row.kind==="charging"&&row.powerWatts!=null) {
     const power=(row.powerWatts/1000).toLocaleString("pt-PT",{maximumFractionDigits:2});
     value=`${power} kW · ${value}`;

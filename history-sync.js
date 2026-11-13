@@ -228,17 +228,26 @@
         if (activitySchemaAvailable) {
           const activity = window.CasaMeteoActivity?.exportShared();
           if (activity) {
+            const publishActivity = async (rpc, payload) => {
+              const result = await client.rpc(rpc, payload);
+              // Older databases reject more than 15 rows before saving anything.
+              if (payload.p_activity.length > 15 && result.error?.code === '22023' &&
+                  result.error.message === 'Too many activity rows' && stillSignedIn() && writerSettings()?.enabled) {
+                return client.rpc(rpc, {...payload, p_activity:payload.p_activity.slice(0,15)});
+              }
+              return result;
+            };
             const activityArgs = {...args, p_activity:activity};
             const rates = window.CasaEnergyCost?.snapshot().dailyRates;
             if (tariffSchemaAvailable && rates) {
-              response = await client.rpc('casa_publish_energy_activity_tariff', {...activityArgs, p_tariff:rates});
+              response = await publishActivity('casa_publish_energy_activity_tariff', {...activityArgs, p_tariff:rates});
               if (!stillSignedIn() || !writerSettings()?.enabled) return;
               if (['PGRST202','42883'].includes(response.error?.code)) {
                 tariffSchemaAvailable = false;
                 response = null;
               }
             }
-            response ??= await client.rpc('casa_publish_energy_and_activity', activityArgs);
+            response ??= await publishActivity('casa_publish_energy_and_activity', activityArgs);
             if (!stillSignedIn() || !writerSettings()?.enabled) return;
             if (['PGRST202','42883'].includes(response.error?.code)) {
               activitySchemaAvailable = false;
