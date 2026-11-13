@@ -5,7 +5,7 @@ from functools import partial
 ROOT=Path(__file__).resolve().parents[1]
 SHIM=r'''<script>
 (()=>{
-localStorage.setItem('casa-nl-lights-restored-v1','true');localStorage.setItem('casa-nl-kitchen-ids-associated-v1','true');
+localStorage.setItem('casa-nl-lights-restored-v1','true');localStorage.setItem('casa-nl-kitchen-ids-associated-v1','true');localStorage.setItem('casa-nl-kitchen-aeg-associated-v1','true');
 localStorage.setItem('casa-nl-door-ids-restored-v1','true');
 localStorage.setItem('casa-nl-temperature-sensors-replaced-v2','true');localStorage.setItem('casa-nl-balcony-sensor-added-v1','true');localStorage.setItem('casa-nl-heater-added-v1','true');localStorage.setItem('casa-nl-dehumidifier-added-v1','true');
 const cloud={schemaVersion:1,server:'https://shelly-1-eu.shelly.cloud',authKey:'',rememberKey:false,bindings:{},lightBindings:{master:{deviceId:'deadbeef1111',channel:0,type:'switch'},bedroom2:{deviceId:'deadbeef2222',channel:1,type:'light'},living:{deviceId:'deadbeef3333',channel:0,type:'switch'}}};

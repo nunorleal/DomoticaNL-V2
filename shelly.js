@@ -74,6 +74,14 @@
  try{if(fanMigrationAllowed&&!localStorage.getItem('casa-nl-dehumidifier-added-v1')){if(config.dehumidifier===undefined){const next=CORE.config({...config,dehumidifier:{deviceId:'88d798',channel:0}});localStorage.setItem(KEY,JSON.stringify(next));config=next}localStorage.setItem('casa-nl-dehumidifier-added-v1','true')}}catch{dehumidifierMessage='Confirme o ID 88d798 e o canal nas definições.'}
 
  try{if(fanMigrationAllowed&&!localStorage.getItem('casa-nl-kitchen-ids-associated-v1')){const next=CORE.config({...config,kitchenBindings:MC.associateKitchen(config.kitchenBindings)});localStorage.setItem(KEY,JSON.stringify(next));config=next;localStorage.setItem('casa-nl-kitchen-ids-associated-v1','true')}}catch{for(const id of MC.KITCHEN_IDS)mediaMessages.set(id,'Confirme os IDs dos equipamentos da cozinha nas definições.')}
+ const kitchenMeterMigration='casa-nl-kitchen-aeg-associated-v1';
+ try{
+  if(fanMigrationAllowed&&!localStorage.getItem(kitchenMeterMigration)){
+   const next=CORE.config({...config,kitchenBindings:MC.kitchenMeterDefaults(config.kitchenBindings)});
+   localStorage.setItem(KEY,JSON.stringify(next));config=next;
+   localStorage.setItem(kitchenMeterMigration,'true');
+  }
+ }catch{for(const id of MC.KITCHEN_METERS)mediaMessages.set(id,'Confirme a associação do canal de medição nas definições.')}
  let savedConfigText=null;try{savedConfigText=localStorage.getItem(KEY)}catch{}
 
  const binding=id=>config.bindings[id]||null;
@@ -314,14 +322,17 @@
   }finally{if(priority)urgentReads--}
  }
  const consumptionReadings=new Map();
- function consumptionBindings(){const all=[];const add=(role,id,b)=>{if(b)all.push({role,id,b:{...b,...(role==='cover'||role==='light'?{kind:role}:{})}})};for(const [id,b]of Object.entries(config.bindings||{}))add('cover',id,b);for(const [id,b]of Object.entries(config.lightBindings||{}))add('light',id,b);for(const [id,b]of Object.entries({...config.mediaBindings,...config.officeBindings,...config.kitchenBindings}))add('media',id,b);for(const role of ['fan','heater','dehumidifier'])add(role,'',config[role]);for(const id of AL.ROLES)add('alarm',id,config.alarm?.[id]);add('energy','',{...window.CasaEnergyCore.binding(config),component:'emeter'});for(const id of ['meter','totalMeter'])add('ev',id,config.ev?.[id]);return all.filter(x=>x.b.deviceId)}
+ function mediaMeterBinding(id,b){return MC.isKitchenMeter(id)?{...b,component:'emeter'}:b}
+ function consumptionBindings(){const all=[];const add=(role,id,b)=>{if(b)all.push({role,id,b:{...b,...(role==='cover'||role==='light'?{kind:role}:{})}})};for(const [id,b]of Object.entries(config.bindings||{}))add('cover',id,b);for(const [id,b]of Object.entries(config.lightBindings||{}))add('light',id,b);for(const [id,b]of Object.entries({...config.mediaBindings,...config.officeBindings,...config.kitchenBindings}))add('media',id,mediaMeterBinding(id,b));for(const role of ['fan','heater','dehumidifier'])add(role,'',config[role]);for(const id of AL.ROLES)add('alarm',id,config.alarm?.[id]);add('energy','',{...window.CasaEnergyCore.binding(config),component:'emeter'});for(const id of ['meter','totalMeter'])add('ev',id,config.ev?.[id]);return all.filter(x=>x.b.deviceId)}
  function consumptionSnapshot(role,id=''){const item=consumptionBindings().find(x=>x.role===role&&x.id===id);if(!item)return {configured:false,reading:null,key:null};const key=CasaConsumptionCore.identity(config.server,item.b),r=consumptionReadings.get(key);return {configured:true,key,reading:r?{...r}:null,fresh:EV.fresh(r)}}
  function updateConsumptionReadings(result,requested){const seen=new Set();for(const {b}of consumptionBindings()){if(!requested.has(b.deviceId.toLowerCase()))continue;const key=CasaConsumptionCore.identity(config.server,b);if(seen.has(key))continue;seen.add(key);const device=result.devices.find(d=>d.id?.toLowerCase()===b.deviceId.toLowerCase()),r={...CasaConsumptionCore.normalize(device,b),fetchedAt:lastFetched};consumptionReadings.set(key,r);window.CasaDailyEnergy?.record(config.server,b,r)}}
  function applyReadings(result,batchIds){
    lastFetched=Date.now();const requested=new Set(batchIds.map(id=>id.toLowerCase())),has=b=>!!b&&requested.has(b.deviceId.toLowerCase());for(const id of batchIds){checkedDevices.set(id,lastFetched);summaryReadFailures.delete(id.toLowerCase())};for(const [id,b]of Object.entries(config.bindings)){if(!has(b))continue;const device=result.devices.find(d=>typeof d.id==='string'&&d.id.toLowerCase()===b.deviceId),d=CORE.status(device,b.channel);readings.set(id,d?{...d,fetchedAt:lastFetched}:{missing:true,online:false,hasCover:false,position:null,state:null,calibrated:null,errors:[],fetchedAt:lastFetched})}
    for(const [id,b]of Object.entries(config.lightBindings||{})){if(!has(b))continue;const device=result.devices.find(d=>typeof d.id==='string'&&d.id.toLowerCase()===b.deviceId),d=CORE.lightStatus(device,b);lightReadings.set(id,d?{...d,fetchedAt:lastFetched}:{missing:true,online:false,hasOutput:false,on:null,fetchedAt:lastFetched});if(CORE.canLightControl?.(lightReadings.get(id)))window.CasaLightAudit?.observe(id,d)}
    for(const [id,b]of Object.entries(config.sensorBindings||{})){if(!has(b))continue;const device=result.devices.find(d=>typeof d.id==='string'&&d.id.toLowerCase()===b.deviceId.toLowerCase()),d=CORE.sensorStatus(device,b);sensorReadings.set(id,d?{...d,fetchedAt:lastFetched}:{missing:true,online:false,temperature:null,humidity:null,battery:null,fetchedAt:lastFetched})}
-   for(const [id,b]of Object.entries({...config.mediaBindings,...config.officeBindings,...config.kitchenBindings})){if(!has(b))continue;const device=result.devices.find(d=>d.id?.toLowerCase()===b.deviceId);mediaReadings[id]={...EV.relayStatus(device,b),meter:EV.meterStatus(device,{...b,component:'auto'}),missing:!device,fetchedAt:lastFetched}}
+   for(const [id,b]of Object.entries({...config.mediaBindings,...config.officeBindings,...config.kitchenBindings})){if(!has(b))continue;const device=result.devices.find(d=>d.id?.toLowerCase()===b.deviceId);const meter=EV.meterStatus(device,{component:'auto',...mediaMeterBinding(id,b)});
+    const status=MC.isKitchenMeter(id)?{online:meter.online,errors:meter.errors}:EV.relayStatus(device,b);
+    mediaReadings[id]={...status,meter,missing:!device,fetchedAt:lastFetched}}
    if(has(config.fan)){const b=config.fan,device=result.devices.find(d=>d.id?.toLowerCase()===b.deviceId);fanReading={...EV.relayStatus(device,b),missing:!device,fetchedAt:lastFetched}}
    if(has(config.heater)){const b=config.heater,device=result.devices.find(d=>d.id?.toLowerCase()===b.deviceId);heaterReading={...EV.relayStatus(device,b),missing:!device,fetchedAt:lastFetched}}
    if(has(config.dehumidifier)){const b=config.dehumidifier,device=result.devices.find(d=>d.id?.toLowerCase()===b.deviceId);dehumidifierReading={...EV.relayStatus(device,b),missing:!device,fetchedAt:lastFetched}}
@@ -414,12 +425,14 @@
   finally{commandCount--;if(version===generation){summary();render();settleEV();summary();schedulePoll()}}
  }
  function mediaBinding(id){return MC.IDS.includes(id)?config.mediaBindings?.[id]:MC.OFFICE_IDS.includes(id)?config.officeBindings?.[id]:MC.KITCHEN_IDS.includes(id)?config.kitchenBindings?.[id]:null}
- function mediaSnapshot(id){const d=MC.state(mediaBinding(id),mediaReadings[id],Date.now(),MC.activityThreshold(id)),working=blockingRead()||commandCount>0||groupBusy||lightGroupBusy;return {...d,label:d.stale&&d.lastReading?'Última leitura · '+(d.lastReading.on?'com energia':'sem energia'):d.label,busy:working,pending:mediaTargets.has(id),canControl:d.canControl&&!working&&!mediaTargets.has(id)&&!dirty()&&!!key&&!!config.server,message:mediaMessages.get(id)||'',reading:mediaReadings[id]?{...mediaReadings[id]}:null}}
- function mediaEnsureFresh(ids=MC.IDS){if(ids.some(id=>mediaBinding(id)&&(!MC.state(mediaBinding(id),mediaReadings[id]).canControl||Date.now()-mediaReadings[id].fetchedAt>10000)))return refresh({quiet:true,ids:ids.map(id=>mediaBinding(id)?.deviceId)})}
+ function mediaState(id,b,r,now=Date.now()){return MC.isKitchenMeter(id)?MC.kitchenMeterState(id,b,r,now):MC.state(b,r,now,MC.activityThreshold(id))}
+ function mediaReady(id,b,r,now){const d=mediaState(id,b,r,now);return MC.isKitchenMeter(id)?d.ready:d.canControl}
+ function mediaSnapshot(id){const d=mediaState(id,mediaBinding(id),mediaReadings[id]),working=blockingRead()||commandCount>0||groupBusy||lightGroupBusy;return {...d,label:d.stale&&d.lastReading?'Última leitura · '+(d.lastReading.on?'com energia':'sem energia'):d.label,busy:working,pending:mediaTargets.has(id),canControl:d.canControl&&!working&&!mediaTargets.has(id)&&!dirty()&&!!key&&!!config.server,message:mediaMessages.get(id)||'',reading:mediaReadings[id]?{...mediaReadings[id]}:null}}
+ function mediaEnsureFresh(ids=MC.IDS){if(ids.some(id=>mediaBinding(id)&&(!mediaReady(id,mediaBinding(id),mediaReadings[id])||Date.now()-mediaReadings[id].fetchedAt>10000)))return refresh({quiet:true,ids:ids.map(id=>mediaBinding(id)?.deviceId)})}
  function settleMedia(){for(const [id,target]of mediaTargets)if(confirmationCurrent('media:'+id,mediaReadings[id])&&MC.state(mediaBinding(id),mediaReadings[id]).on===target){mediaTargets.delete(id);mediaMessages.set(id,'Alimentação '+(target?'ligada':'desligada')+' · estado confirmado pelo Shelly.')}}
  function commandMedia(id,on){if(MC.IDS.includes(id))return commandMediaDevice(id,on,false)}
  function commandOffice(id,on){if(MC.OFFICE_IDS.includes(id))return commandMediaDevice(id,on,true)}
- function commandKitchen(id,on){if(MC.KITCHEN_IDS.includes(id))return commandMediaDevice(id,on,'kitchen')}
+ function commandKitchen(id,on){if(MC.KITCHEN_IDS.includes(id)&&!MC.isKitchenMeter(id))return commandMediaDevice(id,on,'kitchen')}
  function kitchenEnsureFresh(id){return mediaEnsureFresh(id?[id]:MC.KITCHEN_IDS)}
  function officeEnsureFresh(){return mediaEnsureFresh(MC.OFFICE_IDS)}
  async function commandMediaDevice(id,on,office){
@@ -495,7 +508,7 @@
   for(const [id,b]of Object.entries(config.sensorBindings||{})){const r=sensorReading(id);add(b,r,r?.hasSensor&&Number.isFinite(r.fetchedAt)&&now>=r.fetchedAt&&now-r.fetchedAt<=120000&&(Number.isFinite(r.temperature)||Number.isFinite(r.humidity)),120000)}
   for(const [b,r]of [[config.fan,fanReading],[config.heater,heaterReading],[config.dehumidifier,dehumidifierReading]])add(b,r,AL.fresh(r,now));
   for(const role of AL.ROLES)add(config.alarm?.[role],alarmReadings[role],AL.fresh(alarmReadings[role],now));
-  for(const [id,b]of Object.entries({...config.mediaBindings,...config.officeBindings,...config.kitchenBindings}))add(b,mediaReadings[id],MC.state(b,mediaReadings[id],now).canControl);
+  for(const [id,b]of Object.entries({...config.mediaBindings,...config.officeBindings,...config.kitchenBindings}))add(b,mediaReadings[id],mediaReady(id,b,mediaReadings[id],now));
   for(const role of EV.ROLES){const r=evReadings[role];add(config.ev?.[role],r,role==='relay'?EV.canControl(r,now):EV.fresh(r,now)&&r?.hasMeter&&(Number.isFinite(r.power)||Number.isFinite(r.energyKWh)))}
   for(const [id,b]of Object.entries(config.windowBindings||{}))add(b,windowReadings[id],typeof CasaDoorCore.state(windowReadings[id],now)==='boolean');
   add(config.door,doorReading,typeof CasaDoorCore.state(doorReading,now)==='boolean');add(config.cellarDoor,cellarDoorReading,typeof CasaDoorCore.state(cellarDoorReading,now)==='boolean');
@@ -514,7 +527,7 @@
   for(const [id,b]of Object.entries(config.sensorBindings||{})){const r=sensorReading(id);add('sensor',id,id,b,r,r?.hasSensor&&(Number.isFinite(r.temperature)||Number.isFinite(r.humidity)),120000,'Sensor · '+name(id))}
   for(const kind of ['fan','heater','dehumidifier']){const r={fan:fanReading,heater:heaterReading,dehumidifier:dehumidifierReading}[kind],room=kind==='fan'?'cellar':kind==='heater'?window.CasaHeater?.roomId()||'master':window.CasaDehumidifier?.roomId()||'bath1';add(kind,kind,room,config[kind],r,AL.fresh(r,now),45000,{fan:'Ventoinha da cave',heater:'Termoventilador',dehumidifier:'Desumidificador'}[kind])}
   for(const role of AL.ROLES)add('alarm',role,'cellar',config.alarm?.[role],alarmReadings[role],AL.fresh(alarmReadings[role],now),45000,'Alarme · '+(role==='arm'?'Armação':'Disparo'));
-  for(const [kind,bindings,room]of [['media',config.mediaBindings,'living'],['office',config.officeBindings,'bedroom2'],['kitchen',config.kitchenBindings,'kitchen']])for(const [id,b]of Object.entries(bindings||{}))add(kind,id,room,b,mediaReadings[id],MC.state(b,mediaReadings[id],now).canControl,45000,MC.NAMES[id]);
+  for(const [kind,bindings,room]of [['media',config.mediaBindings,'living'],['office',config.officeBindings,'bedroom2'],['kitchen',config.kitchenBindings,'kitchen']])for(const [id,b]of Object.entries(bindings||{}))add(kind,id,room,b,mediaReadings[id],mediaReady(id,b,mediaReadings[id],now),45000,MC.NAMES[id]);
   for(const role of EV.ROLES){const r=evReadings[role];add('ev',role,'cellar',config.ev?.[role],r,role==='relay'?EV.canControl(r,now):EV.fresh(r,now)&&r?.hasMeter&&(Number.isFinite(r.power)||Number.isFinite(r.energyKWh)),45000,'Carregamento · '+({relay:'Alimentação',meter:'Medidor',totalMeter:'Total'}[role]||role))}
   for(const [id,b]of Object.entries(config.windowBindings||{})){const r=windowReadings[id],value=CasaDoorCore.state(r,now),row=add('window',id,id,b,r,typeof value==='boolean',45000,'Janela · '+name(id));windows.push({...row,configured:true,value:row.status==='ready'?value:null})}
   add('door','entrance','living',config.door,doorReading,typeof CasaDoorCore.state(doorReading,now)==='boolean',45000,'Porta de entrada');add('door','cellar','cellar',config.cellarDoor,cellarDoorReading,typeof CasaDoorCore.state(cellarDoorReading,now)==='boolean',45000,'Porta da cave');

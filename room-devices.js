@@ -2,7 +2,7 @@
 (function(){
  'use strict';const $=id=>document.getElementById(id),C=CasaRoomDevicesCore;const inventories=new WeakMap();
  const powerKinds=['light','media','office','kitchen','heater','dehumidifier','fan','alarm'];
- const isPower=e=>powerKinds.includes(e.kind)&&(e.kind!=='alarm'||e.id==='arm');
+ const isPower=e=>powerKinds.includes(e.kind)&&(e.kind!=='alarm'||e.id==='arm')&&!(e.kind==='kitchen'&&CasaMediaCore.isKitchenMeter(e.id));
  const labels={light:'Iluminação',sensor:'Temperatura e humidade',cover:'Estore',window:'Janela',door:'Porta de entrada',heater:'Termoventilador',dehumidifier:'Desumidificador',fan:'Ventoinha'};
  const portable=()=>({heaterRoom:window.CasaHeater?.roomId(),dehumidifierRoom:window.CasaDehumidifier?.roomId()});
  const number=(v,unit)=>Number.isFinite(v)?v.toLocaleString('pt-PT',{maximumFractionDigits:1})+' '+unit:null;
@@ -17,6 +17,7 @@
  }
  function caption(e,d,room){
   if(e.kind==='alarm')return !d.configured?'Por associar':e.id==='arm'?(d.pending?'A confirmar…':d.on===true?'Armado':d.on===false?'Desarmado':'Por confirmar'):(d.on===true?'A tocar':d.on===false?'Sem disparo':'Por confirmar');
+  if(e.kind==='kitchen'&&CasaMediaCore.isKitchenMeter(e.id))return [d.label,number(d.powerWatts,'W')].filter(Boolean).join(' · ');
   if(isPower(e)){
    if(!d.configured&&!d.simulation)return 'Por associar';
    const relay=['media','office','kitchen'].includes(e.kind),onLabel=relay?'Com energia':'Ligado',offLabel=relay?'Sem energia':'Desligado';

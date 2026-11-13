@@ -38,7 +38,7 @@ begin
      or octet_length(p_activity::text) > 8192 then
     raise exception 'Invalid activity snapshot' using errcode = '22023';
   end if;
-  if jsonb_array_length(p_activity) > 15 then
+  if jsonb_array_length(p_activity) > 17 then
     raise exception 'Too many activity rows' using errcode = '22023';
   end if;
 

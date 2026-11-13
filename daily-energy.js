@@ -22,7 +22,7 @@
   if(!Number.isFinite(r.energyKWh)||r.energyKWh<0)return;
   if(ledger.record(key,r.energyKWh,r.fetchedAt)){dirty=true;if(pending===null)pending=setTimeout(flush,1000)}
  }
- function binding(role,id){let c={};try{c=JSON.parse(localStorage.getItem('casa-nl-shelly-cloud-v1')||'{}')}catch{}let b=role==='energy'?window.CasaEnergyCore.binding(c):role==='cover'?c.bindings?.[id]:role==='light'?c.lightBindings?.[id]:role==='media'?{...c.mediaBindings,...c.officeBindings,...c.kitchenBindings}[id]:role==='ev'?c.ev?.[id||'meter']:role==='alarm'?c.alarm?.[id]:c[role];if(b)b={...b,...(role==='energy'?{component:'emeter'}:['cover','light'].includes(role)?{kind:role}:{})};return {server:c.server,b}}
+ function binding(role,id){let c={};try{c=JSON.parse(localStorage.getItem('casa-nl-shelly-cloud-v1')||'{}')}catch{}let b=role==='energy'?window.CasaEnergyCore.binding(c):role==='cover'?c.bindings?.[id]:role==='light'?c.lightBindings?.[id]:role==='media'?{...c.mediaBindings,...c.officeBindings,...c.kitchenBindings}[id]:role==='ev'?c.ev?.[id||'meter']:role==='alarm'?c.alarm?.[id]:c[role];if(b)b={...b,...(role==='energy'||role==='media'&&window.CasaMediaCore?.isKitchenMeter(id)?{component:'emeter'}:['cover','light'].includes(role)?{kind:role}:{})};return {server:c.server,b}}
  function preferSharedToday(local,remote){
   // The emitter owns the shared daily total. A receiver may have started counting later.
   return remote?.from!=null&&(remote.observed||local?.from==null);

@@ -28,3 +28,21 @@
 [data-working="true"] .kitchen-flame{animation:kitchen-boiler-heat 1.8s ease-in-out infinite}
 @keyframes kitchen-boiler-heat{50%{opacity:.4}}
 @media(prefers-reduced-motion:reduce){[data-working="true"] .kitchen-flame{animation:none}}
+
+.kitchen-meter-trigger{min-width:0;min-height:0;border-radius:4px}
+#plan-stage .kitchen-meter-trigger:is(:hover,:focus-visible){outline-offset:-2px}
+.kitchen-meter-trigger .kitchen-working-symbol{
+ place-items:center;width:auto;height:min(88%,25px);aspect-ratio:1;
+ box-sizing:border-box;border-radius:6px;padding:3px;
+}
+.kitchen-meter-trigger:is([data-working="true"],:hover,:focus-visible) .kitchen-working-symbol{display:grid}
+.kitchen-meter-trigger[data-working="true"] .kitchen-working-symbol{color:#bdfbe0;border-color:#80dfa8;box-shadow:0 0 8px #2eda8955}
+.kitchen-working-power{display:none}
+.kitchen-meter-trigger[data-working="true"]:not(.offline-symbol-alert) .kitchen-working-power{
+ position:absolute;top:50%;left:calc(100% + 3px);transform:translateY(-50%);display:block;
+ padding:2px 5px;border:1px solid #80dfa8;border-radius:6px;background:var(--banner-glass);
+ color:#d3fce7;font-size:clamp(8px,1.4vw,11px);font-weight:700;white-space:nowrap
+}
+.kitchen-meter-trigger[data-working="true"] .kitchen-working-symbol svg{width:100%;height:100%}
+.kitchen-device-preview{display:block;width:min(190px,70%);max-height:150px;object-fit:contain;margin:8px auto}
+.kitchen-device-preview[hidden],#kitchen-device-power[hidden]{display:none}

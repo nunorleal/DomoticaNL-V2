@@ -1,11 +1,27 @@
 /* Multimedia relay associations. Relay power is distinct from appliance operating state. */
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory();else root.CasaMediaCore=factory()})(typeof window==='undefined'?globalThis:window,function(){
- 'use strict';const NAMES={tv:'Televisão LG',soundbar:'Soundbar Polk',playstation:'PlayStation 5',vodafone:'Router Vodafone',unifi:'UniFi Dream Router',monitor:'Monitor',apollo:'Placa de som Apollo',terramaster:'Servidor TerraMaster',blackdrive:'Disco rígido preto',dishwasher:'Máquina de lavar loiça',washer:'Máquina de lavar roupa',boiler:'Caldeira Bosch'},IDS=['tv','soundbar','playstation','vodafone','unifi'],OFFICE_IDS=['monitor','apollo','terramaster','blackdrive'],KITCHEN_IDS=['dishwasher','washer','boiler'];
+ 'use strict';const NAMES={tv:'Televisão LG',soundbar:'Soundbar Polk',playstation:'PlayStation 5',vodafone:'Router Vodafone',unifi:'UniFi Dream Router',monitor:'Monitor',apollo:'Placa de som Apollo',terramaster:'Servidor TerraMaster',blackdrive:'Disco rígido preto',dishwasher:'Máquina de lavar loiça',washer:'Máquina de lavar roupa',boiler:'Caldeira Bosch',hob:'Placa de indução AEG',oven:'Forno / micro-ondas AEG'},IDS=['tv','soundbar','playstation','vodafone','unifi'],OFFICE_IDS=['monitor','apollo','terramaster','blackdrive'],KITCHEN_METERS=['hob','oven'],KITCHEN_IDS=['dishwasher','washer','boiler',...KITCHEN_METERS];
+ const isKitchenMeter=id=>KITCHEN_METERS.includes(id);
+ function kitchenMeterDefaults(existing){return {
+  hob:{deviceId:'349454745b21',channel:0},
+  oven:{deviceId:'349454745b21',channel:1},
+  ...existing
+ }}
  function config(value,{deviceId,used=new Set(),ids=IDS}){if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(k=>!ids.includes(k)))throw Error('Associações de multimédia inválidas.');const result={};for(const [id,b]of Object.entries(value)){if(!b||!Number.isInteger(b.channel)||b.channel<0||b.channel>15)throw Error('Canal de multimédia inválido.');const device=deviceId(b.deviceId),pair=device+':'+b.channel;if(used.has(pair))throw Error('A saída de '+NAMES[id]+' já está associada a outro equipamento.');used.add(pair);result[id]={deviceId:device,channel:b.channel}}return result}
  const TV_REGEN_MIN=5,TV_REGEN_MAX=25;
- function activityThreshold(id){return id==='tv'?TV_REGEN_MAX:KITCHEN_IDS.includes(id)?10:0}
+ function activityThreshold(id){return id==='tv'?TV_REGEN_MAX:id!=='hob'&&KITCHEN_IDS.includes(id)?10:0}
  function activityFromPower(watts,threshold=0){return typeof watts==='number'&&Number.isFinite(watts)&&watts>=0&&Number.isFinite(threshold)&&threshold>=0?watts>threshold:null}
  function state(binding,reading,now=Date.now(),threshold=0){const valid=!!(binding&&reading?.online&&!reading.error&&!reading.missing&&reading.hasOutput&&!reading.errors?.length&&typeof reading.on==='boolean'&&Number.isFinite(reading.fetchedAt)&&now>=reading.fetchedAt&&now-reading.fetchedAt<=45000),on=valid?reading.on:null,m=reading?.meter,meterFresh=!!(binding&&reading?.online&&!reading.error&&!reading.missing&&!reading.errors?.length&&m?.hasMeter&&m.online&&!m.missing&&!m.error&&!m.errors?.length&&Number.isFinite(reading.fetchedAt)&&now>=reading.fetchedAt&&now-reading.fetchedAt<=45000),powerWatts=meterFresh&&Number.isFinite(m.power)?m.power:null,energyKWh=meterFresh&&Number.isFinite(m.energyKWh)?m.energyKWh:null;const lastReading=binding&&reading?.hasOutput&&typeof reading.on==='boolean'&&!reading.errors?.length&&Number.isFinite(reading.fetchedAt)?{on:reading.on,powerWatts:m?.hasMeter&&Number.isFinite(m.power)?m.power:null,energyKWh:m?.hasMeter&&Number.isFinite(m.energyKWh)?m.energyKWh:null,fetchedAt:reading.fetchedAt}:null;return {configured:!!binding,on,powerWatts,energyKWh,lastReading,stale:!!lastReading&&(!valid||!meterFresh&&(Number.isFinite(lastReading.powerWatts)||Number.isFinite(lastReading.energyKWh))),activity:activityFromPower(powerWatts,threshold),canControl:valid,label:!binding?'Por associar':!valid?'Por confirmar':on?'Com energia':'Sem energia'}}
+ function kitchenMeterState(id,binding,reading,now=Date.now()){
+  const meter=reading?.meter, fetchedAt=reading?.fetchedAt;
+  const power=Number.isFinite(meter?.power)&&meter.power>=0?meter.power:null;
+  const energy=Number.isFinite(meter?.energyKWh)?meter.energyKWh:null;
+  const ready=!!(binding&&reading?.online&&meter?.hasMeter&&!reading.error&&!reading.missing&&!reading.errors?.length&&
+   Number.isFinite(fetchedAt)&&now>=fetchedAt&&now-fetchedAt<=45000&&(power!==null||energy!==null));
+  const activity=ready?activityFromPower(power,activityThreshold(id)):null;
+  return {configured:!!binding,on:null,ready,canControl:false,activity,powerWatts:ready?power:null,energyKWh:ready?energy:null,
+   lastReading:null,stale:false,label:!binding?'Por associar':activity===null?'Por confirmar':activity?'A trabalhar':'Sem atividade'};
+ }
  function tvRegenerating(d){return !!(d?.configured&&d.on===true&&!d.stale&&Number.isFinite(d.powerWatts)&&d.powerWatts>=TV_REGEN_MIN&&d.powerWatts<=TV_REGEN_MAX)}
  function screenWorking(id,d){return !!(['tv','monitor'].includes(id)&&d?.configured&&d.on===true&&!d.stale&&Number.isFinite(d.powerWatts)&&d.powerWatts>(id==='tv'?TV_REGEN_MAX:2))}
  function reflectionStrength(darkness=0,electric=0){const clamp=v=>Number.isFinite(v)?Math.max(0,Math.min(1,v)):0;return Math.min(1,.6+.25*clamp(darkness)+.7*clamp(electric))}
@@ -14,6 +30,6 @@
  function associateOffice(existing){return {monitor:{deviceId:'441db8',channel:0},apollo:{deviceId:'e43ad8',channel:0},terramaster:{deviceId:'e9df12',channel:0},blackdrive:{deviceId:'bb8ac4',channel:0},...existing}}
  function officeCommand(bindings,id,on){if(!OFFICE_IDS.includes(id)||!bindings?.[id]||typeof on!=='boolean')throw Error('Comando da secretária inválido.');return {id:bindings[id].deviceId,channel:bindings[id].channel,type:'switch',on}}
  function associateKitchen(existing){return {dishwasher:{deviceId:'e465b8b1526c',channel:0},washer:{deviceId:'485519eb7022',channel:0},boiler:{deviceId:'bc1c2a',channel:0},...existing}}
- function kitchenCommand(bindings,id,on){if(!KITCHEN_IDS.includes(id)||!bindings?.[id]||typeof on!=='boolean')throw Error('Comando da cozinha inválido.');return {id:bindings[id].deviceId,channel:bindings[id].channel,type:'switch',on}}
- return {NAMES,IDS,OFFICE_IDS,KITCHEN_IDS,associateKitchen,kitchenCommand,config,state,command,officeCommand,associateOffice,activityFromPower,activityThreshold,tvRegenerating,screenWorking,reflectionStrength,roomLighting};
+ function kitchenCommand(bindings,id,on){if(isKitchenMeter(id)||!KITCHEN_IDS.includes(id)||!bindings?.[id]||typeof on!=='boolean')throw Error('Comando da cozinha inválido.');return {id:bindings[id].deviceId,channel:bindings[id].channel,type:'switch',on}}
+ return {NAMES,IDS,OFFICE_IDS,KITCHEN_IDS,KITCHEN_METERS,isKitchenMeter,kitchenMeterDefaults,kitchenMeterState,associateKitchen,kitchenCommand,config,state,command,officeCommand,associateOffice,activityFromPower,activityThreshold,tvRegenerating,screenWorking,reflectionStrength,roomLighting};
 });

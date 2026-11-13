@@ -8,7 +8,7 @@ test('kitchen rejects invalid roles, channels, IDs and aliases of any existing a
  for(const extra of [{fan:bindings.boiler},{mediaBindings:{tv:bindings.boiler}},{officeBindings:{monitor:bindings.boiler}},{lightBindings:{master:{...bindings.boiler,type:'switch'}}},{ev:{relay:bindings.boiler}}])assert.throws(()=>C.config({...base,...extra,kitchenBindings:bindings}));assert.throws(()=>C.config({...base,kitchenBindings:{washer:bindings.boiler,boiler:bindings.boiler}}));
 });
 test('kitchen commands explicitly control just the selected relay; no living-room, office or implicit toggle commands',async()=>{
- for(const id of M.KITCHEN_IDS)for(const on of [true,false])assert.deepEqual(M.kitchenCommand(bindings,id,on),{id:bindings[id].deviceId,channel:0,type:'switch',on});
+ for(const id of Object.keys(bindings))for(const on of [true,false])assert.deepEqual(M.kitchenCommand(bindings,id,on),{id:bindings[id].deviceId,channel:0,type:'switch',on});
  for(const id of ['tv','monitor','fan'])assert.throws(()=>M.kitchenCommand(bindings,id,true));assert.throws(()=>M.kitchenCommand(bindings,'washer','toggle'));assert.throws(()=>M.command(bindings,'washer',true));assert.throws(()=>M.officeCommand(bindings,'boiler',false));
  let sends=0;const t=T.create({interval:0,fetch:async()=>{sends++;return {status:400,text:async()=>JSON.stringify({error:'DEVICE_FAILED_COMMAND'})}}});await assert.rejects(t.request({server:base.server,authKey:'FAKE'},'light',M.kitchenCommand(bindings,'boiler',false)),/recusou/);assert.equal(sends,1);
 });
@@ -19,7 +19,7 @@ test('kitchen backup exports all IDs, preserves them when importing older files 
 });
 test('all three kitchen appliances work strictly above 10 W, independent of relay power and never from stale or missing consumption',()=>{
  const reading={online:true,hasOutput:true,on:true,errors:[],fetchedAt:100000,meter:{online:true,hasMeter:true,power:10,energyKWh:1,errors:[]}};
- for(const id of M.KITCHEN_IDS){
+ for(const id of Object.keys(bindings)){
   const threshold=M.activityThreshold(id);assert.equal(threshold,10);
   for(const watts of [0,4,9.999,10])assert.equal(M.state(bindings[id],{...reading,meter:{...reading.meter,power:watts}},100001,threshold).activity,false);
   for(const watts of [10.001,42.5,2000])assert.equal(M.state(bindings[id],{...reading,meter:{...reading.meter,power:watts}},100001,threshold).activity,true);
@@ -27,4 +27,34 @@ test('all three kitchen appliances work strictly above 10 W, independent of rela
   assert.equal(M.state(bindings[id],reading,100001,threshold).on,true);
  }
  assert.equal(M.activityThreshold('tv'),25);assert.equal(M.activityThreshold('boiler'),10);
+});
+test('two AEG channels share a single Shelly EM read and cannot control its relay',()=>{
+ const E=require('../ev-core.js'),consumption=require('../consumption-core.js'),deviceId='deadbeef0022';
+ const b={hob:{deviceId,channel:0},oven:{deviceId,channel:1}};
+ const cfg=C.config({...base,kitchenBindings:M.kitchenMeterDefaults(b)});
+ assert.deepEqual(cfg.kitchenBindings,b);
+ assert.deepEqual(C.deviceIds(cfg),[deviceId]);
+ assert.deepEqual(Object.values(M.kitchenMeterDefaults()).map(v=>v.channel),[0,1]);
+ const response={online:true,status:{relays:[{ison:true}],emeters:[{power:950,total:18400},{power:4,total:2000}]}};
+ const now=100000;
+ for(const [id,channel,power,kwh,active] of [['hob',0,950,18.4,true],['oven',1,4,2,false]]){
+  const binding={...b[id],component:'emeter'},meter=E.meterStatus(response,binding);
+  assert.deepEqual(JSON.parse(consumption.identity(base.server,binding)),[base.server,deviceId,'emeter',channel]);
+  const reading={online:meter.online,meter,fetchedAt:now};
+  const d=M.kitchenMeterState(id,binding,reading,now);
+  assert.equal(d.ready,true);
+  assert.equal(d.powerWatts,power);
+  assert.equal(d.energyKWh,kwh);
+  assert.equal(d.activity,active);
+  assert.equal(d.canControl,false);
+  assert.equal(d.on,null);
+  for(const watts of [0,1,10,10.01]){
+   const result=M.kitchenMeterState(id,binding,{...reading,meter:{...meter,power:watts}},now);
+   assert.equal(result.activity,watts>(id==='oven'?10:0));
+   assert.equal(result.powerWatts,watts);
+  }
+  assert.equal(M.kitchenMeterState(id,binding,reading,now+45001).activity,null);
+  assert.equal(M.kitchenMeterState(id,binding,{...reading,online:false},now).powerWatts,null);
+  assert.throws(()=>M.kitchenCommand(b,id,true));
+ }
 });

@@ -53,6 +53,8 @@
   washer:()=>[0,()=>window.CasaKitchen.open('washer')],
   dishwasher:()=>[0,()=>window.CasaKitchen.open('dishwasher')],
   boiler:()=>[0,()=>window.CasaKitchen.open('boiler')],
+  hob:()=>[0,()=>window.CasaKitchen.open('hob')],
+  oven:()=>[0,()=>window.CasaKitchen.open('oven')],
   heater:()=>[0,window.CasaHeater?.open],
   dehumidifier:()=>[0,window.CasaDehumidifier?.open],
   ev:()=>[-1,window.CasaEV?.open],
