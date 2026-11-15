@@ -1,6 +1,6 @@
 /* Cached device readings only. Isolated per house; never calls Cloud or actuators. */
 (function(){'use strict';const C=window.CasaMeteoActivityCore;let storage=null;try{storage=localStorage}catch{}const tracker=C.create({storage,key:'casa-nl-meteo-activity-t2-v1'});
-function configuration(){try{return JSON.parse(localStorage.getItem('casa-nl-shelly-cloud-v1')||'{}')}catch{return {}}}
+function configuration(){try{return window.ShellyCore.activeConfig(JSON.parse(localStorage.getItem('casa-nl-shelly-cloud-v1')||'{}'))}catch{return {}}}
 function bindings(c){return {hob:c.kitchenBindings?.hob,oven:c.kitchenBindings?.oven,boiler:c.kitchenBindings?.boiler,heater:c.heater,dehumidifier:c.dehumidifier,washer:c.kitchenBindings?.washer,dishwasher:c.kitchenBindings?.dishwasher,tv:c.mediaBindings?.tv,ev:c.ev?.meter,...Object.fromEntries(['playstation','soundbar','vodafone','unifi'].map(id=>[id,c.mediaBindings?.[id]])),...Object.fromEntries(['monitor','apollo','terramaster','blackdrive'].map(id=>[id,c.officeBindings?.[id]]))}}
 function collect(){const c=configuration(),map=bindings(c);const api=window.CasaShelly,timer=id=>api?.[id+'Snapshot']?.()||{},washer=api?.mediaSnapshot('washer')||{},dishwasher=api?.mediaSnapshot('dishwasher')||{},tv=api?.mediaSnapshot('tv')||{},ev=api?.evSnapshot()||{},boiler=api?.mediaSnapshot('boiler')||{};
 const identity=id=>map[id]?JSON.stringify([c.server,map[id].deviceId,map[id].channel]):'';

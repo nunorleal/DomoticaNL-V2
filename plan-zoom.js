@@ -17,7 +17,7 @@
    if(e.pointerType!=='touch'||blocked())return;
    points.set(e.pointerId,{x:e.clientX,y:e.clientY,target:e.target});
    if(points.size>=2){if(points.size===2){cancelTargets();gesture={mode:'pinch',start:midpoint(),state:{...s.state}}}stop(e);for(const id of points.keys())s.view.setPointerCapture(id);return}
-   if(s.state.scale>1&&!e.target.closest('.room-pin,.basement-movable,.heater-object,.dehumidifier-object')){gesture={mode:'pan',start:{x:e.clientX,y:e.clientY},state:{...s.state},moved:false};stop(e);s.view.setPointerCapture(e.pointerId)}
+   if(s.state.scale>1&&!e.target.closest('.room-pin,.basement-movable,.heater-object,.dehumidifier-object,.christmas-tree-object')){gesture={mode:'pan',start:{x:e.clientX,y:e.clientY},state:{...s.state},moved:false};stop(e);s.view.setPointerCapture(e.pointerId)}
   },true);
   s.view.addEventListener('pointermove',e=>{
    const p=points.get(e.pointerId);if(!p)return;p.x=e.clientX;p.y=e.clientY;if(!gesture)return;stop(e);
@@ -31,7 +31,7 @@
    const old=gesture;
    if(old.mode==='pinch'||old.moved){stop(e);suppressUntil=performance.now()+700}
    if(old.mode==='pan'&&e.type==='pointerup'&&old.moved){const dy=e.clientY-old.start.y,g=geometry(s),limit=C.limits(old.state.scale,g.base,g.viewport).y,atEdge=dy<0?old.state.y<=-limit+1:old.state.y>=limit-1;
-    if(atEdge&&!blocked()){const next=CasaFloorsCore.swipe(CasaFloors.current(),e.clientX-old.start.x,dy);CasaFloors.show(next)}
+    if(atEdge&&!blocked()){const next=CasaFloorsCore.swipe(CasaFloors.current(),e.clientX-old.start.x,dy,true);CasaFloors.show(next)}
    }
    if(points.size===0)gesture=null;else if(old.mode==='pinch')gesture={mode:'pinch',start:old.start,state:old.state};
   }

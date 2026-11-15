@@ -11,6 +11,32 @@
  function deviceId(value){const id=String(value).trim().toLowerCase().replace(/:/g,'');if(!/^[a-f0-9]{6,32}$/.test(id))throw Error('O ID deve ser o Device ID hexadecimal do Shelly (não o nome nem o endereço IP).');return id}
  // BLU Cloud IDs are distinct from hexadecimal actuator IDs. Preserve XB on reads.
  function statusDeviceId(value){const raw=String(value).trim();if(/^XB[0-9]{1,15}$/i.test(raw)&&BigInt(raw.slice(2))<=281474976710655n)return 'XB'+raw.slice(2);return deviceId(value)}
+ const Disable=typeof module==='object'&&module.exports?require('./shelly-disabled.js'):globalThis.CasaShellyDisabled;
+ function disabledFields(){
+  const media=typeof module==='object'&&module.exports?require('./media-core.js'):globalThis.CasaMediaCore;
+  const windows=typeof module==='object'&&module.exports?require('./windows-core.js'):globalThis.CasaWindowsCore;
+  const group=(ids,key,field)=>ids.map(id=>[field(id),[key,id]]);
+  return Object.fromEntries([
+   ...group(ROOM_IDS,'bindings',id=>'shelly-id-'+id),
+   ...group(LIGHT_ROOM_IDS,'lightBindings',id=>'shelly-light-id-'+id),
+   ...group(SENSOR_ROOM_IDS,'sensorBindings',id=>'shelly-sensor-id-'+id),
+   ...group(windows.IDS,'windowBindings',id=>'window-'+id+'-device'),
+   ...group(media.IDS,'mediaBindings',id=>'media-id-'+id),
+   ...group(media.OFFICE_IDS,'officeBindings',id=>'office-id-'+id),
+   ...group(media.KITCHEN_IDS,'kitchenBindings',id=>'kitchen-id-'+id),
+   ...group(['arm','trigger'],'alarm',id=>'alarm-'+id+'-id'),
+   ...group(['meter','totalMeter','relay'],'ev',id=>'ev-'+id+'-id'),
+   ...['fan','heater','dehumidifier'].map(id=>[id+'-id',[id]]),
+   ['christmas-tree-id',['christmasTree']],['door-device',['door']],['cellar-door-device',['cellarDoor']],['energy-device',['homeEnergy']]
+  ]);
+ }
+ function activeConfig(config){
+  if(!config.disabledShellys?.length)return config;
+  const active=Disable.active(config,disabledFields());
+  // EnergyCore applies the flag without losing the contracted power.
+  if(config.homeEnergy!==undefined)active.homeEnergy=config.homeEnergy;
+  return active;
+ }
  function config(value){if(!value||typeof value!=='object'||Array.isArray(value)||value.schemaVersion!==1)throw Error('Configuração Shelly incompatível.');const host=value.server?server(value.server):'';if(typeof value.authKey!=='string'||value.authKey.length>4096||typeof value.rememberKey!=='boolean'||!value.bindings||typeof value.bindings!=='object'||Array.isArray(value.bindings))throw Error('Configuração Shelly inválida.');const bindings={},used=new Set();for(const [room,b]of Object.entries(value.bindings)){if(!ROOM_IDS.includes(room)||!b||!Number.isInteger(b.channel)||b.channel<0||b.channel>15)throw Error('Associação de estore inválida.');const id=deviceId(b.deviceId),key=id+':'+b.channel;if(used.has(key))throw Error('O mesmo Shelly e canal não pode estar associado a dois estores.');used.add(key);bindings[room]={deviceId:id,channel:b.channel}}const lightBindings={};
   if(value.lightBindings!==undefined){
    if(!value.lightBindings||typeof value.lightBindings!=='object'||Array.isArray(value.lightBindings))throw Error('Associações de candeeiros inválidas.');
@@ -34,7 +60,8 @@
     sensorPairs.add(pair);sensorBindings[room]={deviceId:id,temperatureChannel,humidityChannel,...(b.type!==undefined?{type:b.type}:{})};
    }
   }
-  const homeEnergy=value.homeEnergy===undefined?undefined:(typeof module==='object'&&module.exports?require('./energy-core.js'):globalThis.CasaEnergyCore).config(value.homeEnergy,deviceId);
+  const disabledShellys=value.disabledShellys===undefined?undefined:Disable.normalize(value.disabledShellys,disabledFields());
+  const homeEnergy=value.homeEnergy===undefined?undefined:(typeof module==='object'&&module.exports?require('./energy-core.js'):globalThis.CasaEnergyCore).config(value.homeEnergy,deviceId,disabledShellys?.includes('energy-device'));
   const door=value.door==null?undefined:(typeof module==='object'&&module.exports?require('./door-core.js'):globalThis.CasaDoorCore).config(value.door,statusDeviceId);
   const cellarDoor=value.cellarDoor==null?undefined:(typeof module==='object'&&module.exports?require('./door-core.js'):globalThis.CasaDoorCore).config(value.cellarDoor,statusDeviceId);
   if(door&&cellarDoor&&door.deviceId===cellarDoor.deviceId&&door.source===cellarDoor.source&&door.component===cellarDoor.component)throw Error('O mesmo contacto não pode estar associado às duas portas.');
@@ -44,10 +71,15 @@
   let fan=value.fan;if(fan!==undefined&&fan!==null){const a=(typeof module==='object'&&module.exports?require('./alarm-core.js'):globalThis.CasaAlarmCore).config({arm:{...fan,activeWhenOn:true}},{deviceId,used}).arm;fan={deviceId:a.deviceId,channel:a.channel}}
   let heater=value.heater;if(heater!==undefined&&heater!==null){const a=(typeof module==='object'&&module.exports?require('./alarm-core.js'):globalThis.CasaAlarmCore).config({arm:{...heater,activeWhenOn:true}},{deviceId,used}).arm;heater={deviceId:a.deviceId,channel:a.channel}}
   let dehumidifier=value.dehumidifier;if(dehumidifier!==undefined&&dehumidifier!==null){const a=(typeof module==='object'&&module.exports?require('./alarm-core.js'):globalThis.CasaAlarmCore).config({arm:{...dehumidifier,activeWhenOn:true}},{deviceId,used}).arm;dehumidifier={deviceId:a.deviceId,channel:a.channel}}
+  const christmasTree=value.christmasTree==null?value.christmasTree:(()=>{
+   const {arm}=(typeof module==='object'&&module.exports?require('./alarm-core.js'):globalThis.CasaAlarmCore)
+    .config({arm:{...value.christmasTree,activeWhenOn:true}},{deviceId,used});
+   return {deviceId:arm.deviceId,channel:arm.channel};
+  })();
   const mediaBindings=value.mediaBindings===undefined?undefined:(typeof module==='object'&&module.exports?require('./media-core.js'):globalThis.CasaMediaCore).config(value.mediaBindings,{deviceId,used});
   const officeBindings=value.officeBindings===undefined?undefined:(typeof module==='object'&&module.exports?require('./media-core.js'):globalThis.CasaMediaCore).config(value.officeBindings,{deviceId,used,ids:(typeof module==='object'&&module.exports?require('./media-core.js'):globalThis.CasaMediaCore).OFFICE_IDS});
   const kitchenBindings=value.kitchenBindings===undefined?undefined:(typeof module==='object'&&module.exports?require('./media-core.js'):globalThis.CasaMediaCore).config(value.kitchenBindings,{deviceId,used,ids:(typeof module==='object'&&module.exports?require('./media-core.js'):globalThis.CasaMediaCore).KITCHEN_IDS});
-  return {schemaVersion:1,server:host,authKey:value.rememberKey?value.authKey:'',rememberKey:value.rememberKey,bindings,...(value.lightBindings!==undefined?{lightBindings}:{}),...(value.sensorBindings!==undefined?{sensorBindings}:{}),...(ev!==undefined?{ev}:{}),...(door!==undefined?{door}:{}),...(homeEnergy!==undefined?{homeEnergy}:{}),...(cellarDoor!==undefined?{cellarDoor}:{}),...(alarm!==undefined?{alarm}:{}),...(fan!==undefined?{fan}:{}),...(heater!==undefined?{heater}:{}),...(dehumidifier!==undefined?{dehumidifier}:{}),...(mediaBindings!==undefined?{mediaBindings}:{}),...(officeBindings!==undefined?{officeBindings}:{}),...(windowBindings!==undefined?{windowBindings}:{}),...(kitchenBindings!==undefined?{kitchenBindings}:{})}
+  return {schemaVersion:1,server:host,authKey:value.rememberKey?value.authKey:'',rememberKey:value.rememberKey,bindings,...(disabledShellys!==undefined?{disabledShellys}:{}),...(value.lightBindings!==undefined?{lightBindings}:{}),...(value.sensorBindings!==undefined?{sensorBindings}:{}),...(ev!==undefined?{ev}:{}),...(door!==undefined?{door}:{}),...(homeEnergy!==undefined?{homeEnergy}:{}),...(cellarDoor!==undefined?{cellarDoor}:{}),...(alarm!==undefined?{alarm}:{}),...(fan!==undefined?{fan}:{}),...(heater!==undefined?{heater}:{}),...(dehumidifier!==undefined?{dehumidifier}:{}),...(christmasTree!==undefined?{christmasTree}:{}),...(mediaBindings!==undefined?{mediaBindings}:{}),...(officeBindings!==undefined?{officeBindings}:{}),...(windowBindings!==undefined?{windowBindings}:{}),...(kitchenBindings!==undefined?{kitchenBindings}:{})}
  }
 
  const number=v=>typeof v==='number'&&Number.isFinite(v)?v:null;
@@ -69,7 +101,7 @@
   const bp=number(s['devicepower:0']?.battery?.percent??s.bat?.value),battery=bp!==null&&bp>=0&&bp<=100?bp:null;
   return {online:device.online===1||device.online===true,hasSensor:!!t||!!h,temperature,humidity,battery,model:String(device.code||device.type||'').slice(0,100)};
  }
- function deviceIds(config){const energy=(typeof module==='object'&&module.exports?require('./energy-core.js'):globalThis.CasaEnergyCore).binding(config);return [...new Set([config.mediaBindings,config.officeBindings,config.kitchenBindings,config.windowBindings,config.fan?{fan:config.fan}:{},config.heater?{heater:config.heater}:{},config.dehumidifier?{dehumidifier:config.dehumidifier}:{},energy?{home:energy}:{},config.bindings,config.lightBindings,config.sensorBindings,config.alarm,config.door?{entrance:config.door}:{},config.cellarDoor?{cellar:config.cellarDoor}:{},config.ev?Object.fromEntries(['meter','totalMeter','relay'].filter(k=>config.ev[k]).map(k=>[k,config.ev[k]])):{}].flatMap(b=>Object.values(b||{}).map(v=>v.deviceId)))]}
+ function deviceIds(config){const energy=(typeof module==='object'&&module.exports?require('./energy-core.js'):globalThis.CasaEnergyCore).binding(config);return [...new Set([config.mediaBindings,config.officeBindings,config.kitchenBindings,config.windowBindings,config.fan?{fan:config.fan}:{},config.christmasTree?{tree:config.christmasTree}:{},config.heater?{heater:config.heater}:{},config.dehumidifier?{dehumidifier:config.dehumidifier}:{},energy?{home:energy}:{},config.bindings,config.lightBindings,config.sensorBindings,config.alarm,config.door?{entrance:config.door}:{},config.cellarDoor?{cellar:config.cellarDoor}:{},config.ev?Object.fromEntries(['meter','totalMeter','relay'].filter(k=>config.ev[k]).map(k=>[k,config.ev[k]])):{}].flatMap(b=>Object.values(b||{}).map(v=>v.deviceId)))]}
  function deviceBatches(config){const ids=deviceIds(config),batches=[];for(let i=0;i<ids.length;i+=10)batches.push(ids.slice(i,i+10));return batches}
  function lightCommand(binding,on,brightness){
   if(!binding||!['switch','light'].includes(binding.type)||!Number.isInteger(binding.channel)||binding.channel<0||binding.channel>15||typeof on!=='boolean')throw Error('Comando de candeeiro inválido.');
@@ -118,5 +150,5 @@
   for(const [room,b]of Object.entries(bindings)){if(!ROOM_IDS.includes(room))throw Error('Divisão inválida.');const c=command(b,position),id=c.id+'_'+c.channel;if(used.has(id))throw Error('Estores repetidos.');used.add(id);devices.push({id:c.id,channel:c.channel})}
   if(!devices.length||devices.length>4)throw Error('Selecione entre 1 e 4 estores.');return {devices,position};
  }
- return {replacedTemperatureBindings,balconySensorBindings,SUPPLIED_LIGHT_IDS,suppliedLightBindings,ROOM_IDS,LIGHT_ROOM_IDS,SENSOR_ROOM_IDS,sensorStatus,deviceIds,deviceBatches,server,deviceId,statusDeviceId,config,status,lightCommand,lightStatus,resolvedLightCommand,canLightControl,canDim,dimmerCommand,command,canControl,groupCommand};
+ return {activeConfig,disabledFields,replacedTemperatureBindings,balconySensorBindings,SUPPLIED_LIGHT_IDS,suppliedLightBindings,ROOM_IDS,LIGHT_ROOM_IDS,SENSOR_ROOM_IDS,sensorStatus,deviceIds,deviceBatches,server,deviceId,statusDeviceId,config,status,lightCommand,lightStatus,resolvedLightCommand,canLightControl,canDim,dimmerCommand,command,canControl,groupCommand};
 });

@@ -100,7 +100,7 @@ function drawRoomLighting(){
  }
  Object.keys(lightingZones).forEach(id=>{const r=rooms.find(r=>r.id===id),zone=host.querySelector(`[data-light-zone="${id}"]`),opacity=window.CasaEnvironment.darkness(r,rooms),electric=window.CasaEnvironment.electricOpacity(r,rooms);zone.classList.toggle('is-off',opacity>.5);zone.style.setProperty('--night-opacity',opacity);zone.style.setProperty('--electric-opacity',electric);host.querySelector(`[data-light-mask="night"][data-mask-room="${id}"]`).style.opacity=opacity;host.querySelector(`[data-light-mask="electric"][data-mask-room="${id}"]`).style.opacity=electric;});
  host.querySelectorAll('[data-lamp-halo-room]').forEach(el=>{el.style.opacity=rooms.find(r=>r.id===el.dataset.lampHaloRoom)?.light?'1':'0'});
- window.CasaCats?.drawLighting();window.CasaOffice?.syncPlan();window.CasaHeater?.drawLighting();window.CasaDehumidifier?.drawLighting();
+ window.CasaCats?.drawLighting();window.CasaOffice?.syncPlan();window.CasaHeater?.drawLighting();window.CasaChristmasTree?.drawLighting();window.CasaDehumidifier?.drawLighting();
 }
 
 const roomPolygonCache=new Map();
