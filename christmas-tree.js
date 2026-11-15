@@ -8,6 +8,7 @@
  const geometry=window.BannerGeometry;
  const defaultPosition=condados?{floor:'3',room:'living',x:247,y:1110}:{room:'living',x:760,y:975};
  const check=$('show-christmas-tree');
+ const localFile=window.location.protocol==='file:';
  const api=condados?{
   snapshot:()=>window.CasaCloudRead.appliancePowerSnapshot('christmasTree'),
   command:on=>window.CasaCloudRead.commandAppliance('christmasTree',on),
@@ -56,13 +57,18 @@
   const point=geometry.nearestFit(area,position,core.SIZE,core.SIZE);
   return point?{...position,x:point.x,y:point.y}:null;
  }
- let saved={shown:true,position:defaultPosition};
- try{
-  const loaded=core.preferences(JSON.parse(localStorage.getItem(key)));
-  const position=fits(loaded.position)?loaded.position:nearestPosition(loaded.position);
-  saved={shown:loaded.shown,position:position||defaultPosition};
- }catch{}
- if(!fits(saved.position))saved.position=nearestPosition(defaultPosition)||defaultPosition;
+ function readPreferences(){
+  if(localFile){
+   try{
+    const fallback=window.history.state?.[key];
+    if(fallback)return core.preferences(fallback);
+   }catch{}
+  }
+  try{return core.preferences(JSON.parse(localStorage.getItem(key)))}catch{return null}
+ }
+ const loaded=readPreferences();
+ let saved={shown:loaded?.shown??true,position:loaded?.position||defaultPosition};
+ if(!fits(saved.position))saved.position=nearestPosition(saved.position)||nearestPosition(defaultPosition)||defaultPosition;
  let active=null,svg=null,floor=null,suppress=0,commanding=false,localMessage='',storageMessage='';
  const instruction='Clique e arraste com o rato. No ecrã tátil, mantenha premido e arraste.'+(condados?' Largue nas escadas para mudar de piso.':'');
 
@@ -171,19 +177,35 @@
   object.hidden=!saved.shown||(condados&&saved.position.floor!==floor);
   if(!object.hidden&&!active?.moving)displayPosition(saved.position);
  }
- function persist(next){
+ function syncVisibility(){
+  check.setAttribute('aria-checked',String(saved.shown));
+ }
+ function storePreferences(){
   try{
-   const validated=core.preferences(next);
-   localStorage.setItem(key,JSON.stringify(validated));
-   saved=validated;
-   storageMessage='';
+   localStorage.setItem(key,JSON.stringify(saved));
   }catch{
-   check.checked=saved.shown;
-   storageMessage='Não foi possível guardar a posição ou a visibilidade.';
-   position();
-   draw();
-   return false;
+   if(!localFile)return false;
+   try{
+    window.history.replaceState({...window.history.state,[key]:saved},'');
+    return true;
+   }catch{return false}
   }
+  if(localFile){
+   try{
+    const state=window.history.state;
+    if(state?.[key]){
+     const clean={...state};
+     delete clean[key];
+     window.history.replaceState(clean,'');
+    }
+   }catch{}
+  }
+  return true;
+ }
+ function persist(next){
+  saved=core.preferences(next);
+  storageMessage=storePreferences()?'':'A posição e a visibilidade mantêm-se até recarregar a página.';
+  syncVisibility();
   drawLighting();
   draw();
   position();
@@ -243,8 +265,8 @@
   try{await api.command(!state.on)}catch(error){localMessage=error.message}
   finally{commanding=false;draw()}
  });
- check.checked=saved.shown;
- check.addEventListener('change',()=>persist({...saved,shown:check.checked}));
+ syncVisibility();
+ check.addEventListener('click',()=>persist({...saved,shown:!saved.shown}));
  function startDrag(event,mouse=false){
   if((!mouse&&!event.isPrimary)||event.button!==0||active||document.querySelector('dialog[open]'))return;
   const matrix=condados?svg?.getScreenCTM():null;

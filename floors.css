@@ -64,7 +64,7 @@ body.basement-banner-dragging .basement-movable{cursor:grabbing}
 
 /* Garage camera marker; no inferred connection or power state. */
 
-.labels-hidden .basement-view :is(.parking-caption,.ev-badge),
+.labels-hidden .basement-view .parking-caption,
 .labels-hidden .cellar-pin > strong {
   display: none;
 }

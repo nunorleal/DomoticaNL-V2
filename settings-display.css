@@ -11,3 +11,50 @@ dialog .settings-shelly-content{padding:0 0 12px}dialog #shelly-setup.settings-d
 #settings-dialog .weather-settings[hidden]{display:none!important}
 
 #settings-dialog #environment-status[hidden],#settings-dialog #screensaver-status[hidden]{display:none!important}
+
+/* Plan settings follow the compact layout of Casa Condados. */
+#settings-dialog {
+  width: min(420px, calc(100vw - 24px));
+  padding: 22px 20px 18px;
+  background: #f5f8fb;
+}
+#settings-dialog .environment-settings label {
+  font-size: 12px;
+  color: #4f6d85;
+}
+#plant-display-settings .settings-row[role="checkbox"] {
+  grid-template-columns: 20px minmax(0, 1fr) 24px;
+  min-height: 48px;
+  margin: 0 0 6px;
+  padding: 0;
+  color: #4f6d85;
+  font-weight: 600;
+}
+#plant-display-settings .settings-row > span:first-child {
+  color: #63849c;
+}
+#plant-display-settings .row-check {
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  border: 1.5px solid #808080;
+  border-radius: 8px;
+  color: white;
+  box-shadow: none;
+}
+#plant-display-settings .settings-row[aria-checked="true"] .row-check {
+  border-color: #426e8c;
+  background: #426e8c;
+}
+#plant-display-settings .row-check svg {
+  width: 19px;
+  height: 19px;
+  stroke-width: 3;
+}
+body.hide-plan-energy-banner #energy-pin,
+body.hide-plan-ev-banner .ev-badge,
+body.hide-plan-blind-bars .blind-position-bar,
+body.hide-plan-heater #heater-object,
+body.hide-plan-dehumidifier #dehumidifier-object {
+  display: none;
+}
