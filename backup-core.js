@@ -45,7 +45,10 @@
   if(Object.hasOwn(data,'casa-nl-daily-energy-v1')){const core=typeof module==='object'&&module.exports?require('./daily-energy-core.js'):globalThis.CasaDailyEnergyCore;data['casa-nl-daily-energy-v1']=core.validate(data['casa-nl-daily-energy-v1'])}
   if(Object.hasOwn(data,'casa-nl-consumption-history-v1')){try{const core=typeof module==='object'&&module.exports?require('./consumption-core.js'):globalThis.CasaConsumptionCore;data['casa-nl-consumption-history-v1']=core.validate(data['casa-nl-consumption-history-v1'])}catch{fail()}}
   if(Object.hasOwn(data,'casa-nl-show-sensor-readings')&&typeof data['casa-nl-show-sensor-readings']!=='boolean')fail();
-  if(Object.hasOwn(data,'casa-nl-show-energy-banner')&&typeof data['casa-nl-show-energy-banner']!=='boolean')fail();
+  for(const name of ['energy-banner','ev-banner','blind-bars','heater','dehumidifier']){
+   const key='casa-nl-show-'+name;
+   if(Object.hasOwn(data,key)&&typeof data[key]!=='boolean')fail();
+  }
   if(Object.hasOwn(data,'casa-nl-show-blind-banners')&&typeof data['casa-nl-show-blind-banners']!=='boolean')fail();
   if(Object.hasOwn(data,'casa-nl-basement-layout-v1')){try{const core=typeof module==='object'&&module.exports?require('./basement-layout-core.js'):globalThis.CasaBasementLayoutCore;data['casa-nl-basement-layout-v1']=core.layout(data['casa-nl-basement-layout-v1'])}catch{fail()}}
   if(Object.hasOwn(data,'casa-nl-shelly-cloud-v1')){try{const core=typeof module==='object'&&module.exports?require('./shelly-core.js'):globalThis.ShellyCore;data['casa-nl-shelly-cloud-v1']=core.config(data['casa-nl-shelly-cloud-v1'])}catch{fail()}}
