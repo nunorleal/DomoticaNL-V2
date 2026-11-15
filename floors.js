@@ -36,6 +36,13 @@
  let floor=0,lockedUntil=0,suppressClickUntil=0,touch=null,wheel=0,wheelAt=0;
  function hint(){floorIndicator.textContent=floor===-1?'Piso −1':'Piso 1';floorDots.querySelectorAll('button').forEach(button=>{if(Number(button.dataset.floor)===floor)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current')})}
  function setFloor(next){
+  if(next==='meteo'){
+   if(floor===0&&!blocked()&&window.CasaMeteoBridge?.openFloor){
+    wheel=0;
+    window.CasaMeteoBridge.openFloor();
+   }
+   return;
+  }
   if(next===floor||![-1,0].includes(next))return;
   floor=next;house.hidden=next===-1;cave.hidden=next===0;document.body.dataset.floor=String(next);hint();window.dispatchEvent(new Event('floorchange'));
   const view=next===-1?cave:house;
@@ -48,12 +55,19 @@
   view.addEventListener('wheel',e=>{
    if(blocked()||performance.now()<lockedUntil||e.ctrlKey||Math.abs(e.deltaX)>Math.abs(e.deltaY))return;
    const now=performance.now();if(now-wheelAt>350||Math.sign(wheel)!==Math.sign(e.deltaY))wheel=0;wheelAt=now;wheel+=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?view.clientHeight:1);
-   if(Math.abs(wheel)<65)return;const next=CasaFloorsCore.destination(floor,wheel);if(next!==floor){e.preventDefault();setFloor(next)}
+   if(Math.abs(wheel)<65)return;const next=CasaFloorsCore.destination(floor,wheel,true);if(next!==floor){e.preventDefault();setFloor(next)}
   },{passive:false});
-  view.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch'||!e.isPrimary||blocked()||e.target.closest('.room-pin,.blind-pin,.basement-movable,.heater-object,.dehumidifier-object'))return;touch={id:e.pointerId,x:e.clientX,y:e.clientY}});
-  view.addEventListener('pointerup',e=>{if(!touch||touch.id!==e.pointerId)return;const start=touch;touch=null;if(blocked()||performance.now()<lockedUntil)return;const next=CasaFloorsCore.swipe(floor,e.clientX-start.x,e.clientY-start.y);if(next!==floor){suppressClickUntil=performance.now()+700;setFloor(next)}});
+  view.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch'||!e.isPrimary||blocked()||e.target.closest('.room-pin,.blind-pin,.basement-movable,.heater-object,.dehumidifier-object,.christmas-tree-object'))return;touch={id:e.pointerId,x:e.clientX,y:e.clientY}});
+  view.addEventListener('pointerup',e=>{if(!touch||touch.id!==e.pointerId)return;const start=touch;touch=null;if(blocked()||performance.now()<lockedUntil)return;const next=CasaFloorsCore.swipe(floor,e.clientX-start.x,e.clientY-start.y,true);if(next!==floor){suppressClickUntil=performance.now()+700;setFloor(next)}});
   view.addEventListener('pointercancel',()=>{touch=null});
  }
+ window.addEventListener('meteofloorreturn',()=>{lockedUntil=performance.now()+800;wheel=0});
+ window.addEventListener('keydown',event=>{
+  if(blocked()||performance.now()<lockedUntil||event.repeat||event.target.closest?.('input,textarea,select,[contenteditable]'))return;
+  if(event.key!=='PageUp'&&event.key!=='PageDown')return;
+  const next=CasaFloorsCore.destination(floor,event.key==='PageUp'?-1:1,true);
+  if(next!==floor){event.preventDefault();setFloor(next)}
+ });
  document.addEventListener('click',e=>{if(performance.now()<suppressClickUntil){e.preventDefault();e.stopImmediatePropagation()}},true);
  window.CasaDoor.sync();hint();document.body.dataset.floor='0';window.CasaFloors={show:setFloor,current:()=>floor};
 })();

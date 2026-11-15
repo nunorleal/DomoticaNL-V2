@@ -143,3 +143,6 @@ dialog p[id$="-message"]:empty{display:none}
 .plan-movable{-webkit-touch-callout:none}
 :root .plan-movable:not(.plan-move-unlocked){cursor:pointer}
 :root .plan-movable.plan-move-unlocked:not(.dragging){cursor:grab;outline:2px dashed #ffc86c;outline-offset:4px}
+
+#shelly-form label.shelly-disable-option{display:flex;align-items:center;gap:8px;min-height:34px;margin:4px 0 8px;cursor:pointer}
+#shelly-form label.shelly-disable-option input[type=checkbox]{appearance:auto;width:18px;height:18px;flex:0 0 18px;margin:0;padding:0;accent-color:#427b93}

@@ -69,11 +69,13 @@
  window.addEventListener('blur',lock);
  document.addEventListener('visibilitychange',()=>{if(document.hidden)lock()});
 
- function bind(host,start,find=()=>host){
+ function bind(host,start,find=()=>host,immediateMouse=false){
   host.addEventListener('pointerdown',event=>{
    const node=find(event);
    if(!node||!event.isPrimary||event.button!==0||blocked())return;
-   const pending={node,id:event.pointerId,x:event.clientX,y:event.clientY,waiting:node!==unlocked};
+   const direct=immediateMouse&&event.pointerType==='mouse';
+   if(direct&&unlocked===node)unlock(null);
+   const pending={node,id:event.pointerId,x:event.clientX,y:event.clientY,waiting:!direct&&node!==unlocked};
    gesture=pending;
    if(!pending.waiting){start(event,node);return}
    pending.timer=setTimeout(()=>{
@@ -86,10 +88,10 @@
   });
  }
 
- function bindItem(node,start){
+ function bindItem(node,start,{immediateMouse=false,description=instructions}={}){
   node.classList.add('plan-movable');
-  node.setAttribute('aria-description',instructions);
-  bind(node,start);
+  node.setAttribute('aria-description',description);
+  bind(node,start,()=>node,immediateMouse);
  }
 
  function deferDraw(host,redraw){

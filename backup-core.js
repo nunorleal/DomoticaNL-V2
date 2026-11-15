@@ -25,6 +25,10 @@
   if(Object.hasOwn(data,'casa-nl-kitchen-ids-associated-v1')&&typeof data['casa-nl-kitchen-ids-associated-v1']!=='boolean')fail();
   if(Object.hasOwn(data,'casa-nl-dehumidifier-added-v1')&&typeof data['casa-nl-dehumidifier-added-v1']!=='boolean')fail();
   if(Object.hasOwn(data,'casa-nl-dehumidifier-layout-v1')){try{const core=typeof module==='object'&&module.exports?require('./dehumidifier-core.js'):globalThis.CasaDehumidifierCore;data['casa-nl-dehumidifier-layout-v1']=core.layout(data['casa-nl-dehumidifier-layout-v1'])}catch{fail()}}
+  if(Object.hasOwn(data,'casa-nl-christmas-tree-v1')){
+   const core=typeof module==='object'&&module.exports?require('./christmas-tree-core.js'):globalThis.CasaChristmasTreeCore;
+   data['casa-nl-christmas-tree-v1']=core.preferences(data['casa-nl-christmas-tree-v1']);
+  }
   if(Object.hasOwn(data,'casa-nl-heater-added-v1')&&typeof data['casa-nl-heater-added-v1']!=='boolean')fail();
   if(Object.hasOwn(data,'casa-nl-heater-layout-v1')){try{const core=typeof module==='object'&&module.exports?require('./heater-core.js'):globalThis.CasaHeaterCore;data['casa-nl-heater-layout-v1']=core.layout(data['casa-nl-heater-layout-v1'])}catch{fail()}}
   if(Object.hasOwn(data,'casa-nl-show-console-icons')&&typeof data['casa-nl-show-console-icons']!=='boolean')fail();
@@ -53,7 +57,7 @@
  }
  function create(storage,appVersion){const data={};for(let i=0;i<storage.length;i++){const k=storage.key(i);if(allowed(k)){try{data[k]=JSON.parse(storage.getItem(k))}catch{throw new Error('Não foi possível ler os dados guardados: '+k)}}}validateStorage(data);if(data['casa-nl-shelly-cloud-v1']){data['casa-nl-shelly-cloud-v1'].authKey='';data['casa-nl-shelly-cloud-v1'].rememberKey=false}return {application:'Casa NL',schemaVersion:1,appVersion,exportedAt:new Date().toISOString(),data}}
  function parse(text){if(typeof text!=='string'||new TextEncoder().encode(text).length>MAX_BYTES)throw new Error('O ficheiro deve ter no máximo 8 MB.');let value;try{value=JSON.parse(text)}catch{fail()}if(!object(value)||value.application!=='Casa NL'||value.schemaVersion!==1)fail();validateStorage(value.data);credentials(value);return value}
- const CLOUD='casa-nl-shelly-cloud-v1',GROUPS=['bindings','lightBindings','sensorBindings','windowBindings','mediaBindings','officeBindings','kitchenBindings','alarm'],SINGLES=['door','cellarDoor','fan','heater','dehumidifier','homeEnergy'];
+ const CLOUD='casa-nl-shelly-cloud-v1',GROUPS=['bindings','lightBindings','sensorBindings','windowBindings','mediaBindings','officeBindings','kitchenBindings','alarm'],SINGLES=['door','cellarDoor','fan','heater','dehumidifier','homeEnergy','christmasTree'];
  function credentials(backup){
   const config=backup.data[CLOUD],value=backup.shellyCredentials;
   if(value!==undefined){const crypto=typeof module==='object'&&module.exports?require('./backup-crypto.js'):globalThis.CasaBackupCrypto;const clean=crypto.validate(value);if(!config||clean.server!==config.server)throw Error('A chave Cloud não corresponde ao servidor da configuração.');if(config.authKey)throw Error('O backup cifrado não pode incluir uma chave em texto simples.');return clean}
@@ -64,7 +68,7 @@
  function prepareImport(storage,backup,preserve=true){const out=JSON.parse(JSON.stringify(backup));validateStorage(out.data);if(!preserve)return {backup:out,preserved:0};let current;try{current=JSON.parse(storage.getItem(CLOUD)||'null')}catch{throw Error('A configuração Shelly atual não pode ser lida. Exporte-a antes de importar.')}if(!current)return {backup:out,preserved:0};
   const core=typeof module==='object'&&module.exports?require('./shelly-core.js'):globalThis.ShellyCore;current=core.config(current);const incoming=out.data[CLOUD];if(incoming&&incoming.server!==current.server)return {backup:out,preserved:0,differentAccount:true};
   const next=incoming?{...incoming}:current,before=associationCount(incoming);
-  if(incoming){for(const k of GROUPS)if(current[k]!==undefined)next[k]={...current[k],...incoming[k]};for(const k of SINGLES)if(!Object.hasOwn(incoming,k)&&Object.hasOwn(current,k))next[k]=current[k];if(current.ev){next.ev={...current.ev,...incoming.ev};for(const k of ['meter','totalMeter','relay'])if(current.ev[k]&&!incoming.ev?.[k])next.ev[k]=current.ev[k]}}
+  if(incoming){if(incoming.disabledShellys===undefined&&current.disabledShellys!==undefined)next.disabledShellys=current.disabledShellys;for(const k of GROUPS)if(current[k]!==undefined)next[k]={...current[k],...incoming[k]};for(const k of SINGLES)if(!Object.hasOwn(incoming,k)&&Object.hasOwn(current,k))next[k]=current[k];if(current.ev){next.ev={...current.ev,...incoming.ev};for(const k of ['meter','totalMeter','relay'])if(current.ev[k]&&!incoming.ev?.[k])next.ev[k]=current.ev[k]}}
   try{out.data[CLOUD]=core.config(next)}catch{throw Error('As associações atuais e o ficheiro têm conflitos de ID/canal. Reveja os equipamentos ou desative a preservação para substituir pela cópia.')}
   validateStorage(out.data);return {backup:out,preserved:Math.max(0,associationCount(out.data[CLOUD])-before)};
  }

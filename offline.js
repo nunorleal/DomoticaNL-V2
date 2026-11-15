@@ -44,7 +44,7 @@
   const s=rows.filter(r=>r.configured!==false),pick=(kind,key)=>C.pick(s,kind,key),group=(...sets)=>sets.flat();
   const single=(selector,kind,key)=>{const values=pick(kind,key);for(const node of document.querySelectorAll(selector))mark(node,values,{plan:true})};
   const batch=(selector,values)=>{for(const node of document.querySelectorAll(selector))mark(node,values,{plan:true})};
-  single('#heater-object','heater');single('#dehumidifier-object','dehumidifier');single('#fan-pin','fan');
+  single('#christmas-tree-object','christmasTree');single('#heater-object','heater');single('#dehumidifier-object','dehumidifier');single('#fan-pin','fan');
   single('.ev-badge','ev');single('#energy-pin,.energy-open-general','energy');
   const alarm=pick('alarm');batch('#alarm-pin,.alarm-device-open',alarm);
   const media=group(pick('media'),pick('light','living'));

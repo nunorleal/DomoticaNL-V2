@@ -1,0 +1,102 @@
+.christmas-tree-object{
+ position:absolute;z-index:3;transform:translate(-50%,-50%);width:var(--tree-width,7.42%);
+ display:block;aspect-ratio:1;min-width:35px;padding:0;border:1px solid transparent;border-radius:8px;background:transparent;
+ touch-action:none;user-select:none;-webkit-user-select:none;-webkit-user-drag:none;cursor:pointer;filter:none
+}
+.christmas-tree-object[hidden]{display:none}
+@media (hover:hover) and (pointer:fine){
+ :root .christmas-tree-object.plan-movable:not(.dragging){cursor:grab}
+ :root .christmas-tree-object.plan-movable.dragging{cursor:grabbing}
+}
+.christmas-tree-object:hover{filter:none}
+.christmas-tree-object:is(:hover,:focus-visible):not(.dragging):not(.plan-move-unlocked){
+ background:#8abddd24;border-color:#c7e9f6;outline:2px solid #426e8c;outline-offset:2px
+}
+.christmas-tree-object>.christmas-tree-art{position:absolute;inset:0;width:auto;height:auto}
+
+.christmas-tree-object.dragging{cursor:grabbing;z-index:12}
+.christmas-tree-object.stairs-transfer{outline:2px solid #90deff;outline-offset:3px}
+.christmas-tree-art{position:relative;display:block;width:100%;height:100%;pointer-events:none}
+.christmas-foliage{
+ position:absolute;inset:calc(var(--tier) * 12%);border-radius:50%;
+ background:radial-gradient(ellipse at 40% 32%,#b8e0765c,transparent 65%),
+ repeating-conic-gradient(from 20deg,#112e1e 0deg,#306b3d 7deg,#5a934d 10deg,#254f32 13deg,#132c20 15deg);
+ filter:brightness(calc(.76 + var(--tier) * .2));
+}
+.christmas-bulb{
+ position:absolute;width:5.1%;aspect-ratio:1;border-radius:50%;
+ transform:translate(-50%,-50%);background:var(--bulb);filter:saturate(.55) brightness(.68);
+}
+.christmas-star{
+ position:absolute;left:42%;top:41%;width:16%;height:16%;background:#d5a551;
+ clip-path:polygon(50% 0%,62% 35%,99% 36%,69% 58%,80% 96%,50% 73%,19% 96%,31% 58%,0 36%,38% 35%);
+}
+.christmas-tree-object:not([data-power=on])>.christmas-tree-art{
+ filter:brightness(var(--tree-room-brightness,1)) drop-shadow(1px 3px 3px #08170d88);
+}
+[data-power=on] .christmas-bulb{
+ filter:none;box-shadow:0 0 4px 1px var(--bulb),0 0 9px 2px var(--bulb);
+ animation:christmas-twinkle var(--period) ease-in-out var(--delay) infinite alternate;
+}
+[data-power=on] .christmas-star{background:#fff1b6}
+.christmas-tree-object[data-power=on]>.christmas-tree-art{
+ filter:drop-shadow(1px 3px 3px #08170d88) drop-shadow(0 0 5px #f8c963a8);
+}
+[data-power=on] .christmas-tree-preview{filter:drop-shadow(0 0 5px #f8c963a8)}
+@keyframes christmas-twinkle{from{opacity:.4}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){[data-power=on] .christmas-bulb{animation:none}}
+body dialog.christmas-tree-popup{
+ width:min(440px,calc(100vw - 20px));max-width:none;max-height:calc(100dvh - 20px);
+ padding:26px 24px 20px;overflow:auto;color:#25465c;
+}
+.christmas-tree-popup .eyebrow{display:block;color:#567891;font-size:9px;font-weight:700;letter-spacing:.16em;padding-right:28px}
+.christmas-tree-popup h2{margin:14px 0 8px;font-size:clamp(24px,6vw,29px);line-height:1.15;color:#1e3b50}
+#christmas-tree-location,#christmas-tree-state,#christmas-tree-reading-kind{color:#577a94;font-size:13px}
+#christmas-tree-location{margin:0}
+.christmas-tree-preview{width:94px;height:94px;margin:23px auto 18px}
+.tree-power-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px}
+.christmas-tree-popup .consumption-heading{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap}
+.christmas-tree-popup h3{color:#284d67;font-size:16px;margin:0}
+#christmas-tree-state{margin:7px 0 0}
+.christmas-tree-actions{display:flex;align-items:center;gap:7px;margin-left:auto}
+.tree-power-action{position:relative}
+.christmas-tree-popup .tree-circle{
+ display:grid;place-items:center;width:47px;height:47px;min-width:44px;min-height:44px;
+ border:1px solid #cadbe5;border-radius:50%;background:#eaf0f2;color:#3c6885;padding:10px;cursor:pointer;
+}
+.christmas-tree-popup .tree-circle svg{width:100%;height:100%}
+.christmas-tree-popup .popup-close svg,.christmas-tree-popup .close svg{width:20px;height:20px}
+.christmas-tree-popup .tree-circle:enabled:hover{background:#dceaf3}
+.christmas-tree-popup .tree-circle.is-on{background:#0da464;color:white;border-color:#08945b}
+.christmas-tree-popup .tree-circle.is-on:enabled:hover{background:#0a925a}
+.christmas-tree-popup .tree-circle:disabled{opacity:.55;cursor:default}
+.tree-timer{
+ position:absolute;display:grid;place-items:center;right:-3px;bottom:-2px;
+ padding:3px;width:20px;height:20px;border:1px solid #b2cddd;border-radius:50%;background:#e5f0f6;color:#49728a;pointer-events:none;
+}
+.tree-timer svg{width:100%;height:100%}
+.tree-timer[hidden]{display:none}
+#christmas-tree-message{font-size:12px;color:#577a94;margin:8px 0 0}
+.tree-consumption{margin-top:16px}
+.christmas-tree-popup .consumption-heading{margin:0 0 9px;justify-content:flex-start}
+#christmas-tree-reading-kind{margin-left:auto}
+.christmas-tree-popup .energy-history-shortcut{margin-left:0}
+.tree-meters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.tree-meters>div{
+ min-width:0;min-height:91px;padding:12px 11px;background:#8eacbe13;border:1px solid #d6e4eb;border-radius:16px;
+}
+.tree-meters>div>span{display:block;font-size:12px;color:#577a94;margin-bottom:8px}
+.tree-meters strong{font-size:clamp(18px,5.5vw,27px);line-height:1.1;color:#284d67;overflow-wrap:anywhere}
+.tree-meters strong:empty::before{content:'—'}
+@media(max-width:420px){
+ .tree-power-row h3{font-size:15px}
+ .christmas-tree-popup .tree-circle{width:44px;height:44px;padding:9px}
+ .tree-meters>div>span{min-height:2.4em}
+}
+@media(max-width:375px){
+ body dialog.christmas-tree-popup{padding:19px 13px 15px}
+ .christmas-tree-actions{gap:5px}
+ .tree-meters>div{padding:10px 8px}
+ #christmas-tree-reading-kind{font-size:11px}
+}
+.christmas-tree-check input{width:20px;height:20px;margin-left:auto;accent-color:#427b93}
