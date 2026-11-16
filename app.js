@@ -223,5 +223,13 @@ bannerHost.addEventListener('pointermove',e=>{const d=bannerDrag;if(!d||d.id!==e
 function endBannerDrag(e,cancel){const d=bannerDrag;if(!d||d.id!==e.pointerId)return;bannerDrag=null;d.el.classList.remove('dragging');if(d.active){suppressBannerClickUntil=performance.now()+500;if(cancel){d.r.lx=d.origin.lx;d.r.ly=d.origin.ly;d.el.style.setProperty('--x',d.r.lx+'%');d.el.style.setProperty('--y',d.r.ly+'%')}else{persistRoomLayout();persist()}}}
 bannerHost.addEventListener('pointerup',e=>endBannerDrag(e,false));bannerHost.addEventListener('pointercancel',e=>endBannerDrag(e,true));bannerHost.addEventListener('lostpointercapture',e=>endBannerDrag(e,true));
 document.getElementById('room-name-input').addEventListener('input',e=>e.target.setCustomValidity(''));
-document.getElementById('rename-room-form').addEventListener('submit',e=>{e.preventDefault();const input=document.getElementById('room-name-input'),name=input.value.trim().replace(/\s+/g,' ');if(!name){input.setCustomValidity('Indique um nome para a divisão.');input.reportValidity();return}const r=rooms.find(r=>r.id===renameRoomId);if(!r)return;r.name=name.slice(0,40);r.customName=true;document.getElementById('rename-room-dialog').close();render();fitBanner(r);persistRoomLayout();persist();bannerHost.querySelector(`.room-pin[data-room="${r.id}"]`)?.focus({preventScroll:true});notify('Nome da divisão atualizado')});
+document.getElementById('rename-room-form').addEventListener('submit',e=>{e.preventDefault();const input=document.getElementById('room-name-input'),name=input.value.trim().replace(/\s+/g,' ');if(!name){input.setCustomValidity('Indique um nome para a divisão.');input.reportValidity();return}const r=rooms.find(r=>r.id===renameRoomId);if(!r)return;r.name=name.slice(0,40);r.customName=true;document.getElementById('rename-room-dialog').close();render();fitBanner(r);persistRoomLayout();persist();window.dispatchEvent(new CustomEvent('housepreferencechange',{detail:{setting:'room-name:'+r.id,value:r.name}}));bannerHost.querySelector(`.room-pin[data-room="${r.id}"]`)?.focus({preventScroll:true});notify('Nome da divisão atualizado')});
 let bannerResizeTimer;window.addEventListener('resize',()=>{clearTimeout(bannerResizeTimer);bannerResizeTimer=setTimeout(()=>{if(bannerDrag)return;for(const r of rooms){bannerHost.querySelector(`.room-pin[data-room="${r.id}"]`)?.style.setProperty('--pin-max-width',pinMaxWidth(r)+'px');fitBanner(r)}persistRoomLayout()},200)});
+
+ window.CasaSharedRoomNames={apply(id,name){
+  const room=rooms.find(r=>r.id===id);
+  if(!room||!name||name.length>40||room.name===name||
+    (document.getElementById('rename-room-dialog').open&&renameRoomId===id)||bannerDrag)return;
+  room.name=name;room.customName=true;
+  render();fitBanner(room);persistRoomLayout();persist();
+ }};

@@ -849,7 +849,7 @@ Verificação2.76: build concluído; fixture sem dispositivos, previsão16°C/se
 
 # Versão MeteoNL comum às duas apps — 2.76
 
-A única versão mantida da MeteoNL é a integrada nas plantas. A fonte canónica está em `DomoticaNL V2/meteo-src/`. O build da T2 gera uma única distribuição com versão própria e sincroniza-a com a Casa Condados quando os projetos estão lado a lado ou quando se indica a pasta com `--condados`. O build invocado nos Condados encaminha para o da T2. Preservar as pontes, preferências e associações de cada casa. Ver `METEONL.md`.
+A única versão mantida da MeteoNL é a integrada nas plantas. A fonte canónica está em `DomoticaNL V2/meteo-src/`. O build da T2 gera uma única distribuição que mostra a versão da planta em que é aberta e sincroniza-a com a Casa Condados quando os projetos estão lado a lado ou quando se indica a pasta com `--condados`. O build invocado nos Condados encaminha para o da T2. Preservar as pontes, preferências e associações de cada casa. Ver `METEONL.md`.
 
 Preferência persistente: aplicar alterações comuns compatíveis à Domótica NL e Casa Condados, adaptando cada implementação e preservando dispositivos, IDs, credenciais, regras e plantas. Testes apenas fictícios. As versões próprias da domótica continuam independentes.
 

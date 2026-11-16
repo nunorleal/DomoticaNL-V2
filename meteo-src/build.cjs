@@ -1,6 +1,7 @@
 // Build the integrated MeteoNL once. Optionally copy the same release to Casa Condados.
 // node build.cjs [node_modules] [esbuild module] [--condados path]
 const fs = require('node:fs');
+const {createHash} = require('node:crypto');
 const path = require('node:path');
 
 const args = process.argv.slice(2);
@@ -20,15 +21,8 @@ if (condados && (condados === home ||
   throw new Error('Indique uma pasta diferente com o projeto Casa Condados.');
 }
 
-const version = fs.readFileSync(path.join(__dirname, 'app-info.ts'), 'utf8')
-  .match(/APP_VERSION\s*=\s*["'](\d+\.\d+)["']/)?.[1];
-if (!version) throw new Error('APP_VERSION da MeteoNL em falta.');
-if (require('./package.json').version !== version + '.0') {
-  throw new Error('A versão em package.json deve corresponder a APP_VERSION.');
-}
 const dependencies = path.resolve(args[0] || path.join(__dirname, 'node_modules'));
 const esbuild = require(args[1] || require.resolve('esbuild', {paths: [dependencies]}));
-const stem = 'app-' + version;
 const result = esbuild.buildSync({
   entryPoints: [path.join(__dirname, 'main.tsx')],
   bundle: true,
@@ -38,23 +32,29 @@ const result = esbuild.buildSync({
   jsx: 'automatic',
   nodePaths: [dependencies],
   outdir: path.join(home, 'meteo', 'assets'),
-  entryNames: stem,
+  entryNames: 'app',
   write: false,
   define: {'process.env.NODE_ENV': '"production"'}
 });
+const files = result.outputFiles.map(file => ({extension: path.extname(file.path), contents: file.contents}))
+  .sort((a,b) => a.extension.localeCompare(b.extension));
+const hash = createHash('sha256');
+for (const file of files) hash.update(file.extension + ':' + file.contents.length + ':').update(file.contents);
+const cacheKey = hash.digest('hex').slice(0,16);
+const stem = 'app-' + cacheKey;
 const html = '<!doctype html><html lang="pt"><head><meta charset="UTF-8">' +
   '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">' +
   '<title>MeteoNL · Casa NL</title><link rel="stylesheet" href="assets/' + stem + '.css"></head>' +
   '<body><div id="root"></div><script src="assets/' + stem + '.js"></script></body></html>';
 const bootstrap = '// Gerado por meteo-src/build.cjs.\nwindow.CasaMeteoRelease = Object.freeze(' +
-  JSON.stringify({version, html}) + ');\n';
+  JSON.stringify({cacheKey, html}) + ');\n';
 
 for (const target of condados ? [home, condados] : [home]) {
   const meteo = path.join(target, 'meteo');
   const assets = path.join(meteo, 'assets');
   fs.mkdirSync(assets, {recursive: true});
-  for (const file of result.outputFiles) {
-    fs.writeFileSync(path.join(assets, path.basename(file.path)), file.contents);
+  for (const file of files) {
+    fs.writeFileSync(path.join(assets, stem + file.extension), file.contents);
   }
   fs.writeFileSync(path.join(meteo, 'index.html'), html + '\n');
   fs.writeFileSync(path.join(meteo, 'release.js'), bootstrap);

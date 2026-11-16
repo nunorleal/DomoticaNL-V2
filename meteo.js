@@ -69,7 +69,7 @@
  function screenMessage(){screenStatus.textContent=screensaver.seconds===0?'Desativado. Pode continuar a abrir a MeteoNL pelo símbolo da meteorologia.':`A MeteoNL abre após ${screenSelect.selectedOptions[0].textContent.toLowerCase()} sem interação. Guardado automaticamente.`}
  screenSelect.value=String(screensaver.seconds);screenMessage();
  screenSelect.addEventListener('change',()=>{
-  try{const next=CasaMeteoCore.screensaver({seconds:Number(screenSelect.value)});localStorage.setItem(screensaverKey,JSON.stringify(next));screensaver=next;idle.setDelay(next.seconds*1000);screenMessage()}
+  try{const next=CasaMeteoCore.screensaver({seconds:Number(screenSelect.value)});localStorage.setItem(screensaverKey,JSON.stringify(next));screensaver=next;idle.setDelay(next.seconds*1000);screenMessage();window.dispatchEvent(new CustomEvent('housepreferencechange',{detail:{setting:'screensaver-delay',value:next.seconds}}))}
   catch{screenSelect.value=String(screensaver.seconds);screenStatus.textContent='Não foi possível guardar este tempo. Tente novamente.'}
  });
  function open(){
@@ -84,7 +84,7 @@
    if(location.protocol==='file:'){
     const base=new URL('meteo/',document.baseURI).href.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
     frame.srcdoc=release.html.replace('<head>','<head><base href="'+base+'">');
-   }else frame.src='meteo/index.html?v='+release.version;
+   }else frame.src='meteo/index.html?v='+release.cacheKey;
    loaded=true;
   }
   window.CasaShelly?.ensureFresh('master');window.CasaShelly?.ensureFresh('balcony');refreshIndoorSensor();frame.focus();
@@ -140,7 +140,9 @@
   refreshIndoorSensor(id);return true;
  }
  function refreshIndoorSensor(id=selectedIndoorSensor()){if(!indoorSensors().some(sensor=>sensor.id===id&&sensor.configured))return;window.CasaShelly?.ensureFresh(id)}
- window.CasaMeteoBridge={visible:()=>!host.hidden,preferences:CasaMeteoCore.preferences,ready,open,openFloor,home:()=>home(),settings,toggleLamp,openMorningBlind,
+ window.CasaMeteoBridge={
+  appVersion:()=>document.querySelector('meta[name="application-version"]')?.content,
+  visible:()=>!host.hidden,preferences:CasaMeteoCore.preferences,ready,open,openFloor,home:()=>home(),settings,toggleLamp,openMorningBlind,
   activityDevices:()=>window.CasaMeteoActivity?.devices()||[],
   openActivityDevice,
   activitySnapshot:()=>window.CasaMeteoActivity?.snapshot()||[],
@@ -151,6 +153,7 @@
   blindBusy:()=>!!window.CasaShelly?.isBusy(),
   lamp:()=>window.CasaShelly?.lampSnapshot('master')||{configured:false,state:null,busy:false,ready:false,error:''},
   city:()=>window.CasaEnvironment?.getState().city,
+  saveSharedPreferences(prefs){window.dispatchEvent(new CustomEvent('housepreferencechange',{detail:{setting:'meteo-settings',value:prefs}}))},
   setCity:city=>window.CasaEnvironment?.selectCity(city)};
  // The background app is inert while MeteoNL is visible. Restore the popup
  // (and unsubmitted form values) on return; weather actions never wake Casa.
