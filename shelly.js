@@ -384,6 +384,23 @@
  function installSavedConfig(next,authKey){
   savedConfigText=JSON.stringify(next);window.CasaLightAudit?.reset();consumptionReadings.clear();generation++;readEpoch++;nextRefreshAt=0;deferredReads.clear();checkedDevices.clear();summaryReadFailures.clear();activity={totalRequests:0,doneRequests:0,totalDevices:0,doneDevices:0,running:false,error:false};lastFetched=0;for(const id of CasaWindowsCore.IDS)delete windowReadings[id];for(const id of [...MC.IDS,...MC.OFFICE_IDS,...MC.KITCHEN_IDS])delete mediaReadings[id];mediaTargets.clear();mediaMessages.clear();fanReading=null;fanTarget=null;fanMessage="";treeReading=null;treeTarget=null;treeMessage='';heaterReading=null;heaterTarget=null;heaterMessage="";dehumidifierReading=null;dehumidifierTarget=null;dehumidifierMessage="";alarmReadings={};alarmTarget=null;alarmMessage='';energyReading=null;doorReading=null;cellarDoorReading=null;evReadings={};evTarget=null;evMessage='';clearTimeout(pollTimer);targetRevisions.clear();targets.clear();lightTargets.clear();brightnessTargets.clear();lightMessages.clear();confirmations.clear();savedConfig=next;config=CORE.activeConfig(next);key=authKey;readings.clear();lightReadings.clear();sensorReadings.clear();reapply();fill();summary();render();if(key&&config.server)refresh({quiet:true});
  }
+ function sharedConfiguration(value){
+  const clean=CORE.config({...value,authKey:'',rememberKey:false});
+  const {authKey,rememberKey,disabledShellys,...shared}=clean;
+  return shared;
+ }
+ function applySharedConfiguration(shared){
+  if(window.CasaSharedConfig.equal(sharedConfiguration(savedConfig),shared))return;
+  if(busy||commandCount||groupBusy||lightGroupBusy||pendingEntries().length||($('shelly-dialog').open&&dirty()))return;
+  try{
+   if(localStorage.getItem(KEY)!==savedConfigText)return;
+   const sameServer=shared.server===savedConfig.server;
+   const next=CORE.config({...shared,disabledShellys:savedConfig.disabledShellys,
+    authKey:sameServer?savedConfig.authKey:'',rememberKey:sameServer&&savedConfig.rememberKey});
+   localStorage.setItem(KEY,JSON.stringify(next));
+   installSavedConfig(next,sameServer?key:'');
+  }catch{}
+ }
  function applySharedDisabled(values){
   if((savedConfig.disabledShellys||[]).join()===values.join())return;
   if(busy||commandCount||groupBusy||lightGroupBusy||($('shelly-dialog').open&&dirty()))return;
@@ -414,6 +431,7 @@
    const before=localStorage.getItem(KEY),beforeSession=sessionStorage.getItem(SESSION);
    try{localStorage.setItem(KEY,JSON.stringify(next));if(rememberKey)sessionStorage.removeItem(SESSION);else sessionStorage.setItem(SESSION,JSON.stringify({server:next.server,key:newKey}))}catch(error){if(before===null)localStorage.removeItem(KEY);else localStorage.setItem(KEY,before);if(beforeSession===null)sessionStorage.removeItem(SESSION);else sessionStorage.setItem(SESSION,beforeSession);throw Error('Não foi possível guardar a configuração neste navegador.')}
    installSavedConfig(next,newKey);
+   window.dispatchEvent(new CustomEvent('housepreferencechange',{detail:{setting:'shelly-config',value:sharedConfiguration(next)}}));
    feedback('Configuração guardada. Os equipamentos desativados não são consultados.');
    if((previous.disabledShellys||[]).join()!==disabledShellys.join())window.dispatchEvent(new CustomEvent('housepreferencechange',{detail:{setting:'shelly-disabled',value:disabledShellys}}));
   }catch(error){feedback(error.message,true)}
@@ -614,7 +632,7 @@
   return {...C.aggregate(windows,lights,C.devices(rows)),windowRows:windows,lightRows:lights,deviceRows:rows.map(({kind,key,room,deviceId,name,status})=>({kind,key,room,deviceId,name,status}))};
  }
  function connectionSnapshot(){const waitSeconds=Math.max(0,Math.ceil(((transport.stats(config.server).retryAt||0)-Date.now())/1000));return {paused:waitSeconds>0,waitSeconds,recovering:deferredReads.size>0}}
- window.CasaShelly={applySharedDisabled,christmasTreeSnapshot,commandChristmasTree,blindGestureSnapshot(id){const configured=!!binding(id),r=reading(id);return {configured,position:r?.position,previewAllowed:configured&&!dirty()&&!!key&&!!config.server&&CORE.canControl(r,50),allowed:configured&&controlReady(id,50),token:'real:'+generation}},houseSnapshot,brightnessControl,focusPopup,consumptionSnapshot,connectionSnapshot,commandKitchen,kitchenEnsureFresh,refreshEquipment,activitySnapshot,dehumidifierSnapshot,dehumidifierEnsureFresh,commandDehumidifier,heaterSnapshot,heaterEnsureFresh,commandHeater,hasUnsavedChanges:dirty,windowSnapshot,windowEnsureFresh,commandOffice,officeEnsureFresh,mediaSnapshot,mediaEnsureFresh,commandMedia,inspectDoorSensor,inspectDoorGateway,sensorMarkup,sensorCaption,fanSnapshot,fanEnsureFresh,commandFan,alarmSnapshot,alarmEnsureFresh,commandAlarm,energySnapshot,energyEnsureFresh,doorSnapshot,doorEnsureFresh,evSnapshot,commandEV,evEnsureFresh,lampSnapshot,isBusy:()=>busy||commandCount>0||lightGroupBusy||groupBusy||alarmTarget!==null||fanTarget!==null||treeTarget!==null||heaterTarget!==null||dehumidifierTarget!==null||mediaTargets.size>0,sensorEntries:()=>CORE.SENSOR_ROOM_IDS.map(id=>({id,name:rooms.find(room=>room.id===id)?.name||(id==='cellar'?'Cave':id),configured:!!sensorBinding(id)})),sensorBinding,sensorReading,lightBinding,lightReading,lightCaption,lightValue,commandLight,commandAllLights,binding,reading,roomCaption:caption,decorateRoom,refresh,command,commandAll,ensureFresh,ensureBlindFresh};
+ window.CasaShelly={sharedConfiguration,applySharedConfiguration,applySharedDisabled,christmasTreeSnapshot,commandChristmasTree,blindGestureSnapshot(id){const configured=!!binding(id),r=reading(id);return {configured,position:r?.position,previewAllowed:configured&&!dirty()&&!!key&&!!config.server&&CORE.canControl(r,50),allowed:configured&&controlReady(id,50),token:'real:'+generation}},houseSnapshot,brightnessControl,focusPopup,consumptionSnapshot,connectionSnapshot,commandKitchen,kitchenEnsureFresh,refreshEquipment,activitySnapshot,dehumidifierSnapshot,dehumidifierEnsureFresh,commandDehumidifier,heaterSnapshot,heaterEnsureFresh,commandHeater,hasUnsavedChanges:dirty,windowSnapshot,windowEnsureFresh,commandOffice,officeEnsureFresh,mediaSnapshot,mediaEnsureFresh,commandMedia,inspectDoorSensor,inspectDoorGateway,sensorMarkup,sensorCaption,fanSnapshot,fanEnsureFresh,commandFan,alarmSnapshot,alarmEnsureFresh,commandAlarm,energySnapshot,energyEnsureFresh,doorSnapshot,doorEnsureFresh,evSnapshot,commandEV,evEnsureFresh,lampSnapshot,isBusy:()=>busy||commandCount>0||lightGroupBusy||groupBusy||alarmTarget!==null||fanTarget!==null||treeTarget!==null||heaterTarget!==null||dehumidifierTarget!==null||mediaTargets.size>0,sensorEntries:()=>CORE.SENSOR_ROOM_IDS.map(id=>({id,name:rooms.find(room=>room.id===id)?.name||(id==='cellar'?'Cave':id),configured:!!sensorBinding(id)})),sensorBinding,sensorReading,lightBinding,lightReading,lightCaption,lightValue,commandLight,commandAllLights,binding,reading,roomCaption:caption,decorateRoom,refresh,command,commandAll,ensureFresh,ensureBlindFresh};
  fill();summary();reapply();render();
  if(key&&config.server&&CORE.deviceIds(config).length)refresh({quiet:true});
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){nextRefreshAt=0;schedulePoll()}});

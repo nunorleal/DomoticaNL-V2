@@ -1,10 +1,19 @@
 /* Visual preferences use the history login, independently of the history writer. */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
-  else root.CasaPlantSettingsSync = factory();
+  else {
+    root.CasaPlantSettingsSync = factory();
+    root.CasaSharedConfig = {equal: root.CasaPlantSettingsSync.equal};
+  }
 })(typeof window === 'undefined' ? globalThis : window, function () {
   'use strict';
 
+  function equal(a,b) {
+    if (a === b) return true;
+    if (!a || !b || typeof a !== 'object' || typeof b !== 'object' || Array.isArray(a) !== Array.isArray(b)) return false;
+    const keys = Object.keys(a);
+    return keys.length === Object.keys(b).length && keys.every(key => Object.hasOwn(b,key) && equal(a[key],b[key]));
+  }
   const shared = {
     'energy-banner': 'show-energy-banner',
     'ev-banner': 'show-ev-banner',
@@ -29,7 +38,18 @@
     dehumidifier: 'CasaDehumidifier',
     'christmas-tree': 'CasaChristmasTree'
   };
-  function validatePosition(house, position) {
+  const garageItems = Object.freeze({
+    'garage-fan': 'fan',
+    'garage-cellar': 'cellar',
+    'garage-alarm': 'alarm',
+    'garage-ev': 'ev'
+  });
+  function validatePosition(house, setting, position) {
+    if (Object.hasOwn(garageItems, setting)) {
+      if (house !== 't2' || !position || !Number.isFinite(position.x) || !Number.isFinite(position.y)) return null;
+      const {x, y} = position;
+      return x >= 0 && x <= 100 && y >= 0 && y <= (setting === 'garage-ev' ? 130 : 100) ? {x, y} : null;
+    }
     if (!position || typeof position !== 'object' ||
         typeof position.room !== 'string' || !position.room || position.room.length > 64 ||
         ![position.x, position.y].every(n => Number.isFinite(n) && n >= 0 && n <= 1600)) return null;
@@ -44,13 +64,14 @@
     const field = preferences ? 'value' : positions ? 'position' : 'shown';
     const label = preferences ? 'definições' : positions ? 'posições' : 'checks';
     const normalize = (name, value) => preferences ? preferences.normalize(name, value)
-      : positions ? validatePosition(house, value) : typeof value === 'boolean' ? value : null;
+      : positions ? validatePosition(house, name, value) : typeof value === 'boolean' ? value : null;
     let account = null, currentRun = null;
     let pending = new Map();
     const queuePrefix = preferences ? 'casa-plant-preferences-pending:'
       : positions ? 'casa-plant-positions-pending:' : 'casa-plant-pending:';
     const key = () => queuePrefix + house + ':' + account.user;
-    const known = name => preferences ? preferences.known(name) : Object.hasOwn(supported, name);
+    const known = name => preferences ? preferences.known(name) : Object.hasOwn(supported, name) ||
+      (positions && house === 't2' && Object.hasOwn(garageItems, name));
     function saveQueue() {
       try {
         if (pending.size) storage.setItem(key(), JSON.stringify(Object.fromEntries(pending)));
@@ -179,7 +200,11 @@
     const positions = createSync({
       house, storage, positions: true, ...transport('casa_plant_positions', 'position'),
       apply(setting, position) {
-        window[devices[setting]]?.applySharedPosition(position);
+        if (Object.hasOwn(garageItems, setting)) {
+          window.CasaBasementLayout?.applySharedPosition(garageItems[setting], position);
+        } else {
+          window[devices[setting]]?.applySharedPosition(position);
+        }
       },
       report: statusMessage()
     });
@@ -216,17 +241,47 @@
     let applying = false;
     const meteoCore = window.CasaMeteoCore;
     const rangeId = duplex ? 'banner-scale' : 'room-power-size';
-    const staticNames = ['shelly-disabled','environment-mode','screensaver-delay','banner-scale','weather-city','meteo-settings'];
+    const staticNames = ['shelly-disabled','shelly-config','environment-mode','screensaver-delay','banner-scale','weather-city','meteo-settings','energy-tariff','media-labels','office-labels'];
     const roomPrefix = 'room-name:';
-    const known = name => typeof name === 'string' &&
-      (staticNames.includes(name) || /^room-name:[a-z0-9:-]{1,55}$/.test(name));
+    const bannerPrefix = 'banner-position:';
+    const timerPrefix = 'timer-preset:';
+    const labels = {
+      room: () => duplex ? window.CasaLabelLayout : window.CasaSharedRoomPosition,
+      sensor: () => window.CasaSensorLayout,
+      alarm: () => window.CasaAlarmLayout,
+      fan: () => window.CasaFanLayout,
+      ev: () => window.CasaEVRead?.layout
+    };
+    const shelly = duplex ? window.CasaShellySetup : window.CasaShelly;
+    const timerStore = window.CasaApplianceTimerStore;
+    const known = name => typeof name === 'string' && (
+      staticNames.includes(name) || /^room-name:[a-z0-9:-]{1,55}$/.test(name) ||
+      /^timer-preset:(heater|dehumidifier)-dialog$/.test(name) ||
+      (duplex ? /^banner-position:(room|sensor|alarm|fan|ev):(-1|3|4):[a-z0-9-]{1,40}$/.test(name)
+        : /^banner-position:room:[a-z0-9-]{1,40}$/.test(name))
+    );
     function normalize(name, value) {
       if (!known(name)) return null;
       try {
+        if (name === 'shelly-config') {
+          if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+          return shelly?.sharedConfiguration(value) ?? null;
+        }
+        if (name === 'energy-tariff') {
+          const {globalTotals,...tariff} = window.CasaEnergyCostCore.validate({...value,globalTotals:[]});
+          return tariff;
+        }
+        if (name.startsWith(timerPrefix)) return timerStore.presetList(value);
+        if (name.startsWith(bannerPrefix)) {
+          const limit = duplex ? 1600 : 100;
+          return value && [value.x,value.y].every(n=>Number.isFinite(n)&&n>=0&&n<=limit)
+            ? {x:value.x,y:value.y} : null;
+        }
         if (name === 'shelly-disabled') {
           const fields = duplex ? window.CasaHomeCore.disabledFields(window.CasaPlans) : window.ShellyCore.disabledFields();
           return window.CasaShellyDisabled.normalize(value, fields) ?? null;
         }
+        if (name === 'media-labels' || name === 'office-labels') return !duplex && typeof value === 'boolean' ? value : null;
         if (name === 'environment-mode') return ['auto','day','night'].includes(value) ? value : null;
         if (name === 'screensaver-delay') return meteoCore.screensaver({seconds:value}).seconds;
         if (name === 'banner-scale') return Number.isInteger(value) && value >= 60 && value <= 160 && value % 5 === 0 ? value : null;
@@ -248,7 +303,26 @@
     }
     function apply(setting, value) {
       if (setting === 'shelly-disabled') {
-        (duplex ? window.CasaShellySetup : window.CasaShelly)?.applySharedDisabled(value);
+        shelly?.applySharedDisabled(value);
+      } else if (setting === 'shelly-config') {
+        shelly?.applySharedConfiguration(value);
+      } else if (setting === 'media-labels' || setting === 'office-labels') {
+        window.dispatchEvent(new window.CustomEvent('shared-'+setting,{detail:value}));
+      } else if (setting === 'energy-tariff') {
+        window.CasaEnergyCost?.applySharedPreferences(value);
+      } else if (setting.startsWith(timerPrefix)) {
+        const role = setting.slice(timerPrefix.length);
+        let saved = {};
+        try { saved = timerStore.presetSettings(JSON.parse(storage.getItem(timerStore.PRESET_KEY) || '{}')); } catch {}
+        if (!equal(saved[role],value)) {
+          try { storage.setItem(timerStore.PRESET_KEY,JSON.stringify({...saved,[role]:value})); } catch {}
+        }
+      } else if (setting.startsWith(bannerPrefix)) {
+        const [kind,...parts] = setting.slice(bannerPrefix.length).split(':');
+        const address = parts.join(':');
+        const layout = labels[kind]?.();
+        if (duplex) layout?.applySharedPosition?.(address,value);
+        else layout?.apply?.(address,value);
       } else if (setting.startsWith(roomPrefix)) {
         window.CasaSharedRoomNames?.apply(setting.slice(roomPrefix.length), value);
       } else if (setting === 'weather-city') {
@@ -293,5 +367,5 @@
     return sync;
   }
 
-  return {createSync, mount};
+  return {createSync, mount, equal};
 });
