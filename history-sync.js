@@ -6,6 +6,7 @@
   const projectUrl = 'https://xnxkezilascdouyueukm.supabase.co';
   const publishableKey = 'sb_publishable_AUt0AI1NArlh2NJsuUrweQ_TkhOjaf1';
   const daily = window.CasaDailyEnergy;
+  const plantSettings = window.CasaPlantSettingsSync?.mount(house, document, window);
   const storageKey = 'casa-history-sync-' + house;
   const cadence = 120000;
   let client, session, busy = false;
@@ -150,6 +151,7 @@
           status = session ? 'A ligar ao histórico…' : 'Sessão terminada.';
         }
         paint();
+        plantSettings?.connect(client, session?.user.id ?? null);
         if (session) sync();
       }, 0);
     });
@@ -407,7 +409,10 @@
   }
 
   dialog.querySelector('[data-dismiss-writer-warning]').addEventListener('click', dismissWriterWarning);
-  dialog.querySelector('[data-refresh]').addEventListener('click', () => sync(true));
+  dialog.querySelector('[data-refresh]').addEventListener('click', () => {
+    sync(true);
+    void plantSettings?.sync();
+  });
   dialog.querySelector('[data-sign-out]').addEventListener('click', async () => {
     const {error} = await client.auth.signOut({scope:'local'});
     if (error) paint('Não foi possível terminar a sessão.');

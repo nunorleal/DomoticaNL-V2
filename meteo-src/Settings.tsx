@@ -286,7 +286,7 @@ export function Settings({
             <input type="checkbox" checked={value.nightUntilBlindOpen} onChange={e => set("nightUntilBlindOpen", e.target.checked)} />
           </label>
           {value.nightUntilBlindOpen && <p role="status">{!blind?.configured ? "Associe o estore do quarto principal nas definições da Casa NL para permitir a saída automática." : !blind.ready ? "A aguardar uma leitura atual do estore; dados antigos ou indisponíveis não libertam o modo." : `Estore do quarto principal: ${blind.position}%.`}</p>}
-          <p>Aplica-se ao vermelho e ao modo noturno. O horário ativa o modo; a saída espera uma leitura atual do estore do quarto principal totalmente aberto. Depois de sair, fechar o estore não volta a ativar o modo.</p>
+          <p>Este check prolonga o modo noturno ou vermelho depois do fim do horário. A abertura confirmada a 100% do estore do quarto principal também desliga o vermelho quando o estore é aberto fora da MeteoNL.</p>
           <label>
             Escurecimento · {value.dim}%
             <input

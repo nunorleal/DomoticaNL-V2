@@ -58,3 +58,10 @@ body.hide-plan-heater #heater-object,
 body.hide-plan-dehumidifier #dehumidifier-object {
   display: none;
 }
+
+#plant-display-settings .plant-settings-sync-status {
+  margin: 4px 0 14px;
+  color: #4f6d85;
+  font-size: 12px;
+  line-height: 1.5;
+}

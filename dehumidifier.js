@@ -13,7 +13,22 @@
  if(!fits(position))position={...C.DEFAULT};
  function locate(p){for(const room of C.ROOMS){const candidate={...p,room};if(fits(candidate))return candidate}return null}
  function apply(p){object.style.left=p.x/10.24+'%';object.style.top=(p.y-140)/11.8+'%'}
- function save(){try{localStorage.setItem(KEY,JSON.stringify(C.layout(position)))}catch{notify('A posição mudou, mas não foi possível guardá-la.')}}
+ function save(publish=true){
+  const next=C.layout(position);
+  try{localStorage.setItem(KEY,JSON.stringify(next))}catch{notify('A posição mudou, mas não foi possível guardá-la.')}
+  if(publish)window.dispatchEvent(new CustomEvent('plantpositionchange',{detail:{setting:'dehumidifier',position:next}}));
+ }
+ function applySharedPosition(next){
+  if(active)return;
+  try{
+   const clean=C.layout(next);
+   if(!fits(clean)||['room','x','y'].every(k=>position[k]===clean[k]))return;
+   position=clean;
+  }catch{return}
+  apply(position);
+  save(false);
+  draw();
+ }
  function drawLighting(){const r=rooms.find(r=>r.id===position.room);if(!r)return;const night=CasaEnvironment.darkness(r,rooms)*(1-CasaEnvironment.electricOpacity(r,rooms));if(object.style.getPropertyValue('--dehumidifier-night')!==String(night))object.style.setProperty('--dehumidifier-night',String(night));if(dialog.style.getPropertyValue('--dehumidifier-night')!=='0')dialog.style.setProperty('--dehumidifier-night','0')}
  let planSignature='',popupSignature='';
  function draw(){const d=CasaShelly.dehumidifierSnapshot(),name=rooms.find(r=>r.id===position.room)?.name||'Casa de banho 1',label=!d.configured?'Por associar':d.on===true?'Ligado':d.on===false?'Desligado':d.lastReading?'Última leitura: '+(d.lastReading.on?'ligado':'desligado'):'Por confirmar';
@@ -32,5 +47,5 @@
  function cancelDrag(e){if(!active||active.id!==e.pointerId)return;position=active.original;active=null;object.classList.remove('dragging');suppressUntil=performance.now()+700;apply(position);draw()}
  object.addEventListener('pointercancel',cancelDrag);object.addEventListener('lostpointercapture',cancelDrag);
  object.addEventListener('keydown',e=>{const delta={ArrowLeft:[-10,0],ArrowRight:[10,0],ArrowUp:[0,-10],ArrowDown:[0,10]}[e.key];if(!delta||!window.CasaPlanMove.isUnlocked(object))return;e.preventDefault();const next=locate({x:position.x+delta[0],y:position.y+delta[1]});if(next){position=next;apply(position);save();draw()}});
- window.CasaDehumidifier={drawLighting,roomId:()=>position.room,open:()=>{showPopup('dehumidifier-dialog');draw();CasaShelly.dehumidifierEnsureFresh()}};window.addEventListener('dehumidifierchange',draw);window.addEventListener('environmentchange',drawLighting);setInterval(()=>{if(!document.hidden)draw()},1000);apply(position);draw();
+ window.CasaDehumidifier={applySharedPosition,drawLighting,roomId:()=>position.room,open:()=>{showPopup('dehumidifier-dialog');draw();CasaShelly.dehumidifierEnsureFresh()}};window.addEventListener('dehumidifierchange',draw);window.addEventListener('environmentchange',drawLighting);setInterval(()=>{if(!document.hidden)draw()},1000);apply(position);draw();
 })();

@@ -849,7 +849,7 @@ Verificação2.76: build concluído; fixture sem dispositivos, previsão16°C/se
 
 # Versão MeteoNL comum às duas apps — 2.76
 
-Por pedido explícito, MeteoNL tem versão2.76 nas duas casas e passa a evoluir em conjunto (2.77,etc.), independente de version.json da aplicação de domótica. Fonte canónica da versão Meteo: meteo-src/app-info.ts; build lê esse ficheiro, nunca a versão da casa. Sincronizar package.json, referências meteo/index.html e meteo.js (HTTP e file/srcdoc) e recompilar em cada projeto, sem copiar pontes/associações/configurações entre casas. Cache do script meteo.js da casa deve mudar quando necessário.
+A única versão mantida da MeteoNL é a integrada nas plantas. A fonte canónica está em `DomoticaNL V2/meteo-src/`. O build da T2 gera uma única distribuição com versão própria e sincroniza-a com a Casa Condados quando os projetos estão lado a lado ou quando se indica a pasta com `--condados`. O build invocado nos Condados encaminha para o da T2. Preservar as pontes, preferências e associações de cada casa. Ver `METEONL.md`.
 
 Preferência persistente: aplicar alterações comuns compatíveis à Domótica NL e Casa Condados, adaptando cada implementação e preservando dispositivos, IDs, credenciais, regras e plantas. Testes apenas fictícios. As versões próprias da domótica continuam independentes.
 

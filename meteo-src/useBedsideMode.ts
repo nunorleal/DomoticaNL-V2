@@ -12,7 +12,7 @@ export function useBedsideMode(prefs: Settings, baseNight: boolean, baseRed: boo
   const candidate = stored.current?.signature === signature ? stored.current.mode : null;
   const valid = candidate && ["baseNight", "baseRed", "holdNight", "holdRed"].every(k => typeof candidate[k] === "boolean");
   const blind = bridge?.bedroomBlind?.() || {configured:false, ready:false, open:false, position:null};
-  const mode = bedsideMode(valid ? candidate : null, {enabled:prefs.nightUntilBlindOpen, night:baseNight, red:baseRed, blindOpen:blind.open === true, ...daylight, morningRequested:morningRequest!==processedMorning.current});
+  const mode = bedsideMode(valid ? candidate : null, {enabled:prefs.nightUntilBlindOpen, night:baseNight, red:baseRed, blindOpen:blind.open === true, blindPosition:blind.ready ? blind.position : null, ...daylight, morningRequested:morningRequest!==processedMorning.current});
   const serialized = JSON.stringify({signature, mode});
   useEffect(() => {
     stored.current = {signature, mode};

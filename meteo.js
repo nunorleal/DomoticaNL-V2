@@ -80,10 +80,11 @@
   host.hidden=false;document.documentElement.classList.add('meteo-visible');idle.setActive(false);
   if(!loaded){
    loading.hidden=false;loadTimer=setTimeout(()=>{loadMessage.textContent='Não foi possível carregar a MeteoNL. Volte à casa e atualize a página.'},15000);
+   const release=window.CasaMeteoRelease;
    if(location.protocol==='file:'){
     const base=new URL('meteo/',document.baseURI).href.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-    frame.srcdoc=`<!doctype html><html lang="pt"><head><meta charset="utf-8"><base href="${base}"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MeteoNL · Casa NL</title><link rel="stylesheet" href="assets/app-2.97.css?v=2.97-morning"></head><body><div id="root"></div><script src="assets/app-2.97.js?v=2.97-morning"><\/script></body></html>`;
-   }else frame.src='meteo/index.html?v=2.97';
+    frame.srcdoc=release.html.replace('<head>','<head><base href="'+base+'">');
+   }else frame.src='meteo/index.html?v='+release.version;
    loaded=true;
   }
   window.CasaShelly?.ensureFresh('master');window.CasaShelly?.ensureFresh('balcony');refreshIndoorSensor();frame.focus();
