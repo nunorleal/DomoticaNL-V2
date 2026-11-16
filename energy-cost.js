@@ -20,7 +20,8 @@
     } : C.referenceRates;
   }
   let sharedRates = null;
-  const activeRates = () => sharedRates ?? config.dailyRates;
+  let useLocalRates = false;
+  const activeRates = () => useLocalRates ? config.dailyRates : sharedRates ?? config.dailyRates;
   const button = (text, className) => {
     const el = document.createElement('button');
     el.type = 'button';
@@ -69,7 +70,6 @@
   const status = text => { $('energy-tariff-status').textContent = text; };
   $('energy-daily-form').addEventListener('submit', event => {
     event.preventDefault();
-    if (sharedRates) return;
     const offPeak = $('energy-daily-offpeak').value.trim();
     const peak = $('energy-daily-peak').value.trim();
     const validRate = /^\d{1,3}(?:[,.]\d{1,8})?$/;
@@ -82,11 +82,14 @@
       window.dispatchEvent(new Event('energytariffsave'));
     }
   });
-  function save(next, message) {
+  function save(next, message, publish=true) {
     try {
       const valid = C.validate(next);
       localStorage.setItem(C.KEY, JSON.stringify(valid));
       config = valid;
+      useLocalRates = true;
+      const {globalTotals,...tariff} = config;
+      if (publish) window.dispatchEvent(new CustomEvent('housepreferencechange',{detail:{setting:'energy-tariff',value:tariff}}));
       status(message);
       window.dispatchEvent(new Event('energycostchange'));
       return true;
@@ -112,10 +115,7 @@
     const rates = activeRates();
     $('energy-daily-offpeak').value = rateFormat.format(rates.offPeak);
     $('energy-daily-peak').value = rateFormat.format(rates.peak);
-    $('energy-daily-offpeak').readOnly = Boolean(sharedRates);
-    $('energy-daily-peak').readOnly = Boolean(sharedRates);
-    $('energy-daily-form').querySelector('[type=submit]').hidden = Boolean(sharedRates);
-    $('energy-tariff-source').hidden = !sharedRates;
+    $('energy-tariff-source').hidden = useLocalRates || !sharedRates;
   }
 
   function setSharedRates(rates) {
@@ -207,5 +207,9 @@
   window.addEventListener('energycostchange', () => {
     document.querySelectorAll('[data-energy-cost-role]').forEach(node => today(node,node.dataset.energyCostRole,node.dataset.energyCostId));
   });
-  window.CasaEnergyCost = {today, display, snapshot:() => config, setSharedRates};
+  window.CasaEnergyCost = {today, display, snapshot:() => config, setSharedRates, applySharedPreferences(next) {
+    const {globalTotals,...tariff} = config;
+    if (editor.open || (useLocalRates && window.CasaSharedConfig.equal(tariff,next))) return;
+    save({...next,globalTotals}, '', false);
+  }};
 })();

@@ -5,15 +5,33 @@
  function style(el,p){Object.assign(el.style,{left:p.x+'%',top:p.y+'%',right:'auto',bottom:'auto',transform:'translate(-50%,-50%)'})}
  function limits(id,el){const parent=el.parentElement.getBoundingClientRect(),rect=el.getBoundingClientRect(),view=plan.getBoundingClientRect();return {parent,rect,bounds:{left:4,top:4,right:parent.width-4,bottom:id==='ev'?Math.min(parent.height*1.3,view.bottom-parent.top-8):parent.height-4}}}
  function point(id,el,p){const {parent,rect,bounds}=limits(id,el);if(!parent.width||!parent.height)return p;const center=C.clamp({x:p.x*parent.width/100,y:p.y*parent.height/100},{width:rect.width,height:rect.height},bounds);return {x:center.x/parent.width*100,y:center.y/parent.height*100}}
- function reflow(){for(const [id,el]of Object.entries(items)){if(!el||!saved[id])continue;style(el,point(id,el,saved[id]))}}
+ function reflow(){
+  for(const [id,el]of Object.entries(items)){
+   if(el&&saved[id]&&active?.id!==id)style(el,point(id,el,saved[id]));
+  }
+ }
+ function save(id,p,publish){
+  saved=C.layout({...saved,[id]:p});
+  try{localStorage.setItem(KEY,JSON.stringify(saved))}
+  catch{if(publish)notify('A posição mudou, mas não foi possível guardá-la neste navegador.')}
+  if(publish)window.dispatchEvent(new CustomEvent('plantpositionchange',{detail:{
+   setting:'garage-'+id,position:saved[id]
+  }}));
+ }
+ function applySharedPosition(id,p){
+  const el=items[id],previous=saved[id];
+  if(!el||active?.id===id||(previous?.x===p.x&&previous.y===p.y))return;
+  save(id,p,false);
+  style(el,point(id,el,saved[id]));
+ }
  for(const [id,el]of Object.entries(items)){if(!el)continue;el.classList.add('basement-movable');if(saved[id])style(el,saved[id]);
   el.addEventListener('click',e=>{if(performance.now()<(suppress.get(id)||0)){e.preventDefault();e.stopImmediatePropagation()}},true);
   el.addEventListener('pointerdown',e=>{if(e.isPrimary&&e.button===0)suppress.delete(id)});
   window.CasaPlanMove.bindItem(el,e=>{if(!e.isPrimary||e.button!==0||document.querySelector('dialog[open]')||document.documentElement.classList.contains('meteo-visible'))return;const r=el.getBoundingClientRect();active={id,el,pointer:e.pointerId,x:e.clientX,y:e.clientY,cx:r.left+r.width/2,cy:r.top+r.height/2,dragging:false,original:el.getAttribute('style')};el.setPointerCapture(e.pointerId)});
   el.addEventListener('pointermove',e=>{if(!active||active.el!==el||active.pointer!==e.pointerId)return;const dx=e.clientX-active.x,dy=e.clientY-active.y;if(!active.dragging&&Math.hypot(dx,dy)<6)return;active.dragging=true;document.body.classList.add('basement-banner-dragging');e.preventDefault();e.stopPropagation();const parent=el.parentElement.getBoundingClientRect();const p=point(id,el,{x:(active.cx+dx-parent.left)/parent.width*100,y:(active.cy+dy-parent.top)/parent.height*100});style(el,p);active.position=p});
-  el.addEventListener('pointerup',e=>{if(!active||active.el!==el||active.pointer!==e.pointerId)return;const a=active;active=null;document.body.classList.remove('basement-banner-dragging');if(!a.dragging)return;e.preventDefault();e.stopPropagation();suppress.set(id,performance.now()+700);saved=C.layout({...saved,[id]:a.position});try{localStorage.setItem(KEY,JSON.stringify(saved))}catch{notify('A posição mudou, mas não foi possível guardá-la neste navegador.')}});
+  el.addEventListener('pointerup',e=>{if(!active||active.el!==el||active.pointer!==e.pointerId)return;const a=active;active=null;document.body.classList.remove('basement-banner-dragging');if(!a.dragging)return;e.preventDefault();e.stopPropagation();suppress.set(id,performance.now()+700);if(a.position)save(id,a.position,true)});
   function cancelDrag(e){if(active?.el!==el||active.pointer!==e.pointerId)return;if(active.dragging){if(active.original===null)el.removeAttribute('style');else el.setAttribute('style',active.original);suppress.set(id,performance.now()+700)}active=null;document.body.classList.remove('basement-banner-dragging')}
   el.addEventListener('pointercancel',cancelDrag);el.addEventListener('lostpointercapture',cancelDrag);
  }
- window.addEventListener('resize',reflow);window.addEventListener('floorchange',reflow);window.CasaBasementLayout={reflow};
+ window.addEventListener('resize',reflow);window.addEventListener('floorchange',reflow);window.CasaBasementLayout={reflow,applySharedPosition};
 })();

@@ -43,7 +43,8 @@
    if(!allowed())return;
    if(!Number.isInteger(minutes)||minutes<1||minutes>1440){message.textContent='Escolha entre 1 e 1440 minutos.';return}
    sending=true;message.textContent='A enviar pedido…';update();
-   try{await command(true,minutes*60);if(remember){presets.remember(minutes);renderPresets()}message.textContent='';close()}
+   try{await command(true,minutes*60);if(remember){const values=presets.remember(minutes);
+    window.dispatchEvent(new CustomEvent('housepreferencechange',{detail:{setting:'timer-preset:'+dialog.id,value:values}}));renderPresets()}message.textContent='';close()}
    catch(error){message.textContent=error.message}
    finally{sending=false;update()}
   }
