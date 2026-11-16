@@ -31,15 +31,35 @@
   if(!api||api.isBusy()||api.hasUnsavedChanges()||!morningBlindVisible(context(),snapshot()))return false;
   return await api.command('master','open')===true;
  }
- function bedsideMode(previous,{enabled=false,night=false,red=false,blindOpen=false,morningRequested=false,now,sunrise,sunset}){
+ function bedsideMode(previous,{enabled=false,night=false,red=false,blindOpen=false,blindPosition=null,morningRequested=false,now,sunrise,sunset}){
   let holdNight=enabled&&!!(previous?.holdNight||night&&!previous?.baseNight),holdRed=enabled&&!!(previous?.holdRed||red&&!previous?.baseRed);
   const validNow=Number.isFinite(now),day=validNow&&Number.isFinite(sunrise)&&Number.isFinite(sunset)&&sunrise<sunset&&sunset-sunrise<86400000&&now>=sunrise&&now<sunset;
   let morningUntil=validNow&&Number.isFinite(previous?.morningUntil)&&previous.morningUntil>now&&previous.morningUntil-now<86400000?previous.morningUntil:0;
   let morningReleased=morningUntil>0&&previous?.morningReleased===true;
-  if(morningRequested===true&&day){morningUntil=sunset;morningReleased=false}
-  if(blindOpen===true){holdNight=false;holdRed=false;if(morningUntil>0)morningReleased=true}
+  const maxDismissal=86400000;
+  const previousDismissal=previous?.redDismissedUntil;
+  let redDismissedUntil=red&&validNow&&previousDismissal>now&&previousDismissal-now<=maxDismissal?previousDismissal:0;
+  let blindWasBelowFull=previous?.blindWasBelowFull===true;
+  if(Number.isFinite(blindPosition)&&blindPosition>=0&&blindPosition<100)blindWasBelowFull=true;
+  if(morningRequested===true&&day&&morningUntil!==sunset){morningUntil=sunset;morningReleased=false}
+  if(blindOpen===true){
+   if(day&&(red||holdRed||previous?.red===true)){
+    morningUntil=sunset;
+   }else if(red&&blindWasBelowFull&&validNow){
+    // Outside daylight, release only after observing the blind move to fully open.
+    redDismissedUntil=Number.isFinite(sunset)&&sunset>now&&sunset-now<=maxDismissal?sunset:now+maxDismissal;
+   }
+   blindWasBelowFull=false;
+   holdNight=false;
+   holdRed=false;
+   if(morningUntil>0)morningReleased=true;
+  }
   const daylight=morningUntil>0&&morningReleased;
-  return {baseNight:night,baseRed:red,holdNight,holdRed,morningUntil,morningReleased,night:!daylight&&(night||red||holdNight||holdRed),red:!daylight&&(red||holdRed)};
+  const showRed=!daylight&&redDismissedUntil===0&&(red||holdRed);
+  return {
+   baseNight:night,baseRed:red,holdNight,holdRed,morningUntil,morningReleased,blindWasBelowFull,redDismissedUntil,
+   night:!daylight&&(night||holdNight||showRed),red:showRed
+  };
  }
 
  function indoorClimate(id,sensors,read,now=Date.now()){

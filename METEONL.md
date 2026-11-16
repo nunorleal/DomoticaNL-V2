@@ -1,4 +1,4 @@
-# MeteoNL integrada — Casa NL 1.35
+# MeteoNL integrada nas duas casas
 
 O símbolo meteorológico no topo abre a MeteoNL. O botão da casa na MeteoNL regressa à planta. Por omissão, após 30 segundos sem interação na Casa NL, a MeteoNL abre automaticamente; a edição dos popups fica preservada ao regressar. Uma comunicação Shelly em curso adia esta transição. Isto é um protetor visual dentro da aplicação, não uma configuração do bloqueio físico do iPad.
 
@@ -8,19 +8,19 @@ A conta Shelly Cloud e os IDs continuam em Definições → Shelly Cloud · equi
 
 As preferências de relógio, unidades e paisagem usam `casa-nl-meteo-v1`, incluído na exportação/importação JSON da Casa NL. A cidade é guardada apenas na configuração central. Não há migração automática de dados do antigo site MeteoNL, que tem outra origem no navegador; a configuração da Casa NL é a referência.
 
-## Publicar
+## Versão partilhada
 
-Publicar o conteúdo completo de `dist/`, incluindo `meteo/` e os novos ficheiros `meteo*.js` e `meteo.css`. Funciona com ficheiros estáticos no GitHub Pages, na raiz ou numa subpasta. Não é necessário Node ou servidor Python em produção. Não há carregamento da app MeteoNL a partir de outro domínio nem novo service worker a substituir a aplicação.
+A MeteoNL integrada na T2 é a única fonte mantida, em `DomoticaNL V2/meteo-src/`. A Casa Condados recebe o mesmo pacote gerado. A versão autónoma anterior é histórica e as suas preferências não são importadas automaticamente. O botão de meteorologia ou a navegação acima do piso superior abrem a MeteoNL da respetiva casa.
 
-A pasta original MeteoNL/PUBLICAR-GITHUB e o código original não foram alterados. Os ambientes e recursos fornecidos foram copiados para `meteo/`; as fontes adaptadas estão em `meteo-src/`. Não publicar cópias JSON pessoais com credenciais.
+Definir a versão da MeteoNL em `meteo-src/app-info.ts` e alinhar `meteo-src/package.json`. Com as dependências locais instaladas, executar na raiz da T2:
 
-## Manutenção
+```sh
+node meteo-src/build.cjs
+```
 
-Os ficheiros servidos estão em `meteo/index.html` e `meteo/assets/app-1.35.js` / `app-1.35.css`. Para recompilar alterações React, instalar as dependências descritas em `meteo-src/package.json` dentro dessa pasta e executar `npm run build`. O script também aceita uma pasta node_modules existente e, opcionalmente, o caminho do módulo esbuild como terceiro argumento. Só escreve em `dist/meteo/assets/`.
+Se a pasta Casa Condados estiver noutro local, indicar `--condados <caminho>`. Se as dependências estiverem noutra pasta, passar o caminho de `node_modules` como primeiro argumento. O build gera os mesmos ficheiros JS e CSS, `meteo/index.html` para HTTP e `meteo/release.js` para o Safari com ficheiro local. Também sincroniza a cópia das fontes nos Condados, que é mantida para inspeção e testes. Os dois projetos podem ser publicados separadamente com os ficheiros da respetiva pasta. As pontes `meteo.js`, os dispositivos, as preferências e os recursos de cada casa continuam locais.
 
-Atualizar a versão em `version.json`, nos metadados e referências do index principal, em `meteo.js`, `meteo/index.html` e `meteo-src/app-info.ts`; recompilar as fontes. Evitar o script antigo de versões fora de dist.
-
-Testes: `node --test casa-nl/tests/*.test.cjs casa-nl/dist/tests/*.test.cjs` a partir da pasta Domótica NL. Os testes anteriores são apenas lidos; todos os novos testes estão em dist. Testes de UI usam exclusivamente `dist/tests/serve_lights_fixture.py`, com IDs fictícios e interceção de todos os pedidos Shelly. Nunca testar comandos em equipamentos físicos.
+Executar `node --test tests/*.test.cjs` a partir da raiz de cada casa. Usar dados fictícios para validar equipamentos.
 
 ## Compatibilidade com ficheiros locais — 1.34
 

@@ -202,14 +202,25 @@
   }
   return true;
  }
- function persist(next){
+ function persist(next,publish=true){
+  const previous=saved.position;
   saved=core.preferences(next);
   storageMessage=storePreferences()?'':'A posição e a visibilidade mantêm-se até recarregar a página.';
   syncVisibility();
   drawLighting();
   draw();
   position();
+  if(publish&&['floor','room','x','y'].some(k=>previous[k]!==saved.position[k])){
+   window.dispatchEvent(new CustomEvent('plantpositionchange',{detail:{setting:'christmas-tree',position:saved.position}}));
+  }
   return true;
+ }
+ function applySharedPosition(next){
+  if(active||['floor','room','x','y'].every(k=>saved.position[k]===next[k]))return;
+  try{
+   const clean=core.preferences({shown:saved.shown,position:next});
+   if(fits(clean.position))persist(clean,false);
+  }catch{}
  }
  function roomLabel(p){
   return condados?window.CasaRoomNames.get(p.floor,p.room):rooms.find(r=>r.id===p.room)?.name||p.room;
@@ -368,6 +379,7 @@
  document.addEventListener('visibilitychange',()=>{if(document.hidden)settle();else draw()});
  setInterval(()=>{if(!document.hidden)draw()},1000);
  window.CasaChristmasTree={
+  applySharedPosition,
   mount(next,id){cancel();svg=next;floor=id;position();drawLighting();draw()},
   position,open,drawLighting,roomId:()=>saved.position.room,
   snapshot:()=>core.preferences(saved),
