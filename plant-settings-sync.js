@@ -39,16 +39,18 @@
     return null;
   }
 
-  function createSync({house, read, write, apply, report, storage, positions = false}) {
+  function createSync({house, read, write, apply, report, storage, positions = false, preferences}) {
     const supported = positions ? devices : controls[house];
-    const field = positions ? 'position' : 'shown';
-    const label = positions ? 'posições' : 'checks';
-    const normalize = value => positions ? validatePosition(house, value) : typeof value === 'boolean' ? value : null;
+    const field = preferences ? 'value' : positions ? 'position' : 'shown';
+    const label = preferences ? 'definições' : positions ? 'posições' : 'checks';
+    const normalize = (name, value) => preferences ? preferences.normalize(name, value)
+      : positions ? validatePosition(house, value) : typeof value === 'boolean' ? value : null;
     let account = null, currentRun = null;
     let pending = new Map();
-    const queuePrefix = positions ? 'casa-plant-positions-pending:' : 'casa-plant-pending:';
+    const queuePrefix = preferences ? 'casa-plant-preferences-pending:'
+      : positions ? 'casa-plant-positions-pending:' : 'casa-plant-pending:';
     const key = () => queuePrefix + house + ':' + account.user;
-    const known = name => Object.hasOwn(supported, name);
+    const known = name => preferences ? preferences.known(name) : Object.hasOwn(supported, name);
     function saveQueue() {
       try {
         if (pending.size) storage.setItem(key(), JSON.stringify(Object.fromEntries(pending)));
@@ -78,10 +80,10 @@
         const rows = await read(active);
         if (account !== active) return;
         for (const {setting, [field]: raw} of rows) {
-          const value = normalize(raw);
+          const value = normalize(setting, raw);
           if (known(setting) && value !== null && !pending.has(setting)) apply(setting, value);
         }
-        if (!pending.size) report(positions ? 'Posições sincronizadas.' : 'Checks sincronizados.');
+        if (!pending.size) report(preferences ? 'Definições sincronizadas.' : positions ? 'Posições sincronizadas.' : 'Checks sincronizados.');
       } catch {
         if (account === active) report(pending.size
           ? 'Alterações por enviar. A app tenta novamente quando recuperar a ligação.'
@@ -101,13 +103,13 @@
       account = user ? {client, user, resend: false} : null;
       pending = new Map();
       if (!account) {
-        report(positions ? '' : 'Inicia sessão em «Sincronizar histórico» para partilhar os checks e as posições.');
+        report(positions || preferences ? '' : 'Inicia sessão em «Sincronizar histórico» para partilhar as definições da casa.');
         return;
       }
       try {
         const saved = JSON.parse(storage.getItem(key()));
         for (const [setting, entry] of Object.entries(saved || {})) {
-          const value = normalize(entry?.[field]);
+          const value = normalize(setting, entry?.[field]);
           if (known(setting) && value !== null) pending.set(setting, {[field]: value});
         }
       } catch { /* Start without a queue. */ }
@@ -117,7 +119,7 @@
 
     function change(setting, value) {
       if (!account || !known(setting)) return;
-      const clean = normalize(value);
+      const clean = normalize(setting, value);
       if (clean === null) return;
       pending.set(setting, {[field]: clean});
       saveQueue();
@@ -181,12 +183,14 @@
       },
       report: statusMessage()
     });
+    const housePreferences = mountPreferences(house, document, window, storage, transport, statusMessage());
     function connect(client, user) {
+      housePreferences.connect(client, user);
       checks.connect(client, user);
       positions.connect(client, user);
     }
     async function sync() {
-      await Promise.all([checks.sync(), positions.sync()]);
+      await Promise.all([checks.sync(), positions.sync(), housePreferences.sync()]);
     }
     connect(null, null);
     window.addEventListener('plantpositionchange', event => {
@@ -203,6 +207,90 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) void sync(); });
     window.setInterval(() => { if (!document.hidden) void sync(); }, 10000);
     return {connect, sync};
+  }
+
+  function mountPreferences(house, document, window, storage, transport, report) {
+    const duplex = house === 'duplex';
+    const meteoKey = 'casa-nl-meteo-v1';
+    let appliedMeteo = '';
+    let applying = false;
+    const meteoCore = window.CasaMeteoCore;
+    const rangeId = duplex ? 'banner-scale' : 'room-power-size';
+    const staticNames = ['shelly-disabled','environment-mode','screensaver-delay','banner-scale','weather-city','meteo-settings'];
+    const roomPrefix = 'room-name:';
+    const known = name => typeof name === 'string' &&
+      (staticNames.includes(name) || /^room-name:[a-z0-9:-]{1,55}$/.test(name));
+    function normalize(name, value) {
+      if (!known(name)) return null;
+      try {
+        if (name === 'shelly-disabled') {
+          const fields = duplex ? window.CasaHomeCore.disabledFields(window.CasaPlans) : window.ShellyCore.disabledFields();
+          return window.CasaShellyDisabled.normalize(value, fields) ?? null;
+        }
+        if (name === 'environment-mode') return ['auto','day','night'].includes(value) ? value : null;
+        if (name === 'screensaver-delay') return meteoCore.screensaver({seconds:value}).seconds;
+        if (name === 'banner-scale') return Number.isInteger(value) && value >= 60 && value <= 160 && value % 5 === 0 ? value : null;
+        if (name.startsWith(roomPrefix)) return typeof value === 'string' && value.length <= (duplex ? 120 : 40) ? value : null;
+        if (name === 'meteo-settings') return meteoCore.preferences(value);
+        if (!value || typeof value.name !== 'string' || !value.name.trim() ||
+            value.name.length > 150 || !Number.isFinite(value.latitude) || Math.abs(value.latitude) > 90 ||
+            !Number.isFinite(value.longitude) || Math.abs(value.longitude) > 180) return null;
+        const {name: city, latitude, longitude} = value;
+        const details = Object.fromEntries(['admin1','country','country_code','timezone'].map(key =>
+          [key, typeof value[key] === 'string' ? value[key].slice(0,120) : '']));
+        if (typeof value.id === 'number' && Number.isSafeInteger(value.id)) details.id = value.id;
+        return {name:city, latitude, longitude, ...details};
+      } catch { return null; }
+    }
+    function loadMeteo() {
+      try { return meteoCore.preferences(JSON.parse(storage.getItem(meteoKey)) || {}); }
+      catch { return {}; }
+    }
+    function apply(setting, value) {
+      if (setting === 'shelly-disabled') {
+        (duplex ? window.CasaShellySetup : window.CasaShelly)?.applySharedDisabled(value);
+      } else if (setting.startsWith(roomPrefix)) {
+        window.CasaSharedRoomNames?.apply(setting.slice(roomPrefix.length), value);
+      } else if (setting === 'weather-city') {
+        const current = window.CasaEnvironment?.getState()?.city;
+        if (current?.name !== value.name || current?.latitude !== value.latitude ||
+            current?.longitude !== value.longitude || current?.timezone !== (value.timezone || 'UTC')) {
+          void window.CasaEnvironment?.selectCity(value, false);
+        }
+      } else if (setting === 'meteo-settings') {
+        const current = loadMeteo();
+        const signature = JSON.stringify(Object.entries(value).sort(([a],[b])=>a.localeCompare(b)));
+        if (signature === appliedMeteo && Object.entries(value).every(([key,v])=>JSON.stringify(current[key])===JSON.stringify(v))) return;
+        try { storage.setItem(meteoKey, JSON.stringify({...current,...value})); } catch {}
+        if (signature !== appliedMeteo) {
+          appliedMeteo = signature;
+          window.dispatchEvent(new window.CustomEvent('sharedmeteopreferences', {detail:value}));
+        }
+      } else {
+        const slider = setting === 'banner-scale';
+        const node = document.getElementById(slider ? rangeId : setting);
+        if (!node || node.value === String(value) || node.matches(':active')) return;
+        node.value = String(value);
+        if (slider) node.dispatchEvent(new window.Event('input', {bubbles:true}));
+        else node.dispatchEvent(new window.Event('change', {bubbles:true}));
+      }
+    }
+    const sync = createSync({
+      house, storage, preferences:{known,normalize}, ...transport('casa_plant_preferences','value'),
+      apply(setting, value) {
+        applying = true;
+        try { apply(setting, value); }
+        finally { applying = false; }
+      },
+      report
+    });
+    window.addEventListener('housepreferencechange', event => {
+      if (!applying && event.detail) {
+        if (event.detail.setting === 'meteo-settings') appliedMeteo = '';
+        sync.change(event.detail.setting, event.detail.value);
+      }
+    });
+    return sync;
   }
 
   return {createSync, mount};

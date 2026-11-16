@@ -58,7 +58,7 @@
   finally{if(version===forecastVersion){state.loading=false;changed()}}
  }
  function normalizeCity(r){return {id:r.id,name:r.name,latitude:r.latitude,longitude:r.longitude,admin1:r.admin1||'',country:r.country||'',country_code:r.country_code||'',timezone:r.timezone||'UTC'}}
- async function selectCity(r){if(!validCity(r))return;state.city=normalizeCity(r);state.data=null;state.fetchedAt=0;save();$('city-results').replaceChildren();$('city-feedback').textContent='Cidade selecionada.';$('city-search').value=r.name;changed();await refresh()}
+ async function selectCity(r,publish=true){if(!validCity(r))return;state.city=normalizeCity(r);state.data=null;state.fetchedAt=0;save();$('city-results').replaceChildren();$('city-feedback').textContent='Cidade selecionada.';$('city-search').value=r.name;changed();if(publish)window.dispatchEvent(new CustomEvent('housepreferencechange',{detail:{setting:'weather-city',value:state.city}}));await refresh()}
  async function search(query,initial=false){
   searchController?.abort();searchController=new AbortController();const version=++searchVersion;
   $('city-feedback').classList.remove('error');$('city-feedback').textContent='A pesquisar cidades…';$('city-results').replaceChildren();$('city-search-button').disabled=true;
@@ -73,7 +73,7 @@
   finally{if(version===searchVersion)$('city-search-button').disabled=false}
  }
  $('city-form').addEventListener('submit',e=>{e.preventDefault();const q=$('city-search').value.trim();if(q.length>=2)search(q)});
- $('environment-mode').addEventListener('change',()=>{state.mode=$('environment-mode').value;save();changed()});
+ $('environment-mode').addEventListener('change',()=>{state.mode=$('environment-mode').value;save();changed();window.dispatchEvent(new CustomEvent('housepreferencechange',{detail:{setting:'environment-mode',value:state.mode}}))});
  $('weather-refresh').addEventListener('click',refresh);
  $('weather-button').addEventListener('click',()=>window.CasaMeteoBridge?.open());
  window.CasaEnvironment={isDay,darkness,electricOpacity:(r,rooms=[])=>CORE.electricOpacity(r,isDay(),rooms),roomDescription,refresh,selectCity,getState:()=>({...state})};

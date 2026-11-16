@@ -7,7 +7,6 @@ import { RealTemperature } from "./RealTemperature";
 import { useBedsideMode } from "./useBedsideMode";
 import { useShellyLamp } from "./useShellyLamp";
 import { assetUrl } from "./assets";
-import { APP_VERSION } from "./app-info";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { redActive, morningBlindVisible } from "../meteo-core.js";
 import { useFocusView } from "./useFocusView";
@@ -113,6 +112,7 @@ export default function App() {
   useEffect(() => { bridge?.ready?.(); }, []);
   const lamp = useShellyLamp();
   const weatherReadingRef = useRef<HTMLDivElement>(null);
+  const appVersion = bridge?.appVersion?.();
   const [prefs, setPrefs] = useState(loadSettings),
     [now, setNow] = useState(Date.now()),
     [open, setOpen] = useState(false),
@@ -302,8 +302,19 @@ export default function App() {
     sync();
     return () => window.parent.removeEventListener("environmentchange", sync);
   }, []);
+  useEffect(() => {
+    const parent = window.parent;
+    const apply = (event: Event) => {
+      const incoming = (event as CustomEvent<Partial<Prefs>>).detail;
+      setPrefs(previous => ({...previous, ...incoming}));
+    };
+    parent.addEventListener("sharedmeteopreferences", apply);
+    return () => parent.removeEventListener("sharedmeteopreferences", apply);
+  }, []);
   function update(s: Prefs) {
     if (s.city.latitude !== prefs.city.latitude || s.city.longitude !== prefs.city.longitude) bridge?.setCity(s.city);
+    const {city: _city, ...preferences} = s;
+    bridge?.saveSharedPreferences?.(preferences);
     setPrefs(s);
   }
   return (
@@ -320,9 +331,9 @@ export default function App() {
               <span className="brand-dot" />
               MeteoNL
             </span>
-            <span className="app-version" aria-label={`Versão ${APP_VERSION}`}>
-              {APP_VERSION}
-            </span>
+            {appVersion && <span className="app-version" aria-label={`Versão ${appVersion}`}>
+              {appVersion}
+            </span>}
           </div>
           <div className="top-actions"><button className="icon-button" aria-label="Voltar à casa" title="Voltar à casa" onClick={() => bridge?.home()}><House size={20}/></button>
             <button

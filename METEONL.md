@@ -12,7 +12,7 @@ As preferências de relógio, unidades e paisagem usam `casa-nl-meteo-v1`, inclu
 
 A MeteoNL integrada na T2 é a única fonte mantida, em `DomoticaNL V2/meteo-src/`. A Casa Condados recebe o mesmo pacote gerado. A versão autónoma anterior é histórica e as suas preferências não são importadas automaticamente. O botão de meteorologia ou a navegação acima do piso superior abrem a MeteoNL da respetiva casa.
 
-Definir a versão da MeteoNL em `meteo-src/app-info.ts` e alinhar `meteo-src/package.json`. Com as dependências locais instaladas, executar na raiz da T2:
+A MeteoNL mostra o número da planta onde está aberta. Para atualizar esse número, usar a versão da própria casa. O build identifica os recursos pelo conteúdo para gerir a cache. Com as dependências locais instaladas, executar na raiz da T2:
 
 ```sh
 node meteo-src/build.cjs
