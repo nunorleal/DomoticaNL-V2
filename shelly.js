@@ -411,7 +411,12 @@
    installSavedConfig(next,key);
   }catch{}
  }
- $('open-shelly').addEventListener('click',()=>{fill();summary();showPopup('shelly-dialog')});
+ $('open-shelly').addEventListener('click',()=>{
+  fill();summary();
+  if(!$('settings-dialog').open){showPopup('shelly-dialog');return}
+  if(!$('shelly-dialog').open)$('shelly-dialog').showModal();
+  queueMicrotask(()=>window.CasaShelly?.focusPopup());
+ });
  $('shelly-refresh').addEventListener('click',refresh);
  $('shelly-form').addEventListener('invalid',e=>{let group=e.target.closest('details');while(group){group.open=true;group=group.parentElement.closest('details')}},true);
  $('shelly-form').addEventListener('submit',e=>{

@@ -27,7 +27,7 @@
   dirty:()=>window.CasaShelly.hasUnsavedChanges(),
   settings:()=>{
    $('open-shelly').click();
-   $('shelly-christmas-tree-group').open=true;
+   window.CasaShellyLayout.reveal($('christmas-tree-id'));
    $('christmas-tree-id').focus();
   }
  };

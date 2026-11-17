@@ -113,6 +113,7 @@ export default function App() {
   const lamp = useShellyLamp();
   const weatherReadingRef = useRef<HTMLDivElement>(null);
   const appVersion = bridge?.appVersion?.();
+  const settingsTarget = bridge?.settingsTarget?.() ?? undefined;
   const [prefs, setPrefs] = useState(loadSettings),
     [now, setNow] = useState(Date.now()),
     [open, setOpen] = useState(false),
@@ -223,7 +224,7 @@ export default function App() {
       isNightSchedule(localMinutes, prefs.start, prefs.end));
   const scheduledRed = redActive(prefs, localMinutes, scheduledNight);
   const { red, night, blind, requestMorning } = useBedsideMode(prefs, scheduledNight, scheduledRed, tz, {now,sunrise,sunset});
-  const focus = useFocusView(prefs.focusSeconds, open);
+  const focus = useFocusView(prefs.focusSeconds, open || bridge?.visible() === false);
   useEffect(() => { if (focus.expanded) dismissFocus.current?.focus({ preventScroll: true }); }, [focus.expanded]);
   useLayoutEffect(() => {
     document.documentElement.classList.toggle("red-night", red);
@@ -386,7 +387,8 @@ export default function App() {
               className="icon-button"
               aria-label="Abrir definições"
               onClick={() => {
-                setOpen(true);
+                if (settingsTarget) bridge.openMeteoSettings();
+                else setOpen(true);
               }}
             >
               <Gear size={20} />
@@ -671,8 +673,9 @@ export default function App() {
         </button>
         {blindMessage && <p role="status">{blindMessage}</p>}
       </div>}
-      {open && (
+      {(settingsTarget || open) && (
         <Settings
+          target={settingsTarget}
           value={prefs}
           onChange={update}
           onClose={() => setOpen(false)}

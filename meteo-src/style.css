@@ -1743,3 +1743,25 @@ html.red-night,html.red-night body{background:#000}
 @keyframes storm-cloud-drift{to{transform:translate(9%,3%) scale(1.03)}}
 @keyframes storm-strike{0%,4%{opacity:0}12%{opacity:.8}28%{opacity:.1}44%{opacity:.55}75%,100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.storm-atmosphere{display:none}.storm .rain-particles{display:none}}
+
+.settings .meteo-preference-group { border-bottom: 1px solid #ffffff14; }
+.settings .meteo-preference-group > summary {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 17px minmax(0, 1fr) 16px;
+  gap: 9px;
+  min-height: 54px;
+  list-style: none;
+  cursor: pointer;
+}
+.settings .meteo-preference-group > summary::-webkit-details-marker { display: none; }
+.settings .meteo-preference-group > summary small {
+  display: block;
+  color: #b7cad8;
+  font-size: 11px;
+}
+.settings .meteo-preference-group > summary svg { width: 16px; height: 16px; }
+.settings .meteo-preference-group[open] > summary .meteo-group-chevron { transform: rotate(90deg); }
+.settings .meteo-group-content { padding-bottom: 10px; }
+.settings .meteo-timer-field small { display: block; color: #b7cad8; }
+.settings .meteo-city { display: flex; justify-content: space-between; gap: 8px; }

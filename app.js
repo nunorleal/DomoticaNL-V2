@@ -147,7 +147,7 @@ function drawDetail(){
  const r=current();document.getElementById('room-dialog').classList.toggle('room-overview',detailView==='room');if(detailView==='room'&&window.CasaRoomDevices)return CasaRoomDevices.render(r);if(detailView==='blind')return drawBlindDetail(r);
  document.getElementById('detail-card').innerHTML=`<div class="detail-eyebrow">${detailView==='light'?'CONTROLOS DO CANDEEIRO':'CONTROLOS DA DIVISÃO'}</div><h2 id="room-title">${detailView==='light'?'Candeeiro · ':''}${escapeHTML(r.name)}</h2><p class="detail-subtitle">${r.description}</p><div class="detail-divider light-control"><div class="detail-row"><div><h3>Iluminação</h3><p class="room-light-caption">${escapeHTML(window.CasaEnvironment.roomDescription(r,rooms))}</p></div><button class="switch shelly-light-power" role="switch" aria-checked="${r.light}" aria-label="Iluminação de ${escapeHTML(r.name)}" id="light-toggle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9m-5-7a9 9 0 1 0 10 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div></div><p class="selected-device-note">${icon('shield')}Demonstração · sem ligação à Shelly</p>`;
  window.CasaShelly?.decorateRoom(r,detailView);
- if(detailView==='light'){const b=document.createElement('button');b.className='secondary-action lamp-settings';b.type='button';b.setAttribute('aria-label','Definições Shelly do candeeiro');b.title='Definições Shelly do candeeiro';b.innerHTML=icon('settings');b.addEventListener('click',()=>{document.getElementById('open-shelly').click();const input=document.getElementById('shelly-light-id-'+r.id);if(input)input.closest('details').open=true;input?.scrollIntoView({block:'center'});input?.focus()});document.getElementById('detail-card').append(b)}
+ if(detailView==='light'){const b=document.createElement('button');b.className='secondary-action lamp-settings';b.type='button';b.setAttribute('aria-label','Definições Shelly do candeeiro');b.title='Definições Shelly do candeeiro';b.innerHTML=icon('settings');b.addEventListener('click',()=>{document.getElementById('open-shelly').click();const input=document.getElementById('shelly-light-id-'+r.id);window.CasaShellyLayout.reveal(input);input?.scrollIntoView({block:'center'});input?.focus()});document.getElementById('detail-card').append(b)}
  window.CasaDeviceEnergy?.room(r);
 
 }
@@ -183,13 +183,14 @@ document.getElementById('all-lights-off').addEventListener('click',()=>all(false
 document.getElementById('toggle-labels').addEventListener('click',()=>{labels=!labels;drawPlan();try{localStorage.setItem('casa-nl-show-banners',String(labels))}catch{}});
 document.getElementById('toggle-sensor-readings').addEventListener('click',()=>{showSensorReadings=!showSensorReadings;drawPlan();try{localStorage.setItem('casa-nl-show-sensor-readings',JSON.stringify(showSensorReadings))}catch{}});
 document.getElementById('toggle-blind-labels').addEventListener('click',()=>{showBlindBanners=!showBlindBanners;updateBlindBannerVisibility();try{localStorage.setItem('casa-nl-show-blind-banners',JSON.stringify(showBlindBanners))}catch{}});
-document.getElementById('settings').addEventListener('click',()=>showPopup('settings-dialog'));
-document.getElementById('close-settings').addEventListener('click',()=>document.getElementById('settings-dialog').close());
+function dismissPopup(dialog){if(dialog.id!=='settings-dialog'||!window.CasaSettingsMenu?.back())dialog.close()}
+document.getElementById('settings').addEventListener('click',()=>{window.CasaSettingsMenu?.showMain();showPopup('settings-dialog')});
+document.getElementById('close-settings').addEventListener('click',()=>dismissPopup(document.getElementById('settings-dialog')));
 document.getElementById('open-controls').addEventListener('click',()=>showPopup('controls-dialog'));
 document.getElementById('open-overview').addEventListener('click',()=>showPopup('controls-dialog'));
 document.getElementById('home-button').addEventListener('click',()=>document.querySelectorAll('dialog[open]').forEach(d=>d.close()));
 document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>document.getElementById(b.dataset.close).close()));
-window.CasaDialogDismiss.install(document);
+window.CasaDialogDismiss.install(document,dismissPopup);
 document.getElementById('hotspots').addEventListener('keydown',e=>{if(e.target.matches('.room-hit')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();selectRoom(e.target.dataset.room)}});
 window.addEventListener('environmentchange',()=>{drawRoomLighting();const caption=document.querySelector('.room-light-caption');if(caption)caption.textContent=isCloudLight(current().id)?window.CasaShelly.lightCaption(current().id):window.CasaEnvironment.roomDescription(current(),rooms)});
 window.addEventListener('pagehide',persist);restoreRoomLayout();setMode('lights');

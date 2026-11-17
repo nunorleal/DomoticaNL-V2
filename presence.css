@@ -1,0 +1,162 @@
+.presence-bar {
+  position: absolute;
+  translate: -50% -50%;
+  z-index: 18;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #425e72;
+}
+
+.presence-bar[hidden], .presence-bar [hidden], .presence-settings [hidden] { display: none; }
+
+.presence-bar button {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+  font: inherit;
+}
+
+.presence-bar .presence-handle {
+  position: absolute;
+  inset-inline-end: 100%;
+  width: 24px;
+  height: 44px;
+  color: white;
+  text-shadow: 0 1px 4px #18272f, 0 0 4px #18272f;
+  font-size: 19px;
+  cursor: grab;
+  touch-action: none;
+}
+.presence-bar .presence-handle:active { cursor: grabbing; }
+.presence-bar button:focus-visible { outline: 2px solid #35617e; outline-offset: 2px; }
+
+.presence-bar .presence-person {
+  --portrait-ring: linear-gradient(145deg, #dbe2e6, #637481);
+  --presence-accent: #455763;
+  position: relative;
+  width: clamp(44px, 5vw, 55px);
+  aspect-ratio: 1;
+  padding: 3px;
+  border-radius: 50%;
+  background: var(--portrait-ring);
+  box-shadow: 0 2px 7px #172b3470;
+  color: var(--presence-accent);
+  cursor: pointer;
+}
+.presence-bar .presence-person[data-state="home"] {
+  --portrait-ring: linear-gradient(145deg, #e2e96a, #4dd19d 54%, #147a72);
+  --presence-accent: #176148;
+}
+.presence-bar .presence-person[data-state="away"] .presence-portrait img { filter: grayscale(1); }
+.presence-bar .presence-person[data-state="unknown"] .presence-portrait img { filter: saturate(.45); }
+.presence-portrait, .presence-photo-thumb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #e4ebf1;
+}
+.presence-portrait { box-shadow: inset 0 0 0 1px #f0f4f7; }
+.presence-portrait svg, .presence-photo-thumb svg { width: 56%; height: 56%; }
+.presence-portrait img, .presence-photo-thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.presence-state {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #f8fbff;
+  border-radius: 50%;
+  color: white;
+  background: var(--presence-accent);
+  font: 700 11px/1 system-ui, sans-serif;
+}
+.presence-caption {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  translate: -50%;
+  padding: 4px 9px;
+  border-radius: 12px;
+  background: #eff5fa;
+  color: #27465b;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.presence-settings { margin-block: .45rem 1rem; padding: .7rem 0; border-block-start: 1px solid #c6d8e4; }
+.presence-settings summary { font-weight: 650; cursor: pointer; }
+.presence-settings fieldset { display: grid; gap: .7rem; border: 0; margin: 0; padding: 0; min-width: 0; }
+.presence-settings label { display: grid; gap: .3rem; min-width: 0; }
+.presence-settings input, .presence-settings select { width: 100%; min-width: 0; box-sizing: border-box; }
+.presence-phone { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: .65rem; margin-block: .55rem; }
+.presence-feedback:empty { display: none; }
+
+.presence-photo-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-block: 14px;
+}
+.presence-photo-options .presence-photo-choice {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 8px 2px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: none;
+  color: #36596f;
+  font: inherit;
+  font-size: .82rem;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.presence-photo-options .presence-photo-choice[aria-pressed="true"] {
+  border-color: #aec5d6;
+  background: #e5eef5;
+}
+.presence-photo-thumb {
+  width: 48px;
+  height: 48px;
+  border: 2px solid #8fabbf;
+}
+.presence-photo-editor { display: grid; gap: 12px; }
+.presence-photo-crop {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.presence-photo-window {
+  width: min(132px, 100%);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50%;
+  outline: 2px solid #7090a7;
+  touch-action: none;
+  cursor: grab;
+}
+.presence-photo-window:active { cursor: grabbing; }
+.presence-photo-window canvas { display: block; width: 100%; height: 100%; }
+.presence-photo-adjustments { flex: 1 0 140px; min-width: 0; }
+.presence-photo-adjustments label { margin-bottom: 6px; font-size: .8rem; }
+.presence-photo-actions { display: flex; flex-wrap: wrap; gap: 8px; }
