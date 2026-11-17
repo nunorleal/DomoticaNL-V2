@@ -5,6 +5,6 @@
   const refresh=document.querySelector('.cellar-data-refresh');if(refresh)refresh.disabled=!(b||api?.doorSnapshot('cellar').configured)||!!api?.isBusy();
   const detail=document.getElementById('cellar-temperature-detail');if(detail)detail.innerHTML=b?'<h3>Temperatura e humidade da cave</h3>'+api.sensorMarkup('cellar'):'<p>Sensor de temperatura por associar.</p>';window.CasaBasementLayout?.reflow();
  }
- function openSettings(){document.getElementById('open-shelly').click();const input=document.getElementById('shelly-sensor-id-cellar');input.closest('.shelly-equipment-group').open=true;input.scrollIntoView({block:'center'});input.focus()}
+ function openSettings(){document.getElementById('open-shelly').click();const input=document.getElementById('shelly-sensor-id-cellar');window.CasaShellyLayout.reveal(input);input.scrollIntoView({block:'center'});input.focus()}
  window.CasaCellarTemperature={draw,openSettings};window.addEventListener('sensorchange',draw);setInterval(()=>{if(!document.hidden)draw()},10000);draw();
 })();

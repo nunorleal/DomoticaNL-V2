@@ -6,7 +6,10 @@
  const loadMessage=document.createElement('p');loadMessage.setAttribute('role','status');loadMessage.textContent='A abrir MeteoNL…';
  const back=document.createElement('button');back.type='button';back.textContent='Voltar à casa';back.addEventListener('click',()=>home());
  loading.append(loadMessage,back);host.append(loading);let loadTimer;
- function ready(){clearTimeout(loadTimer);loading.hidden=true}
+ function ready(){
+  clearTimeout(loadTimer);loading.hidden=true;
+  const status=document.getElementById('meteo-settings-load');if(status)status.hidden=true;
+ }
  let savedDialogs=[],lastFocus=null,loaded=false;
  let enteredFromFloor=false,floorEnteredAt=0;
  function openFloor(){
@@ -63,7 +66,7 @@
  });
  const screensaverKey='casa-nl-screensaver-v1';let screensaver={seconds:30};
  try{screensaver=CasaMeteoCore.screensaver(JSON.parse(localStorage.getItem(screensaverKey)))}catch{}
- const idle=CasaMeteoCore.idle({delay:screensaver.seconds*1000,onIdle:open,blocked:()=>document.body.classList.contains('room-power-mode')||document.hidden||!!window.CasaShelly?.isBusy()});
+ const idle=CasaMeteoCore.idle({delay:screensaver.seconds*1000,onIdle:open,blocked:()=>document.body.classList.contains('room-power-mode')||document.getElementById('settings-dialog').open||document.hidden||!!window.CasaShelly?.isBusy()});
  window.addEventListener('roompowerviewchange',()=>idle.activity());
  const screenSelect=document.getElementById('screensaver-delay'),screenStatus=document.getElementById('screensaver-status');
  function screenMessage(){screenStatus.textContent=screensaver.seconds===0?'Desativado. Pode continuar a abrir a MeteoNL pelo símbolo da meteorologia.':`A MeteoNL abre após ${screenSelect.selectedOptions[0].textContent.toLowerCase()} sem interação. Guardado automaticamente.`}
@@ -72,26 +75,33 @@
   try{const next=CasaMeteoCore.screensaver({seconds:Number(screenSelect.value)});localStorage.setItem(screensaverKey,JSON.stringify(next));screensaver=next;idle.setDelay(next.seconds*1000);screenMessage();window.dispatchEvent(new CustomEvent('housepreferencechange',{detail:{setting:'screensaver-delay',value:next.seconds}}))}
   catch{screenSelect.value=String(screensaver.seconds);screenStatus.textContent='Não foi possível guardar este tempo. Tente novamente.'}
  });
+ function loadFrame(){
+  if(loaded)return;
+  loading.hidden=false;loadTimer=setTimeout(()=>{const message='Não foi possível carregar a MeteoNL. Atualize a página.';loadMessage.textContent=message;const status=document.getElementById('meteo-settings-load');if(status)status.textContent=message},15000);
+  const release=window.CasaMeteoRelease;
+  if(location.protocol==='file:'){
+   const base=new URL('meteo/',document.baseURI).href.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+   frame.srcdoc=release.html.replace('<head>','<head><base href="'+base+'">');
+  }else frame.src='meteo/index.html?v='+release.cacheKey;
+  loaded=true;
+ }
+ function setMeteoVisible(visible){
+  host.hidden=!visible;
+  document.documentElement.classList.toggle('meteo-visible',visible);
+  document.getElementById('casa-app')?.toggleAttribute('inert',visible);
+  idle.setActive(!visible);
+ }
  function open(){
   if(!host.hidden)return;
   lastFocus=document.activeElement;savedDialogs=[...document.querySelectorAll('dialog[open]')];savedDialogs.forEach(d=>d.close());
-  document.getElementById('casa-app')?.setAttribute('inert','');
   window.CasaPlanMove?.lock();
-  host.hidden=false;document.documentElement.classList.add('meteo-visible');idle.setActive(false);
-  if(!loaded){
-   loading.hidden=false;loadTimer=setTimeout(()=>{loadMessage.textContent='Não foi possível carregar a MeteoNL. Volte à casa e atualize a página.'},15000);
-   const release=window.CasaMeteoRelease;
-   if(location.protocol==='file:'){
-    const base=new URL('meteo/',document.baseURI).href.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-    frame.srcdoc=release.html.replace('<head>','<head><base href="'+base+'">');
-   }else frame.src='meteo/index.html?v='+release.cacheKey;
-   loaded=true;
-  }
+  setMeteoVisible(true);
+  loadFrame();
   window.CasaShelly?.ensureFresh('master');window.CasaShelly?.ensureFresh('balcony');refreshIndoorSensor();frame.focus();
  }
  function home(restore=true){
   const fromFloor=enteredFromFloor;enteredFromFloor=false;
-  host.hidden=true;document.documentElement.classList.remove('meteo-visible');document.getElementById('casa-app')?.removeAttribute('inert');idle.setActive(true);
+  setMeteoVisible(false);
   if(restore){savedDialogs.filter(d=>d.isConnected).slice(-1).forEach(d=>d.showModal());lastFocus?.focus?.()}
   savedDialogs=[];
   if(fromFloor)window.dispatchEvent(new Event('meteofloorreturn'));
@@ -124,7 +134,23 @@
   openDevice();
   return true;
  }
- function settings(){home(false);document.getElementById('open-shelly').click()}
+ const settingsDialog=document.getElementById('settings-dialog');
+ let returnToMeteo=false;
+ function openMeteoSettings(){
+  if(host.hidden||!window.CasaSettingsMenu)return;
+  returnToMeteo=true;
+  setMeteoVisible(false);
+  window.CasaSettingsMenu.openMeteo();
+ }
+ settingsDialog.addEventListener('close',()=>{
+  if(!returnToMeteo||settingsDialog.open)return;
+  returnToMeteo=false;
+  if(document.querySelector('dialog[open]')){home(false);return}
+  setMeteoVisible(true);
+  frame.focus();
+ });
+ window.addEventListener('meteosettingsopen',loadFrame);
+ function settings(){if(!host.hidden)home(false);document.getElementById('open-shelly').click()}
  function toggleLamp(){return CasaMeteoCore.lampAction(window.CasaShelly,settings)}
  async function openMorningBlind({sunrise,sunset}={}){
   const context=()=>({red:!host.hidden&&!document.hidden&&frame.contentDocument?.querySelector('main')?.dataset.nightPalette==='red',now:Date.now(),sunrise,sunset});
@@ -132,7 +158,7 @@
  }
  function indoorSensors(){return window.CasaShelly?.sensorEntries?.()||[]}
  let chosenIndoorSensor=null;
- function selectedIndoorSensor(){if(chosenIndoorSensor)return chosenIndoorSensor;try{return CasaMeteoCore.preferences(JSON.parse(localStorage.getItem('casa-nl-meteo-v1')||'{}')).indoorSensor||'master'}catch{return 'master'}}
+ function selectedIndoorSensor(){try{return CasaMeteoCore.preferences(JSON.parse(localStorage.getItem('casa-nl-meteo-v1')||'{}')).indoorSensor||chosenIndoorSensor||'master'}catch{return chosenIndoorSensor||'master'}}
  function selectIndoorSensor(id){
   if(!indoorSensors().some(sensor=>sensor.id===id&&sensor.configured))return false;
   let previous={};try{previous=CasaMeteoCore.preferences(JSON.parse(localStorage.getItem('casa-nl-meteo-v1')||'{}'))}catch{}
@@ -142,7 +168,7 @@
  function refreshIndoorSensor(id=selectedIndoorSensor()){if(!indoorSensors().some(sensor=>sensor.id===id&&sensor.configured))return;window.CasaShelly?.ensureFresh(id)}
  window.CasaMeteoBridge={
   appVersion:()=>document.querySelector('meta[name="application-version"]')?.content,
-  visible:()=>!host.hidden,preferences:CasaMeteoCore.preferences,ready,open,openFloor,home:()=>home(),settings,toggleLamp,openMorningBlind,
+  visible:()=>!host.hidden,preferences:CasaMeteoCore.preferences,ready,open,openFloor,home:()=>home(),settings,openMeteoSettings,settingsTarget:()=>document.getElementById('meteo-settings-content'),toggleLamp,openMorningBlind,
   activityDevices:()=>window.CasaMeteoActivity?.devices()||[],
   openActivityDevice,
   activitySnapshot:()=>window.CasaMeteoActivity?.snapshot()||[],

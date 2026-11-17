@@ -109,9 +109,8 @@
  $('kitchen-device-refresh').addEventListener('click',()=>CasaShelly.refreshEquipment('media',selected));
  $('kitchen-device-settings').addEventListener('click',()=>{
   $('open-shelly').click();
-  $('shelly-kitchen-group').open=true;
   const input=$('kitchen-id-'+selected);
-  input.closest('details').open=true;
+  window.CasaShellyLayout.reveal(input);
   input.scrollIntoView({block:'center'});
   input.focus();
  });

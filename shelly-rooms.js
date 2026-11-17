@@ -2,10 +2,9 @@
 (function(){
  'use strict';const $=id=>document.getElementById(id),form=$('shelly-form'),sections=new Map(),wrappers=new Map();let moved=[];
  const holder=document.createElement('div');holder.id='shelly-room-groups';form.insertBefore(holder,form.querySelector(':scope > .shelly-equipment-group'));
- const order=['master','bedroom2','living','kitchen','bath1','bath2','hall','balcony','cellar','parking','general'];
- const fixedNames={cellar:'Cave',parking:'Estacionamento',general:'Casa · geral'};
+ const order=['master','bedroom2','living','kitchen','bath1','bath2','hall','balcony','cellar'];
+ const fixedNames={cellar:'Cave'};
  for(const id of order){const section=document.createElement('section');section.className='shelly-room-section';section.dataset.shellyRoom=id;const heading=document.createElement('h3');heading.className='shelly-room-heading';section.append(heading);holder.append(section);sections.set(id,section)}
- function roomOf(kind){return (kind==='heater'?window.CasaHeater:window.CasaDehumidifier)?.roomId()||(kind==='heater'?'master':'bath1')}
  function put(node,section){if(node&&section&&node.parentElement!==section)section.append(node)}
  function mapping(field,sourceId,room,label,key){const input=$(field),source=$(sourceId);if(!input||!source)return;const fieldset=input.closest('fieldset');if(!fieldset)return;
   let wrap=wrappers.get(key);if(!wrap){wrap=document.createElement('details');wrap.className='shelly-equipment-group shelly-room-mapping';wrap.id='shelly-room-mapping-'+key;const summary=document.createElement('summary');summary.textContent=label;const content=document.createElement('div');content.className='shelly-equipment-content';wrap.append(summary,content);wrappers.set(key,wrap)}
@@ -20,11 +19,9 @@
   for(const id of CasaWindowsCore.IDS){const input=$('window-'+id+'-device'),node=input?.closest('details');if(!node)continue;node.classList.remove('shelly-help');node.classList.add('shelly-equipment-group','shelly-room-window');node.querySelector('summary').textContent='Janela';
    if(!node.querySelector(':scope > .shelly-equipment-content')){const content=document.createElement('div');content.className='shelly-equipment-content';for(const child of [...node.childNodes])if(child!==node.querySelector('summary'))content.append(child);node.append(content)}put(node,sections.get(id));
   }
-  const groups={'shelly-door-group':'living','shelly-cellar-door-group':'cellar','shelly-alarm-group':'cellar','shelly-fan-group':'cellar','shelly-media-group':'living','shelly-office-group':'bedroom2','shelly-kitchen-group':'kitchen','shelly-heater-group':roomOf('heater'),'shelly-dehumidifier-group':roomOf('dehumidifier'),'shelly-energy-group':'general','shelly-ev-group':'parking'};
-  for(const [id,room]of Object.entries(groups))put($(id),sections.get(room));
   for(const id of ['shelly-lights-title','shelly-sensors-title','shelly-blinds-title']){const group=$(id)?.closest('details');if(group)group.hidden=true}
   if($('shelly-windows-group'))$('shelly-windows-group').hidden=true;
   for(const section of sections.values())section.hidden=section.children.length===1;
  }
- window.CasaShellyRooms={restore,sync};window.addEventListener('roomlayoutchange',sync);for(const event of ['heaterchange','dehumidifierchange'])window.addEventListener(event,()=>{if($('shelly-dialog').open)sync()});sync();
+ window.CasaShellyRooms={restore,sync};window.addEventListener('roomlayoutchange',sync);sync();
 })();

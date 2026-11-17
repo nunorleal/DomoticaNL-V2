@@ -7,6 +7,7 @@
   const publishableKey = 'sb_publishable_AUt0AI1NArlh2NJsuUrweQ_TkhOjaf1';
   const daily = window.CasaDailyEnergy;
   const plantSettings = window.CasaPlantSettingsSync?.mount(house, document, window);
+  const presence = window.CasaPresence?.mount(house);
   const storageKey = 'casa-history-sync-' + house;
   const cadence = 120000;
   let client, session, busy = false;
@@ -152,6 +153,7 @@
         }
         paint();
         plantSettings?.connect(client, session?.user.id ?? null);
+        presence?.connect(client, session?.user.id ?? null, () => writerSettings()?.enabled === true);
         if (session) sync();
       }, 0);
     });
@@ -264,6 +266,7 @@
         if (data === 'other_writer') {
           clearSyncConfirmation();
           localStorage.setItem(writerStorage(), JSON.stringify({...writer, enabled:false, conflict:true}));
+          presence?.emitterChanged();
           paint('Modo de consulta ativo.');
           syncAgain = true;
           return;
@@ -397,6 +400,7 @@
       paint('Não foi possível guardar a opção neste navegador.');
     }
   });
+  writerBox.addEventListener('change', () => presence?.emitterChanged());
   function dismissWriterWarning() {
     const current = writerSettings();
     if (!current?.conflict) return;
@@ -410,6 +414,7 @@
 
   dialog.querySelector('[data-dismiss-writer-warning]').addEventListener('click', dismissWriterWarning);
   dialog.querySelector('[data-refresh]').addEventListener('click', () => {
+    void presence?.sync();
     sync(true);
     void plantSettings?.sync();
   });

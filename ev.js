@@ -24,7 +24,7 @@
  }
  function open(){showPopup('ev-dialog');draw();window.CasaShelly?.evEnsureFresh()}
  [post,badge].forEach(el=>el.addEventListener('click',open));$('ev-close').addEventListener('click',()=>dialog.close());$('ev-refresh').addEventListener('click',()=>window.CasaShelly?.refreshEquipment('ev'));
- $('ev-settings').addEventListener('click',()=>{$('open-shelly').click();$('shelly-ev-group').open=true;$('shelly-ev-group').scrollIntoView({block:'start',behavior:'smooth'})});
+ $('ev-settings').addEventListener('click',()=>{$('open-shelly').click();window.CasaShellyLayout.reveal($('shelly-ev-group'));$('shelly-ev-group').scrollIntoView({block:'start',behavior:'smooth'})});
  window.addEventListener('evchange',draw);setInterval(()=>{if(!document.hidden)draw()},2000);
  window.CasaEV={open};draw();
 })();

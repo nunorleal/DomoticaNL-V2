@@ -55,7 +55,6 @@
  content.append(...controls.values());
  if(size)content.append(size);
  group.append(content);
- dialog.addEventListener('close',()=>{group.open=false});
  const screensaver=dialog.querySelector('#screensaver-delay')?.closest('section');
  (screensaver||dialog.querySelector('#open-shelly')).after(group);
  const shellyButton=dialog.querySelector('#open-shelly');if(shellyButton){
