@@ -151,7 +151,7 @@
       avatars.forEach((avatar, index) => {
         const person = snapshot?.people?.[index];
         const state = fresh && Object.hasOwn(states, person?.state) ? person.state : 'unknown';
-        avatar.hidden = state === 'away';
+        avatar.hidden = state !== 'home';
         if (avatar.hidden && selected === index) selected = undefined;
         const label = avatarName(index) + ' · ' + states[state][0];
         photos?.setImage(avatar, photos.current(index));
