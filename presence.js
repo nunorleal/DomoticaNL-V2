@@ -61,6 +61,11 @@
     let absentSince = [], lastSuccess = 0, settingsGeneration = 0;
     let isEmitter = () => false;
     let removed = false;
+    let vehicle = {present:true,chargeOverride:false};
+    const charging = () => {
+      const local = t2 ? window.CasaShelly?.evSnapshot?.() : window.CasaCloudRead?.evSnapshot?.();
+      return local?.charging === true || window.CasaMeteoActivity?.sharedCharging?.() === true;
+    };
 
     const preference = document.createElement(t2 ? 'button' : 'label');
     const preferenceLabel = 'Mostrar presenças no cabeçalho';
@@ -143,6 +148,8 @@
     });
 
     function render() {
+      vehicle = window.CasaVehiclePresenceCore.state(snapshot?.people, charging(), snapshot?.vehicle || vehicle);
+      document.body.classList.toggle('vehicle-absent', !vehicle.present);
       if (checkbox) checkbox.checked = layout.shown;
       else preference.setAttribute('aria-checked', String(layout.shown));
       bar.hidden = !layout.shown;
@@ -360,7 +367,8 @@
       if (learned) {
         try { storage.write(configKey(current), settings); } catch {}
       }
-      const next = {checkedAt: now, people};
+      const next = {checkedAt: now, people,
+        vehicle:window.CasaVehiclePresenceCore.state(people, charging(), vehicle)};
       await store(current, 'status', next);
       if (current === account && config()?.revision === settings.revision) {
         snapshot = next;
@@ -401,6 +409,13 @@
           snapshot = data.find(row => row.kind === 'status')?.value;
         }
         render();
+        if (isEmitter() && Number.isFinite(snapshot?.checkedAt) &&
+            (snapshot.vehicle?.present !== vehicle.present || snapshot.vehicle?.chargeOverride !== vehicle.chargeOverride)) {
+          const next = {...snapshot, vehicle:{...vehicle}};
+          await store(current, 'status', next);
+          if (account !== current) return;
+          snapshot = next;
+        }
         const saved = config();
         if (saved && isEmitter() && Date.now() - lastPoll >= POLL_INTERVAL) await poll(current, saved);
       } catch {
@@ -427,6 +442,7 @@
     function connect(client, user, emitter) {
       isEmitter = emitter;
       if ((account?.user ?? null) === user && (account?.client ?? null) === client && user) return;
+      vehicle = {present:true,chargeOverride:false};
       account = user ? {client, user} : null;
       if (account) {
         const imported = storage.read('restored-config');
@@ -448,6 +464,10 @@
       render();
     }
 
+    for (const type of ['evchange','energychange']) window.addEventListener(type, () => {
+      render();
+      void sync();
+    });
     window.addEventListener('floorchange', render);
     window.addEventListener('resize', render);
     window.addEventListener('online', sync);

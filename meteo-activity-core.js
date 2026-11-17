@@ -9,6 +9,7 @@
    for(const sample of samples){const {id}=sample;if(!IDS.includes(id))continue;
     if(!sample.configured||!sample.identity){delete records[id];continue}
     if(id==='hob')sample.active=Number.isFinite(sample.powerWatts)&&sample.powerWatts>=0?sample.powerWatts>10:null;
+    if(id==='oven')sample.active=Number.isFinite(sample.powerWatts)&&sample.powerWatts>=0?sample.powerWatts>15:null;
     if(id==='boiler')sample.active=Number.isFinite(sample.powerWatts)&&sample.powerWatts>=0?sample.powerWatts>30:null;
     const manual=id==='heater'||id==='dehumidifier';
     if(manual){
@@ -47,7 +48,7 @@
   for(const row of rows){
    if(!IDS.includes(row?.id)||!KINDS.includes(row.kind)||devices.has(row.id))continue;
    const {id,kind}=row, name=NAMES[id];
-   if(id==='hob'&&(!Number.isFinite(row.powerWatts)||row.powerWatts<=10))continue;
+   if((id==='hob'||id==='oven')&&(!Number.isFinite(row.powerWatts)||row.powerWatts<=(id==='oven'?15:10)))continue;
    if(kind==='timer'){
     if(!['heater','dehumidifier'].includes(id)||!Number.isSafeInteger(row.endsAt)||row.endsAt<=time)continue;
     devices.set(id,{id,name,kind,remaining:Math.ceil((row.endsAt-time)/1000),estimated:row.estimated===true,stale});
