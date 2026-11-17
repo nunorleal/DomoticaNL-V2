@@ -201,3 +201,9 @@
   .topbar.has-presences .header-clock time { font-size: 20px; }
   .topbar.has-presences .header-clock :is(small, span) { font-size: 7px; }
 }
+
+/* Only the vehicle is removed. The charging point and its controls remain accessible. */
+body.vehicle-absent #open-car,
+body.vehicle-absent [data-vehicle="id4"] { display: none; }
+.garage-empty-floor { visibility: hidden; }
+body.vehicle-absent .garage-empty-floor { visibility: visible; }
