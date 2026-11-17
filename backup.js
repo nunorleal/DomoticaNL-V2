@@ -6,7 +6,7 @@
  function clearPasswords(){for(const id of ['backup-password','backup-password-confirm','backup-import-password'])$(id).value=''}
  function setBusy(value){busy=value;for(const id of ['export-data','import-data','backup-include-cloud-key','backup-restore-cloud-key','backup-preserve-ids']){const el=$(id);if(el)el.disabled=value}$('confirm-import').disabled=value||!pending}
  function syncEncryption(){$('backup-encryption-fields').hidden=!$('backup-include-cloud-key').checked;if(!$('backup-include-cloud-key').checked)clearPasswords()}
- function syncDecryption(){$('backup-decryption-fields').hidden=!$('backup-restore-cloud-key').checked||!CasaBackup.credentials(sourceBackup||{data:{}})?.encrypted;if($('backup-decryption-fields').hidden)$('backup-import-password').value=''}
+ function syncDecryption(){$('backup-decryption-fields').hidden=!$('backup-restore-cloud-key').checked||!(CasaBackup.credentials(sourceBackup||{data:{}})?.encrypted||sourceBackup?.unifiCredentials);if($('backup-decryption-fields').hidden)$('backup-import-password').value=''}
  function clear(){readGeneration++;pending=null;sourceBackup=null;clearPasswords();$('backup-preview').hidden=true;$('backup-file').value='';$('backup-restore-cloud-key').checked=false;$('backup-restore-cloud-key-row').hidden=true;syncDecryption();setBusy(busy)}
  $('backup-include-cloud-key').addEventListener('change',syncEncryption);$('backup-restore-cloud-key').addEventListener('change',syncDecryption);$('settings-dialog').addEventListener('close',()=>{readGeneration++;clearPasswords()});syncEncryption();
 
@@ -21,8 +21,13 @@
    window.CasaDailyEnergy?.flush();const before=localStorage.getItem('casa-nl-shelly-cloud-v1'),backup=CasaBackup.create(localStorage,version);if(window.CasaDailyEnergy)backup.data['casa-nl-daily-energy-v1']=window.CasaDailyEnergyCore.validate(window.CasaDailyEnergy.snapshot());
    if(includeKey){
     const password=$('backup-password').value;if(password!==$('backup-password-confirm').value)throw Error('As palavras-passe do backup não coincidem.');
-    status('A encriptar a chave localmente…');
-    backup.shellyCredentials=await CasaBackupCrypto.encrypt({server:backup.data['casa-nl-shelly-cloud-v1']?.server,authKey:$('shelly-key').value.trim()},password);
+    const shelly={server:backup.data['casa-nl-shelly-cloud-v1']?.server,authKey:$('shelly-key').value.trim()};
+    const unifi=window.CasaPresence?.backupConfig?.();
+    if(!shelly.authKey&&!unifi)throw Error('Não há chaves guardadas neste dispositivo para incluir.');
+    status('A encriptar as chaves localmente…');
+    if(shelly.authKey)backup.shellyCredentials=await CasaBackupCrypto.encrypt(shelly,password);
+    if(unifi)backup.unifiCredentials=await CasaBackupCrypto.encryptUnifi(unifi,password);
+    if(JSON.stringify(window.CasaPresence?.backupConfig?.())!==JSON.stringify(unifi))throw Error('A configuração UniFi mudou durante a exportação. Exporte novamente.');
     if(generation!==readGeneration)return;
     if(window.CasaShelly?.hasUnsavedChanges()||localStorage.getItem('casa-nl-shelly-cloud-v1')!==before)throw Error('A configuração mudou durante a exportação. Exporte novamente.');
     CasaBackup.parse(JSON.stringify(backup));
@@ -30,7 +35,7 @@
    const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
    const now=new Date(),pad=value=>String(value).padStart(2,'0');
    const date=[now.getFullYear(),pad(now.getMonth()+1),pad(now.getDate())].join('-'),time=[now.getHours(),now.getMinutes(),now.getSeconds()].map(pad).join('-');
-   a.href=url;a.download=`T2-NL-${date}_${time}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);status(includeKey?'Cópia JSON exportada com a chave Cloud encriptada. A palavra-passe não está no ficheiro.':'Cópia JSON exportada sem a chave Cloud.');
+   a.href=url;a.download=`T2-NL-${date}_${time}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);status(includeKey?'Cópia JSON exportada com as chaves disponíveis encriptadas (Shelly Cloud e UniFi).':'Cópia JSON exportada sem chaves Shelly Cloud ou UniFi.');
   }catch(e){window.CasaDailyEnergy?.resume();status(e.message||'Não foi possível exportar os dados.',true)}finally{clearPasswords();setBusy(false)}
  });
  $('import-data').addEventListener('click',()=>{clear();$('backup-file').click()});
@@ -41,8 +46,8 @@
    const text=await file.text();if(generation!==readGeneration)return;pending=CasaBackup.parse(text);
    // Reject room centres outside their respective floor polygons.
    for(const [id,r]of Object.entries(pending.data['casa-nl-room-layout-v1']))if(!BannerGeometry.rectFits(roomPolygons(id),{x:r.lx*10.24,y:140+r.ly*11.8},1,1))throw new Error('O ficheiro contém uma posição de divisão inválida.');
-   sourceBackup=pending;updatePreview();const credentials=CasaBackup.credentials(pending);$('backup-restore-cloud-key-row').hidden=!credentials;$('backup-restore-cloud-key').checked=!!credentials;syncDecryption();setBusy(false);
-   $('backup-preview').hidden=false;status(CasaBackup.credentials(pending)?.encrypted?'Ficheiro validado. Introduza a palavra-passe para restaurar a chave Cloud.':'Ficheiro validado. Pronto para restaurar.');
+   sourceBackup=pending;updatePreview();const credentials=CasaBackup.credentials(pending)||pending.unifiCredentials;$('backup-restore-cloud-key-row').hidden=!credentials;$('backup-restore-cloud-key').checked=!!credentials;syncDecryption();setBusy(false);
+   $('backup-preview').hidden=false;status((CasaBackup.credentials(pending)?.encrypted||pending.unifiCredentials)?'Ficheiro validado. Introduza a palavra-passe para restaurar as chaves incluídas.':'Ficheiro validado. Pronto para restaurar.');
   }catch(e){if(sourceBackup){pending=null;$('backup-preview').hidden=false}else clear();status(e.message||'Não foi possível ler o ficheiro.',true)}
  });
  const preserve=document.createElement('label');preserve.className='shelly-remember';preserve.innerHTML='<input id="backup-preserve-ids" type="checkbox" checked>Preservar associações Shelly atuais que faltam no ficheiro';$('backup-preview').prepend(preserve);
@@ -55,7 +60,15 @@
   try{
    const included=CasaBackup.credentials(sourceBackup);let decrypted=null;
    if(restoreCredentials&&included?.encrypted){status('A desencriptar a chave localmente…');decrypted=await CasaBackupCrypto.decrypt(included,$('backup-import-password').value);if(generation!==readGeneration||sourceBackup!==selected)return}
-   updatePreview();window.CasaDailyEnergy?.suspend();CasaBackup.restore(localStorage,pending,{restoreCredentials,decrypted});
+   let unifi=null;
+   if(restoreCredentials&&sourceBackup.unifiCredentials){
+    status('A desencriptar os dados UniFi localmente…');
+    unifi=await CasaBackupCrypto.decryptUnifi(sourceBackup.unifiCredentials,$('backup-import-password').value);
+    if(generation!==readGeneration||sourceBackup!==selected)return;
+   }
+   updatePreview();window.CasaDailyEnergy?.suspend();CasaBackup.restore(localStorage,pending,{
+    restoreCredentials,decrypted,unifi,unifiStorageKey:window.CasaPresence?.backupStorageKey?.()
+   });
    for(const id of [...motions.keys()])stopMotion(id);
    // The pagehide persistence must use imported states, never the previous rooms.
    const saved=pending.data['casa-nl-realistic-v2'];rooms=defaults.map(r=>({...r,...saved.find(s=>s.id===r.id)}));

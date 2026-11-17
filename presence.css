@@ -1,6 +1,8 @@
 .presence-bar {
-  position: absolute;
-  translate: -50% -50%;
+  position: relative;
+  align-self: center;
+  justify-self: center;
+  flex: none;
   z-index: 18;
   display: flex;
   align-items: center;
@@ -21,25 +23,13 @@
   font: inherit;
 }
 
-.presence-bar .presence-handle {
-  position: absolute;
-  inset-inline-end: 100%;
-  width: 24px;
-  height: 44px;
-  color: white;
-  text-shadow: 0 1px 4px #18272f, 0 0 4px #18272f;
-  font-size: 19px;
-  cursor: grab;
-  touch-action: none;
-}
-.presence-bar .presence-handle:active { cursor: grabbing; }
 .presence-bar button:focus-visible { outline: 2px solid #35617e; outline-offset: 2px; }
 
 .presence-bar .presence-person {
   --portrait-ring: linear-gradient(145deg, #dbe2e6, #637481);
   --presence-accent: #455763;
   position: relative;
-  width: clamp(44px, 5vw, 55px);
+  width: 44px;
   aspect-ratio: 1;
   padding: 3px;
   border-radius: 50%;
@@ -52,7 +42,6 @@
   --portrait-ring: linear-gradient(145deg, #e2e96a, #4dd19d 54%, #147a72);
   --presence-accent: #176148;
 }
-.presence-bar .presence-person[data-state="away"] .presence-portrait img { filter: grayscale(1); }
 .presence-bar .presence-person[data-state="unknown"] .presence-portrait img { filter: saturate(.45); }
 .presence-portrait, .presence-photo-thumb {
   position: relative;
@@ -160,3 +149,55 @@
 .presence-photo-adjustments { flex: 1 0 140px; min-width: 0; }
 .presence-photo-adjustments label { margin-bottom: 6px; font-size: .8rem; }
 .presence-photo-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.presence-bar .presence-person { user-select: none; }
+.presence-bar .presence-person img { pointer-events: none; -webkit-user-drag: none; }
+
+/* The avatars occupy a header column before the weather and clock. */
+.topbar.has-presences {
+  grid-template-columns: minmax(0, 1fr) auto auto minmax(0, 1fr);
+}
+@media (min-width:761px) and (max-width:950px) {
+  .topbar.has-presences { padding-left: 20px; padding-right: 20px; gap: 12px; }
+  .topbar.has-presences > .brand { font-size: 21px; gap: 8px; }
+  .topbar.has-presences .header-information { gap: 16px; }
+  .topbar.has-presences .presence-person { width: 40px; }
+}
+@media (max-width:760px) {
+  body.has-header-presences { --plan-top: calc(154px + env(safe-area-inset-top)); }
+  .topbar.has-presences {
+    height: calc(154px + env(safe-area-inset-top));
+    padding: calc(10px + env(safe-area-inset-top)) 12px 12px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    column-gap: 12px;
+    row-gap: 8px;
+    align-items: center;
+  }
+  .topbar.has-presences > .brand { grid-column: 1; grid-row: 1; }
+  .topbar.has-presences > :is(.clock-actions, .top-actions) { grid-column: 2; grid-row: 1; justify-self: end; }
+  .topbar.has-presences > .presence-bar { grid-column: 1; grid-row: 2; justify-self: start; }
+  .topbar.has-presences > .header-information {
+    grid-column: 2;
+    grid-row: 2;
+    flex-direction: row;
+    justify-self: end;
+    gap: 10px;
+  }
+  .topbar.has-presences .presence-person { width: 40px; }
+  .topbar.has-presences .weather-widget { gap: 4px; }
+  .topbar.has-presences .weather-widget svg { width: 21px; height: 21px; }
+  .topbar.has-presences .weather-widget strong { font-size: 20px; }
+  .topbar.has-presences .weather-widget small { max-width: 90px; font-size: 8px; }
+  .topbar.has-presences .header-clock time { font-size: 22px; }
+  .topbar.has-presences .header-clock :is(small, span) { font-size: 8px; }
+  .has-header-presences main:not(#house-view) > #plan-stage { top: calc(154px + env(safe-area-inset-top)); }
+}
+@media (max-width:360px) {
+  .topbar.has-presences { column-gap: 8px; }
+  .topbar.has-presences .presence-person { width: 32px; }
+  .topbar.has-presences .header-information { gap: 6px; }
+  .topbar.has-presences .weather-widget strong { font-size: 18px; }
+  .topbar.has-presences .header-clock time { font-size: 20px; }
+  .topbar.has-presences .header-clock :is(small, span) { font-size: 7px; }
+}
