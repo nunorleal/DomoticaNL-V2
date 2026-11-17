@@ -59,7 +59,7 @@
   return data;
  }
  function create(storage,appVersion){const data={};for(let i=0;i<storage.length;i++){const k=storage.key(i);if(allowed(k)){try{data[k]=JSON.parse(storage.getItem(k))}catch{throw new Error('Não foi possível ler os dados guardados: '+k)}}}validateStorage(data);if(data['casa-nl-shelly-cloud-v1']){data['casa-nl-shelly-cloud-v1'].authKey='';data['casa-nl-shelly-cloud-v1'].rememberKey=false}return {application:'Casa NL',schemaVersion:1,appVersion,exportedAt:new Date().toISOString(),data}}
- function parse(text){if(typeof text!=='string'||new TextEncoder().encode(text).length>MAX_BYTES)throw new Error('O ficheiro deve ter no máximo 8 MB.');let value;try{value=JSON.parse(text)}catch{fail()}if(!object(value)||value.application!=='Casa NL'||value.schemaVersion!==1)fail();validateStorage(value.data);credentials(value);return value}
+ function parse(text){if(typeof text!=='string'||new TextEncoder().encode(text).length>MAX_BYTES)throw new Error('O ficheiro deve ter no máximo 8 MB.');let value;try{value=JSON.parse(text)}catch{fail()}if(!object(value)||value.application!=='Casa NL'||value.schemaVersion!==1)fail();validateStorage(value.data);credentials(value);if(value.unifiCredentials!==undefined)backupCrypto().validateUnifi(value.unifiCredentials);return value}
  const CLOUD='casa-nl-shelly-cloud-v1',GROUPS=['bindings','lightBindings','sensorBindings','windowBindings','mediaBindings','officeBindings','kitchenBindings','alarm'],SINGLES=['door','cellarDoor','fan','heater','dehumidifier','homeEnergy','christmasTree'];
  function credentials(backup){
   const config=backup.data[CLOUD],value=backup.shellyCredentials;
@@ -75,7 +75,8 @@
   try{out.data[CLOUD]=core.config(next)}catch{throw Error('As associações atuais e o ficheiro têm conflitos de ID/canal. Reveja os equipamentos ou desative a preservação para substituir pela cópia.')}
   validateStorage(out.data);return {backup:out,preserved:Math.max(0,associationCount(out.data[CLOUD])-before)};
  }
- function restore(storage,backup,{restoreCredentials=false,decrypted=null}={}){
+ function backupCrypto(){return typeof module==='object'&&module.exports?require('./backup-crypto.js'):globalThis.CasaBackupCrypto}
+ function restore(storage,backup,{restoreCredentials=false,decrypted=null,unifi=null,unifiStorageKey='presence-unifi:t2:restored-config'}={}){
   const clean=JSON.parse(JSON.stringify(backup));if(!Object.hasOwn(clean.data,'casa-nl-daily-energy-v1')){const old=storage.getItem('casa-nl-daily-energy-v1');if(old)clean.data['casa-nl-daily-energy-v1']=JSON.parse(old)}if(!Object.hasOwn(clean.data,'casa-nl-electricity-tariffs-v1')){const old=storage.getItem('casa-nl-electricity-tariffs-v1');if(old)clean.data['casa-nl-electricity-tariffs-v1']=JSON.parse(old)}const data=validateStorage(clean.data),included=credentials(clean),config=data[CLOUD];
   if(config){
    let current=null;try{current=JSON.parse(storage.getItem(CLOUD)||'null')}catch{}
@@ -88,8 +89,18 @@
    }else if(current?.server===config.server&&current.rememberKey&&typeof current.authKey==='string'){config.authKey=current.authKey;config.rememberKey=true}
   }
   validateStorage(data);
+  let unifiEntry=null;
+  if(clean.unifiCredentials!==undefined){
+   backupCrypto().validateUnifi(clean.unifiCredentials);
+   if(restoreCredentials){
+    if(!unifi)throw Error('Introduza a palavra-passe do backup antes de restaurar a chave UniFi.');
+    if(!/^presence-unifi:t2:(?:restored-config|[a-zA-Z0-9-]+:config)$/.test(unifiStorageKey))throw Error('Destino UniFi inválido.');
+    unifiEntry=JSON.stringify({...backupCrypto().unifiConfig(unifi),revision:Date.now()});
+   }
+  }
   const previous=new Map();for(let i=0;i<storage.length;i++){const k=storage.key(i);if(allowed(k))previous.set(k,storage.getItem(k))}
-  try{for(const k of previous.keys())storage.removeItem(k);for(const [k,v]of Object.entries(data))storage.setItem(k,JSON.stringify(v))}catch(e){try{for(const k of Object.keys(data))storage.removeItem(k);for(const [k,v]of previous)storage.setItem(k,v)}catch{}throw new Error('Não foi possível guardar a importação neste navegador. Verifique o espaço disponível.')}
+  if(unifiEntry!==null)previous.set(unifiStorageKey,storage.getItem(unifiStorageKey));
+  try{for(const k of previous.keys())storage.removeItem(k);for(const [k,v]of Object.entries(data))storage.setItem(k,JSON.stringify(v));if(unifiEntry!==null)storage.setItem(unifiStorageKey,unifiEntry)}catch(e){try{for(const k of Object.keys(data))storage.removeItem(k);for(const [k,v]of previous){if(v===null)storage.removeItem(k);else storage.setItem(k,v)}}catch{}throw new Error('Não foi possível guardar a importação neste navegador. Verifique o espaço disponível.')}
  }
 
  return {create,parse,restore,prepareImport,describe,associationCount,credentials,MAX_BYTES};

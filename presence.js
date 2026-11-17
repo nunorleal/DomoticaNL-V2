@@ -7,7 +7,6 @@
   const ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 20v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/></svg>';
   const states = {home: ['Em casa', '✓'], away: ['Fora do Wi-Fi', '−'], unknown: ['Por confirmar', '?']};
   const defaults = ['Eu', 'Esposa', 'Filho'];
-  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
   const mac = value => /^(?:[a-f\d]{2}[:-]){5}[a-f\d]{2}$/i.test(value || '') ? value.toLowerCase().replaceAll('-', ':') : '';
   const ipv4 = value => /^(?:\d{1,3}\.){3}\d{1,3}$/.test(value) && value.split('.').every(part => +part <= 255);
 
@@ -45,10 +44,10 @@
 
   function mount(house) {
     const group = document.querySelector('#plant-display-settings .display-settings');
-    const stage = document.getElementById('plan-stage');
-    if (!group || !stage) return;
+    const header = document.querySelector('.topbar');
+    const information = header?.querySelector('.header-information');
+    if (!group || !information) return;
     const t2 = house === 't2';
-    const floor = t2 ? '0' : '3';
     const prefix = 'presence-unifi:' + house + ':';
     const storage = {
       read(key) {
@@ -58,13 +57,13 @@
     };
     const layoutDefault = {shown: false, x: null, y: null};
     let layout = layoutDefault;
-    let snapshot, account, dragging, selected, savedLayout, lastPoll = 0, syncing = false, syncQueued = false;
+    let snapshot, account, selected, savedLayout, lastPoll = 0, syncing = false, syncQueued = false;
     let absentSince = [], lastSuccess = 0, settingsGeneration = 0;
     let isEmitter = () => false;
     let removed = false;
 
     const preference = document.createElement(t2 ? 'button' : 'label');
-    const preferenceLabel = 'Mostrar presenças na planta';
+    const preferenceLabel = 'Mostrar presenças no cabeçalho';
     if (t2) {
       preference.type = 'button';
       preference.className = 'settings-row';
@@ -124,15 +123,15 @@
     bar.className = 'presence-bar';
     bar.hidden = true;
     bar.setAttribute('role', 'group');
-    bar.setAttribute('aria-label', 'Presenças na planta');
-    bar.innerHTML = '<button type="button" class="presence-handle" aria-label="Mover barra de presenças" title="Arraste ou use as setas">⠿</button><output class="presence-caption" hidden></output>';
-    stage.append(bar);
-    const handle = bar.firstElementChild;
+    bar.setAttribute('aria-label', 'Presenças em casa');
+    bar.innerHTML = '<output class="presence-caption" hidden></output>';
+    header.insertBefore(bar, information);
     const caption = bar.querySelector('output');
     const avatars = defaults.map((_, index) => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'presence-person';
+      button.title = 'Toque para ver o nome e o estado da pessoa.';
       button.innerHTML = '<span class="presence-portrait">' + ICON +
         '<img alt="" hidden></span><span class="presence-state" aria-hidden="true"></span>';
       button.addEventListener('click', () => {
@@ -143,40 +142,17 @@
       return button;
     });
 
-    function point() {
-      if (Number.isFinite(layout.x) && Number.isFinite(layout.y)) return layout;
-      if (t2) return {x: 31, y: 66};
-      const svg = stage.querySelector('#plan-canvas svg');
-      const matrix = svg?.getScreenCTM();
-      if (!matrix) return {x: 76, y: 49};
-      const door = window.CasaFloor3Render?.ENTRANCE;
-      const origin = door && svg.dataset.floor3Render ? door : {x: 935, y: 833};
-      const p = new DOMPoint(origin.x - 160, origin.y + 110).matrixTransform(matrix);
-      const bounds = stage.getBoundingClientRect();
-      return {x: (p.x - bounds.left) / bounds.width * 100, y: (p.y - bounds.top) / bounds.height * 100};
-    }
-
-    function position(p = point()) {
-      const width = stage.clientWidth;
-      const height = stage.clientHeight;
-      if (!width || !height) return;
-      const marginX = Math.min(50, (bar.offsetWidth / 2 + 3) / width * 100);
-      const marginY = Math.min(50, (bar.offsetHeight / 2 + 3) / height * 100);
-      const next = {x: clamp(p.x, marginX, 100 - marginX), y: clamp(p.y, marginY, 100 - marginY)};
-      bar.style.left = next.x + '%';
-      bar.style.top = next.y + '%';
-      return next;
-    }
-
     function render() {
       if (checkbox) checkbox.checked = layout.shown;
       else preference.setAttribute('aria-checked', String(layout.shown));
-      bar.hidden = !layout.shown || String(window.CasaFloors?.current()) !== floor;
+      bar.hidden = !layout.shown;
       const age = Date.now() - Number(snapshot?.checkedAt);
       const fresh = age >= -30_000 && age <= MAX_AGE;
       avatars.forEach((avatar, index) => {
         const person = snapshot?.people?.[index];
         const state = fresh && Object.hasOwn(states, person?.state) ? person.state : 'unknown';
+        avatar.hidden = state === 'away';
+        if (avatar.hidden && selected === index) selected = undefined;
         const label = avatarName(index) + ' · ' + states[state][0];
         photos?.setImage(avatar, photos.current(index));
         avatar.dataset.state = state;
@@ -185,9 +161,11 @@
         avatar.lastElementChild.textContent = states[state][1];
         if (selected === index) caption.textContent = label;
       });
+      bar.hidden ||= avatars.every(avatar => avatar.hidden);
+      header.classList.toggle('has-presences', !bar.hidden);
+      document.body.classList.toggle('has-header-presences', !bar.hidden);
       photos?.paint();
       caption.hidden = selected === undefined;
-      if (!bar.hidden && !dragging) position();
     }
 
     function updateLayout(next) {
@@ -204,48 +182,10 @@
     preference.addEventListener(t2 ? 'click' : 'change', () => {
       updateLayout({...layout, shown: checkbox?.checked ?? !layout.shown});
     });
-    for (const event of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) {
-      bar.addEventListener(event, e => e.stopPropagation());
-    }
-    handle.addEventListener('pointerdown', e => {
-      if (!e.isPrimary || e.button !== 0) return;
-      const origin = position();
-      if (!origin) return;
-      dragging = {id: e.pointerId, x: e.clientX, y: e.clientY, origin};
-      handle.setPointerCapture(e.pointerId);
-    });
-    handle.addEventListener('pointermove', e => {
-      if (dragging?.id !== e.pointerId) return;
-      const bounds = stage.getBoundingClientRect();
-      const dx = e.clientX - dragging.x;
-      const dy = e.clientY - dragging.y;
-      if (!dragging.next && Math.hypot(dx, dy) < 4) return;
-      dragging.next = position({
-        x: dragging.origin.x + dx / bounds.width * 100,
-        y: dragging.origin.y + dy / bounds.height * 100
-      });
-    });
-    handle.addEventListener('pointerup', e => {
-      if (dragging?.id !== e.pointerId) return;
-      const {next} = dragging;
-      dragging = null;
-      if (next) updateLayout({...layout, ...next});
-      else render();
-    });
-    const cancelDrag = () => { dragging = null; render(); };
-    handle.addEventListener('pointercancel', cancelDrag);
-    handle.addEventListener('lostpointercapture', () => { if (dragging) cancelDrag(); });
-    handle.addEventListener('keydown', e => {
-      const step = {ArrowLeft: [-2, 0], ArrowRight: [2, 0], ArrowUp: [0, -2], ArrowDown: [0, 2]}[e.key];
-      if (!step) return;
-      e.preventDefault();
-      e.stopPropagation();
-      const {x, y} = position() || point();
-      updateLayout({...layout, ...position({x: x + step[0], y: y + step[1]})});
-    });
-
     const configKey = current => current.user + ':config';
     const config = () => account && storage.read(configKey(account));
+    window.CasaPresence.backupConfig = () => config() || storage.read('restored-config');
+    window.CasaPresence.backupStorageKey = () => prefix + (account ? configKey(account) : 'restored-config');
     const option = (select, value, name) => select.add(new Option(name, value));
     function populate() {
       const saved = config();
@@ -488,6 +428,15 @@
       isEmitter = emitter;
       if ((account?.user ?? null) === user && (account?.client ?? null) === client && user) return;
       account = user ? {client, user} : null;
+      if (account) {
+        const imported = storage.read('restored-config');
+        if (imported) {
+          try {
+            storage.write(configKey(account), {...imported, revision: Date.now()});
+            storage.write('restored-config', null);
+          } catch { /* Keep the imported configuration available for the next sign-in. */ }
+        }
+      }
       photos?.connect(account);
       const stored = storage.read((user || 'local') + ':layout');
       layout = stored || layoutDefault;
@@ -505,7 +454,6 @@
     window.addEventListener('pageshow', sync);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) void sync(); });
     setInterval(() => { if (!document.hidden || isEmitter()) void sync(); }, 15_000);
-    if (typeof ResizeObserver === 'function') new ResizeObserver(render).observe(stage);
     connect(null, null, () => false);
     return {connect, emitterChanged, sync};
   }

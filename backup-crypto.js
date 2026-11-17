@@ -19,5 +19,51 @@
   const clean=validate(value),e=clean.encrypted,c=provider(),derived=await key(c,pass,decode(e.salt,16,16),'decrypt');let bytes;
   try{bytes=new Uint8Array(await c.subtle.decrypt({name:'AES-GCM',iv:decode(e.iv,12,12),additionalData:aad(clean.server),tagLength:128},derived,decode(e.ciphertext,17,20000)));const plain=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));object(plain,['authKey']);if(typeof plain.authKey!=='string'||!plain.authKey.trim()||plain.authKey.length>4096||/[\r\n]/.test(plain.authKey))throw fail();return {server:clean.server,authKey:plain.authKey}}catch{throw Error('Palavra-passe incorreta ou chave cifrada alterada. Nenhum dado foi importado.')}finally{bytes?.fill(0)}
  }
- const api={FORMAT,ITERATIONS,validate,encrypt,decrypt};if(typeof module==='object'&&module.exports)module.exports=api;else root.CasaBackupCrypto=api;
+
+ const UNIFI_FORMAT='casa-leal-unifi-aes-gcm-v1',UNIFI_SERVER='https://api.ui.com';
+ function unifiConfig(value){
+  if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Configuração UniFi inválida.');
+  const text=(key,max,required=true)=>{
+   const v=value[key];
+   if(typeof v!=='string'||v.length>max||(required&&!v.trim())||/[\r\n]/.test(v))throw Error('Configuração UniFi inválida.');
+   return v;
+  };
+  const clean={key:text('key',4096),host:text('host',256),site:text('site',256),
+   hostName:text('hostName',256,false),siteName:text('siteName',256,false)};
+  if(!Array.isArray(value.people)||value.people.length!==3)throw Error('Configuração UniFi inválida.');
+  const validMac=v=>typeof v==='string'&&/^(?:[a-f\d]{2}:){5}[a-f\d]{2}$/i.test(v);
+  const validIp=v=>/^(?:\d{1,3}\.){3}\d{1,3}$/.test(v)&&v.split('.').every(part=>+part<=255);
+  clean.people=value.people.map(person=>{
+   if(!person||typeof person!=='object'||typeof person.name!=='string'||!person.name.trim()||person.name.length>32||
+      typeof person.address!=='string'||(person.address&&!validMac(person.address.replaceAll('-',':'))&&!validIp(person.address))||
+      (person.mac&&!validMac(person.mac)))throw Error('Telefone UniFi inválido na cópia.');
+   return {name:person.name,address:person.address,mac:person.mac||''};
+  });
+  if(value.revision!==undefined&&(!Number.isFinite(value.revision)||value.revision<0))throw Error('Configuração UniFi inválida.');
+  clean.revision=value.revision??0;
+  return clean;
+ }
+ function validateUnifi(value){
+  if(value?.server!==UNIFI_SERVER||value.encrypted?.format!==UNIFI_FORMAT)throw Error('Chave UniFi cifrada inválida.');
+  const old=validate({...value,encrypted:{...value.encrypted,format:FORMAT}});
+  return {...old,encrypted:{...old.encrypted,format:UNIFI_FORMAT}};
+ }
+ async function encryptUnifi(value,pass){
+  const plain=unifiConfig(value),c=provider(),salt=c.getRandomValues(new Uint8Array(16)),iv=c.getRandomValues(new Uint8Array(12));
+  const derived=await key(c,pass,salt,'encrypt'),bytes=new TextEncoder().encode(JSON.stringify(plain));
+  try{
+   const ciphertext=await c.subtle.encrypt({name:'AES-GCM',iv,additionalData:new TextEncoder().encode(UNIFI_FORMAT),tagLength:128},derived,bytes);
+   return validateUnifi({server:UNIFI_SERVER,encrypted:{format:UNIFI_FORMAT,kdf:'PBKDF2',hash:'SHA-256',iterations:ITERATIONS,salt:encode(salt),iv:encode(iv),ciphertext:encode(new Uint8Array(ciphertext))}});
+  }finally{bytes.fill(0)}
+ }
+ async function decryptUnifi(value,pass){
+  const e=validateUnifi(value).encrypted,c=provider(),derived=await key(c,pass,decode(e.salt,16,16),'decrypt');let bytes;
+  try{
+   bytes=new Uint8Array(await c.subtle.decrypt({name:'AES-GCM',iv:decode(e.iv,12,12),additionalData:new TextEncoder().encode(UNIFI_FORMAT),tagLength:128},derived,decode(e.ciphertext,17,20000)));
+   return unifiConfig(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes)));
+  }catch{throw Error('Palavra-passe incorreta ou dados UniFi cifrados alterados. Nenhum dado foi importado.')}
+  finally{bytes?.fill(0)}
+ }
+
+ const api={FORMAT,ITERATIONS,validate,encrypt,decrypt,unifiConfig,validateUnifi,encryptUnifi,decryptUnifi};if(typeof module==='object'&&module.exports)module.exports=api;else root.CasaBackupCrypto=api;
 })(typeof window==='object'?window:globalThis);
