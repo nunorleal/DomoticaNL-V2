@@ -150,5 +150,15 @@ test('shared induction activity applies the 10W threshold to older emitter rows'
  for(const watts of [0,1,9.9,10,null,NaN,-1])assert.deepEqual(C.readShared([reading(watts)],now,now+30000,now),[]);
  assert.equal(C.readShared([reading(10.01)],now,now+30000,now)[0].id,'hob');
  const oven={id:'oven',kind:'device',startedAt:now-10000,powerWatts:5};
- assert.equal(C.readShared([oven],now,now+30000,now)[0].id,'oven');
+ assert.deepEqual(C.readShared([oven],now,now+30000,now),[]);
+});
+
+test('oven basal consumption through 15W is hidden locally and on receiving devices',()=>{
+ const now=100000,tracker=C.create({now:()=>now});
+ for(const watts of [0,10,10.8,15]){
+  assert.deepEqual(tracker.update([{...sample('oven',now),powerWatts:watts}]),[]);
+  assert.deepEqual(C.readShared([{id:'oven',kind:'device',startedAt:now-1000,powerWatts:watts}],now,now+30000,now),[]);
+ }
+ assert.equal(tracker.update([{...sample('oven',now),powerWatts:15.01}])[0].id,'oven');
+ assert.equal(C.readShared([{id:'oven',kind:'device',startedAt:now-1000,powerWatts:15.01}],now,now+30000,now)[0].id,'oven');
 });
