@@ -5,7 +5,7 @@
   const MAX_AGE = 3 * 60_000;
   const POLL_INTERVAL = 60_000;
   const ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 20v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/></svg>';
-  const states = {home: ['Em casa', '✓'], away: ['Fora do Wi-Fi', '−'], unknown: ['Por confirmar', '?']};
+  const states = {home: 'Em casa', away: 'Fora do Wi-Fi', unknown: 'Por confirmar'};
   const defaults = ['Eu', 'Esposa', 'Filho'];
   const mac = value => /^(?:[a-f\d]{2}[:-]){5}[a-f\d]{2}$/i.test(value || '') ? value.toLowerCase().replaceAll('-', ':') : '';
   const ipv4 = value => /^(?:\d{1,3}\.){3}\d{1,3}$/.test(value) && value.split('.').every(part => +part <= 255);
@@ -68,7 +68,7 @@
     };
 
     const preference = document.createElement(t2 ? 'button' : 'label');
-    const preferenceLabel = 'Mostrar presenças no cabeçalho';
+    const preferenceLabel = 'Mostrar pessoas em casa';
     if (t2) {
       preference.type = 'button';
       preference.className = 'settings-row';
@@ -138,7 +138,7 @@
       button.className = 'presence-person';
       button.title = 'Toque para ver o nome e o estado da pessoa.';
       button.innerHTML = '<span class="presence-portrait">' + ICON +
-        '<img alt="" hidden></span><span class="presence-state" aria-hidden="true"></span>';
+        '<img alt="" hidden></span>';
       button.addEventListener('click', () => {
         selected = selected === index ? undefined : index;
         render();
@@ -146,6 +146,14 @@
       bar.insertBefore(button, caption);
       return button;
     });
+
+    window.CasaPresence.snapshot = () => {
+      const age = Date.now() - Number(snapshot?.checkedAt);
+      if (!layout.shown || age < -30_000 || age > MAX_AGE || !Number.isFinite(age)) return [];
+      return defaults.flatMap((_, index) => snapshot?.people?.[index]?.state === 'home'
+        ? [{id:index, name:avatarName(index), photo:photos?.current(index) || null}]
+        : []);
+    };
 
     function render() {
       vehicle = window.CasaVehiclePresenceCore.state(snapshot?.people, charging(), snapshot?.vehicle || vehicle);
@@ -160,12 +168,11 @@
         const state = fresh && Object.hasOwn(states, person?.state) ? person.state : 'unknown';
         avatar.hidden = state !== 'home';
         if (avatar.hidden && selected === index) selected = undefined;
-        const label = avatarName(index) + ' · ' + states[state][0];
+        const label = avatarName(index) + ' · ' + states[state];
         photos?.setImage(avatar, photos.current(index));
         avatar.dataset.state = state;
         avatar.setAttribute('aria-label', label);
         avatar.setAttribute('aria-pressed', String(selected === index));
-        avatar.lastElementChild.textContent = states[state][1];
         if (selected === index) caption.textContent = label;
       });
       bar.hidden ||= avatars.every(avatar => avatar.hidden);

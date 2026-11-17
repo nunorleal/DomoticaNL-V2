@@ -1765,3 +1765,54 @@ html.red-night,html.red-night body{background:#000}
 .settings .meteo-group-content { padding-bottom: 10px; }
 .settings .meteo-timer-field small { display: block; color: #b7cad8; }
 .settings .meteo-city { display: flex; justify-content: space-between; gap: 8px; }
+
+/* Confirmed household presence, above the indoor readings. */
+.hero .home-presence {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  gap: 20px;
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 16px auto 0;
+  padding: 9px 20px;
+  border-radius: 50px;
+  flex-shrink: 0;
+  color: #fff;
+}
+.home-presence-label { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 550; white-space: nowrap; }
+.home-presence-label svg { width: 25px; height: 25px; }
+.home-presence-people { display: flex; align-items: center; gap: 10px; padding-left: 20px; border-left: 1px solid #ffffff55; }
+.home-presence-person {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 2px solid #82d886;
+  border-radius: 50%;
+  background: #c3dbea26;
+  flex: none;
+}
+.home-presence-person img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.home-presence-person svg { width: 60%; height: 60%; }
+.focus-view .hero .home-presence { margin-top: .6dvh; padding: 6px 18px; }
+.focus-view .home-presence-person { width: clamp(36px, 5dvh, 54px); height: clamp(36px, 5dvh, 54px); }
+.focus-view .hero.has-home-presence .clock { font-size: clamp(55px, min(25vw, 18dvh), 220px); min-height: 0; }
+.red-night .home-presence-person { border-color: currentColor; background: #000; }
+.red-night .home-presence-person img { filter: grayscale(1); }
+@media (max-width:480px) {
+  .hero .home-presence { gap: 12px; padding: 7px 14px; margin-top: 12px; }
+  .home-presence-label { font-size: 14px; gap: 7px; }
+  .home-presence-label svg { width: 21px; height: 21px; }
+  .home-presence-people { padding-left: 12px; gap: 7px; }
+  .home-presence-person { width: 40px; height: 40px; }
+}
+@media (max-height:650px) {
+  .focus-view .hero .home-presence { padding: 4px 12px; }
+  .focus-view .home-presence-label { font-size: 13px; }
+  .focus-view .home-presence-person { width: 32px; height: 32px; }
+}

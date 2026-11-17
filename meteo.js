@@ -172,6 +172,7 @@
   activityDevices:()=>window.CasaMeteoActivity?.devices()||[],
   openActivityDevice,
   activitySnapshot:()=>window.CasaMeteoActivity?.snapshot()||[],
+  presenceSnapshot:()=>window.CasaPresence?.snapshot?.()||[],
   indoorSensors,selectIndoorSensor,
   bedroomClimate:()=>CasaMeteoCore.indoorClimate(selectedIndoorSensor(),indoorSensors(),id=>window.CasaShelly?.sensorReading(id)),
   realTemperature:()=>CasaMeteoCore.realTemperature(window.CasaShelly?.sensorBinding('balcony'),window.CasaShelly?.sensorReading('balcony')),

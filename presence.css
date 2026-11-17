@@ -62,20 +62,6 @@
   height: 100%;
   object-fit: cover;
 }
-.presence-state {
-  position: absolute;
-  right: -1px;
-  bottom: -1px;
-  display: grid;
-  place-items: center;
-  width: 16px;
-  height: 16px;
-  border: 1px solid #f8fbff;
-  border-radius: 50%;
-  color: white;
-  background: var(--presence-accent);
-  font: 700 11px/1 system-ui, sans-serif;
-}
 .presence-caption {
   position: absolute;
   top: calc(100% + 4px);
