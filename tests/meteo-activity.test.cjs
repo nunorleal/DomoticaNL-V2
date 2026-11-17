@@ -129,3 +129,26 @@ test('the AEG circuits are independently selectable and retain activity on the r
  const synced=C.readShared(C.encodeShared(rows,now),now,now+30000,now+2000);
  assert.deepEqual(synced.map(r=>[r.id,r.elapsed,r.powerWatts]),[['hob',2,950],['oven',2,450]]);
 });
+
+test('induction activity ignores basal power through 10W and resets its clock',()=>{
+ let now=100000;
+ const tracker=C.create({now:()=>now});
+ const reading=watts=>({...sample('hob',now),powerWatts:watts});
+ for(const watts of [0,1,9.9,10,null,NaN,-1])assert.deepEqual(tracker.update([reading(watts)]),[]);
+ assert.equal(tracker.update([reading(10.01)])[0].elapsed,0);
+ now+=20000;
+ assert.equal(tracker.update([reading(1000)])[0].elapsed,20);
+ assert.deepEqual(tracker.update([reading(10)]),[]);
+ now+=5000;
+ assert.equal(tracker.update([reading(11)])[0].elapsed,0);
+ assert.deepEqual(tracker.update([{...reading(11),fetchedAt:now-45001}]),[]);
+ assert.deepEqual(tracker.update([{...reading(11),configured:false}]),[]);
+});
+test('shared induction activity applies the 10W threshold to older emitter rows',()=>{
+ const now=100000;
+ const reading=powerWatts=>({id:'hob',kind:'device',startedAt:now-10000,powerWatts});
+ for(const watts of [0,1,9.9,10,null,NaN,-1])assert.deepEqual(C.readShared([reading(watts)],now,now+30000,now),[]);
+ assert.equal(C.readShared([reading(10.01)],now,now+30000,now)[0].id,'hob');
+ const oven={id:'oven',kind:'device',startedAt:now-10000,powerWatts:5};
+ assert.equal(C.readShared([oven],now,now+30000,now)[0].id,'oven');
+});
