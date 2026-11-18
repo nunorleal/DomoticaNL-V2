@@ -1,3 +1,4 @@
+import { bridge } from "./bridge";
 import { House, UserRound } from "lucide-react";
 
 export type HomePerson = { id: number; name: string; photo: string | null };
@@ -10,11 +11,11 @@ export function HomePresence({ rows }: { rows: HomePerson[] }) {
       <span className="home-presence-label"><House aria-hidden="true" />Em casa</span>
       <div className="home-presence-people">
         {rows.map(person => (
-          <span className="home-presence-person" key={person.id} title={person.name}>
+          <button type="button" className="home-presence-person" key={person.id} title={person.name} aria-label={`Definições de presença · ${person.name}`} onClick={()=>bridge?.openPresenceSettings?.()}>
             {person.photo
               ? <img src={person.photo} alt={person.name} draggable={false} />
               : <UserRound role="img" aria-label={person.name} />}
-          </span>
+          </button>
         ))}
       </div>
     </section>

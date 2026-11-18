@@ -1816,3 +1816,12 @@ html.red-night,html.red-night body{background:#000}
   .focus-view .home-presence-label { font-size: 13px; }
   .focus-view .home-presence-person { width: 32px; height: 32px; }
 }
+
+.climate-history-button { display:inline-flex; align-items:center; gap:5px; flex:none; border:1px solid #ffffff40; border-radius:10px; padding:7px 9px; background:#ffffff10; color:inherit; font:inherit; font-size:12px; cursor:pointer; }
+.climate-history-button svg { width:17px; height:17px; }
+@media(max-width:480px){.climate-history-button{padding:7px}.climate-history-button span{display:none}.bedroom-climate-heading .bedroom-climate-source{width:17px}}
+
+/* Banner actions keep the same layout and night palette. */
+button.home-presence-person{padding:0;color:inherit;cursor:pointer;font:inherit;}
+.climate-device-button{width:100%;padding:0;border:0;background:transparent;color:inherit;font:inherit;text-align:inherit;cursor:pointer;}
+.home-presence-person:focus-visible,.climate-device-button:focus-visible{outline:2px solid currentColor;outline-offset:3px;}

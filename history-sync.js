@@ -154,6 +154,7 @@
         paint();
         plantSettings?.connect(client, session?.user.id ?? null);
         presence?.connect(client, session?.user.id ?? null, () => writerSettings()?.enabled === true);
+        window.CasaSensorHistory?.connect(client, session?.user.id ?? null, () => writerSettings()?.enabled === true);
         if (session) sync();
       }, 0);
     });
@@ -415,6 +416,7 @@
   dialog.querySelector('[data-dismiss-writer-warning]').addEventListener('click', dismissWriterWarning);
   dialog.querySelector('[data-refresh]').addEventListener('click', () => {
     void presence?.sync();
+    void window.CasaSensorHistory?.sync(true);
     sync(true);
     void plantSettings?.sync();
   });

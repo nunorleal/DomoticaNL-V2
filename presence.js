@@ -147,6 +147,13 @@
       return button;
     });
 
+    window.CasaPresence.openSettings = () => {
+      window.CasaSettingsMenu?.openPlant();
+      settings.open = true;
+      settings.scrollIntoView({block:'start'});
+      settings.querySelector('summary').focus({preventScroll:true});
+    };
+
     window.CasaPresence.snapshot = () => {
       const age = Date.now() - Number(snapshot?.checkedAt);
       if (!layout.shown || age < -30_000 || age > MAX_AGE || !Number.isFinite(age)) return [];

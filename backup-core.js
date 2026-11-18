@@ -11,6 +11,10 @@
   if(!object(data)||Object.keys(data).length>100)fail();safe(data);
   for(const k of Object.keys(data))if(!allowed(k))fail();
   if(Object.hasOwn(data,'casa-nl-appliance-timer-presets-v1')){const core=typeof module==='object'&&module.exports?require('./appliance-timer-store.js'):globalThis.CasaApplianceTimerStore;data['casa-nl-appliance-timer-presets-v1']=core.presetSettings(data['casa-nl-appliance-timer-presets-v1'])}
+  if(Object.hasOwn(data,'casa-nl-sensor-history-v1')){
+   const core=typeof module==='object'&&module.exports?require('./sensor-history-core.js'):globalThis.CasaSensorHistoryCore;
+   data['casa-nl-sensor-history-v1']=core.validate(data['casa-nl-sensor-history-v1']);
+  }
   // Retired camera links are neither restored nor exported.
   delete data['casa-nl-camera-hall-v1'];
   if(Object.hasOwn(data,'casa-nl-show-cats-v1')&&typeof data['casa-nl-show-cats-v1']!=='boolean')fail();
@@ -77,7 +81,9 @@
  }
  function backupCrypto(){return typeof module==='object'&&module.exports?require('./backup-crypto.js'):globalThis.CasaBackupCrypto}
  function restore(storage,backup,{restoreCredentials=false,decrypted=null,unifi=null,unifiStorageKey='presence-unifi:t2:restored-config'}={}){
-  const clean=JSON.parse(JSON.stringify(backup));if(!Object.hasOwn(clean.data,'casa-nl-daily-energy-v1')){const old=storage.getItem('casa-nl-daily-energy-v1');if(old)clean.data['casa-nl-daily-energy-v1']=JSON.parse(old)}if(!Object.hasOwn(clean.data,'casa-nl-electricity-tariffs-v1')){const old=storage.getItem('casa-nl-electricity-tariffs-v1');if(old)clean.data['casa-nl-electricity-tariffs-v1']=JSON.parse(old)}const data=validateStorage(clean.data),included=credentials(clean),config=data[CLOUD];
+  const clean=JSON.parse(JSON.stringify(backup));if(!Object.hasOwn(clean.data,'casa-nl-daily-energy-v1')){const old=storage.getItem('casa-nl-daily-energy-v1');if(old)clean.data['casa-nl-daily-energy-v1']=JSON.parse(old)}if(!Object.hasOwn(clean.data,'casa-nl-electricity-tariffs-v1')){const old=storage.getItem('casa-nl-electricity-tariffs-v1');if(old)clean.data['casa-nl-electricity-tariffs-v1']=JSON.parse(old)}if(!Object.hasOwn(clean.data,'casa-nl-sensor-history-v1')){
+   const old=storage.getItem('casa-nl-sensor-history-v1');if(old)clean.data['casa-nl-sensor-history-v1']=JSON.parse(old);
+  }const data=validateStorage(clean.data),included=credentials(clean),config=data[CLOUD];
   if(config){
    let current=null;try{current=JSON.parse(storage.getItem(CLOUD)||'null')}catch{}
    config.authKey='';config.rememberKey=false;

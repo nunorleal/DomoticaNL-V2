@@ -14,6 +14,7 @@
   if(busy)return;const includeKey=$('backup-include-cloud-key').checked,generation=readGeneration;setBusy(true);
   try{
    if(window.CasaShelly?.hasUnsavedChanges())throw Error('Há alterações Shelly por guardar. Use Guardar configuração no menu Shelly Cloud antes de exportar.');
+   window.CasaSensorHistory?.snapshot();
    persist();persistRoomLayout();
    // Always include defaults even before the user has changed a preference.
    const env=CasaEnvironment.getState();localStorage.setItem('casa-nl-environment-v1',JSON.stringify({city:env.city,mode:env.mode}));localStorage.setItem('casa-nl-show-banners',JSON.stringify(labels));localStorage.setItem('casa-nl-show-blind-banners',JSON.stringify(showBlindBanners));
@@ -36,7 +37,7 @@
    const now=new Date(),pad=value=>String(value).padStart(2,'0');
    const date=[now.getFullYear(),pad(now.getMonth()+1),pad(now.getDate())].join('-'),time=[now.getHours(),now.getMinutes(),now.getSeconds()].map(pad).join('-');
    a.href=url;a.download=`T2-NL-${date}_${time}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);status(includeKey?'Cópia JSON exportada com as chaves disponíveis encriptadas (Shelly Cloud e UniFi).':'Cópia JSON exportada sem chaves Shelly Cloud ou UniFi.');
-  }catch(e){window.CasaDailyEnergy?.resume();status(e.message||'Não foi possível exportar os dados.',true)}finally{clearPasswords();setBusy(false)}
+  }catch(e){window.CasaDailyEnergy?.resume();window.CasaSensorHistory?.resume();status(e.message||'Não foi possível exportar os dados.',true)}finally{clearPasswords();setBusy(false)}
  });
  $('import-data').addEventListener('click',()=>{clear();$('backup-file').click()});
  $('backup-file').addEventListener('change',async()=>{
@@ -66,13 +67,13 @@
     unifi=await CasaBackupCrypto.decryptUnifi(sourceBackup.unifiCredentials,$('backup-import-password').value);
     if(generation!==readGeneration||sourceBackup!==selected)return;
    }
-   updatePreview();window.CasaDailyEnergy?.suspend();CasaBackup.restore(localStorage,pending,{
+   updatePreview();window.CasaDailyEnergy?.suspend();window.CasaSensorHistory?.suspend();CasaBackup.restore(localStorage,pending,{
     restoreCredentials,decrypted,unifi,unifiStorageKey:window.CasaPresence?.backupStorageKey?.()
    });
    for(const id of [...motions.keys()])stopMotion(id);
    // The pagehide persistence must use imported states, never the previous rooms.
    const saved=pending.data['casa-nl-realistic-v2'];rooms=defaults.map(r=>({...r,...saved.find(s=>s.id===r.id)}));
    restoreRoomLayout();persist();window.location.reload();
-  }catch(e){window.CasaDailyEnergy?.resume();status(e.message||'Não foi possível importar os dados.',true)}finally{$('backup-import-password').value='';setBusy(false)}
+  }catch(e){window.CasaDailyEnergy?.resume();window.CasaSensorHistory?.resume();status(e.message||'Não foi possível importar os dados.',true)}finally{$('backup-import-password').value='';setBusy(false)}
  });
 })();
