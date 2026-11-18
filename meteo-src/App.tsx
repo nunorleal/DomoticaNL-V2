@@ -224,7 +224,7 @@ export default function App() {
     (prefs.night === "auto" &&
       isNightSchedule(localMinutes, prefs.start, prefs.end));
   const scheduledRed = redActive(prefs, localMinutes, scheduledNight);
-  const { red, night, blind, requestMorning } = useBedsideMode(prefs, scheduledNight, scheduledRed, tz, {now,sunrise,sunset});
+  const { red, night, blind, requestMorning, cycleMode } = useBedsideMode(prefs, scheduledNight, scheduledRed, tz, {now,sunrise,sunset});
   const focus = useFocusView(prefs.focusSeconds, open || bridge?.visible() === false);
   useEffect(() => { if (focus.expanded) dismissFocus.current?.focus({ preventScroll: true }); }, [focus.expanded]);
   useLayoutEffect(() => {
@@ -379,9 +379,10 @@ export default function App() {
             </button>
             <button
               className={"icon-button " + (night ? "selected" : "")}
-              title="Modo de cabeceira"
+              title={red ? "Modo vermelho · mudar para normal" : night ? "Modo escuro · mudar para vermelho" : "Modo normal · mudar para escuro"}
               aria-label="Alternar modo de cabeceira"
-              onClick={() => update({ ...prefs, night: night ? "off" : "on" })}
+              aria-pressed={night}
+              onClick={cycleMode}
             >
               <Moon size={19} />
             </button>
