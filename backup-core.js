@@ -104,9 +104,11 @@
     unifiEntry=JSON.stringify({...backupCrypto().unifiConfig(unifi),revision:Date.now()});
    }
   }
-  const previous=new Map();for(let i=0;i<storage.length;i++){const k=storage.key(i);if(allowed(k))previous.set(k,storage.getItem(k))}
-  if(unifiEntry!==null)previous.set(unifiStorageKey,storage.getItem(unifiStorageKey));
-  try{for(const k of previous.keys())storage.removeItem(k);for(const [k,v]of Object.entries(data))storage.setItem(k,JSON.stringify(v));if(unifiEntry!==null)storage.setItem(unifiStorageKey,unifiEntry)}catch(e){try{for(const k of Object.keys(data))storage.removeItem(k);for(const [k,v]of previous){if(v===null)storage.removeItem(k);else storage.setItem(k,v)}}catch{}throw new Error('Não foi possível guardar a importação neste navegador. Verifique o espaço disponível.')}
+  const remove=[];for(let i=0;i<storage.length;i++){const k=storage.key(i);if(allowed(k))remove.push(k)}
+  const entries=Object.entries(data).map(([k,v])=>[k,JSON.stringify(v)]);
+  if(unifiEntry!==null)entries.push([unifiStorageKey,unifiEntry]);
+  const store=typeof module==='object'&&module.exports?require('./backup-storage.js'):globalThis.CasaBackupStorage;
+  store.write(storage,entries,remove);
  }
 
  return {create,parse,restore,prepareImport,describe,associationCount,credentials,MAX_BYTES};
