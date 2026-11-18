@@ -10,6 +10,8 @@
   const presence = window.CasaPresence?.mount(house);
   const storageKey = 'casa-history-sync-' + house;
   const cadence = 120000;
+  let backupLogin=null;
+  const backupLoginKey=storageKey+'-backup-login';
   let client, session, busy = false;
   let downloaded = 0, sent = 0;
   let syncAgain = false;
@@ -134,6 +136,7 @@
     client.auth.onAuthStateChange((_event, nextSession) => {
       const changedUser = session?.user.id !== nextSession?.user.id;
       session = nextSession;
+      if(backupLogin&&backupLogin.email!==session?.user.email)backupLogin=null;
       if (changedUser) {
         setSharedActivity(null);
         setSharedRates(null);
@@ -370,7 +373,9 @@
     button.disabled = true;
     try {
       if (!connect()) return;
-      const {error} = await client.auth.signInWithPassword({email:email.value.trim(), password:password.value});
+      const submitted={server:projectUrl,email:email.value.trim(),password:password.value};
+      const {error} = await client.auth.signInWithPassword({email:submitted.email, password:submitted.password});
+      if(!error)backupLogin=submitted;
       if (error) paint(signInError(error));
     } catch (error) {
       paint(signInError(error));
@@ -430,6 +435,20 @@
   window.addEventListener('pageshow', sync);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
   window.setInterval(() => { if (!document.hidden) sync(); }, cadence);
+  window.CasaHistorySyncAccess={
+    credentials:()=>backupLogin?{...backupLogin}:null,
+    email:()=>session?.user.email||email.value.trim(),
+    refresh:()=>session?sync():Promise.resolve(),
+    storageKey:backupLoginKey
+  };
+  let savedLogin=null;try{const value=JSON.parse(localStorage.getItem(backupLoginKey)||'null');if(value)savedLogin=window.CasaBackupCrypto.validateSupabase(value)}catch{}
+  if(savedLogin){
+    const recovery=document.createElement('details');recovery.className='backup-supabase-recovery';
+    recovery.innerHTML='<summary>Recuperar acesso Supabase do backup</summary><label>Palavra-passe do backup<input type="password" autocomplete="off"></label><button type="button">Preencher acesso guardado</button><p role="status"></p>';
+    form.after(recovery);
+    const input=recovery.querySelector('input'),button=recovery.querySelector('button'),message=recovery.querySelector('p');
+    button.addEventListener('click',async()=>{button.disabled=true;try{const plain=await window.CasaBackupCrypto.decryptSupabase(savedLogin,input.value);email.value=plain.email;password.value=plain.password;backupLogin=plain;message.textContent='Acesso preenchido. Prima Entrar para ligar ao Supabase.';form.hidden=false;password.focus()}catch(e){message.textContent=e.message}finally{input.value='';button.disabled=false}});
+  }
   try { if (!fromFile && localStorage.getItem(storageKey)) connect(); }
   catch { paint('O armazenamento da sessão está indisponível neste navegador.'); }
 })();

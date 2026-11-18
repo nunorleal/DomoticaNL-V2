@@ -24,9 +24,9 @@
 .sensor-history-chart svg { display: block; width: 100%; height: auto; }
 .sensor-history-chart svg text { fill: #63849c; stroke: none; font: 400 11px system-ui,sans-serif; }
 .sensor-history-grid { stroke: #d7e3ec; stroke-width: 1; }
-.sensor-history-line { fill: none; stroke: #426e8c; stroke-width: 2; pointer-events: none; }
-.sensor-history-chart circle { fill: #426e8c; cursor: pointer; }
-.sensor-history-chart circle:focus-visible { outline: 2px solid #426e8c; outline-offset: 3px; }
+.sensor-history-line { fill: none; stroke: var(--sensor-history-color, #426e8c); stroke-width: 2; pointer-events: none; }
+.sensor-history-chart circle { fill: var(--sensor-history-color, #426e8c); cursor: pointer; }
+.sensor-history-chart circle:focus-visible { outline: 2px solid var(--sensor-history-color, #426e8c); outline-offset: 3px; }
 .sensor-history-sync { font-size: 11px; color: #8c582d; }
 [data-sensor-history] { cursor: pointer; }
 @media(max-width:450px) { #sensor-history-dialog { padding: 18px; } .sensor-history-chart p { font-size: 11px; } }
@@ -40,3 +40,5 @@
 #sensor-history-dialog.sensor-history-red .sensor-history-grid { stroke:#622b25; }
 #sensor-history-dialog.sensor-history-red .history-periods { background:#000; border:1px solid #622b25; }
 #sensor-history-dialog.sensor-history-red [aria-pressed=true] { background:#461b15; border-color:#ed5d50; }
+
+.sensor-history-chart[data-metric="humidity"] { --sensor-history-color: #c94343; }

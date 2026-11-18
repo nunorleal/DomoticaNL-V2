@@ -45,7 +45,7 @@
   return node;
  }
  function chart(field,title,unit,bins){
-  const card=document.createElement('section');card.className='sensor-history-chart';
+  const card=document.createElement('section');card.className='sensor-history-chart';card.dataset.metric=field;
   const heading=document.createElement('h3');heading.textContent=title;card.append(heading);
   const summary=C.combine(bins.flatMap(bin=>bin.rows),field),stats=document.createElement('p');
   stats.textContent=summary?'Média '+fmt(summary.average,unit)+' · Mín. '+fmt(summary.min,unit)+' · Máx. '+fmt(summary.max,unit):'Sem leituras neste período.';

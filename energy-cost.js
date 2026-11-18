@@ -207,7 +207,7 @@
   window.addEventListener('energycostchange', () => {
     document.querySelectorAll('[data-energy-cost-role]').forEach(node => today(node,node.dataset.energyCostRole,node.dataset.energyCostId));
   });
-  window.CasaEnergyCost = {today, display, snapshot:() => config, setSharedRates, applySharedPreferences(next) {
+  window.CasaEnergyCost = {today, display, snapshot:() => config, backupSnapshot:() => ({...config,dailyRates:activeRates()}), setSharedRates, applySharedPreferences(next) {
     const {globalTotals,...tariff} = config;
     if (editor.open || (useLocalRates && window.CasaSharedConfig.equal(tariff,next))) return;
     save({...next,globalTotals}, '', false);

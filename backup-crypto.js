@@ -65,5 +65,22 @@
   finally{bytes?.fill(0)}
  }
 
- const api={FORMAT,ITERATIONS,validate,encrypt,decrypt,unifiConfig,validateUnifi,encryptUnifi,decryptUnifi};if(typeof module==='object'&&module.exports)module.exports=api;else root.CasaBackupCrypto=api;
+ const SUPABASE_FORMAT='casa-leal-supabase-login-aes-gcm-v1',SUPABASE_SERVER='https://xnxkezilascdouyueukm.supabase.co';
+ function supabaseConfig(value){
+  if(!value||Object.keys(value).some(k=>!['server','email','password'].includes(k))||value.server!==SUPABASE_SERVER||typeof value.email!=='string'||value.email.length>320||!/^\S+@\S+\.\S+$/.test(value.email)||typeof value.password!=='string'||!value.password.length||value.password.length>4096)throw Error('Email ou palavra-passe Supabase inválidos.');
+  return {server:SUPABASE_SERVER,email:value.email,password:value.password};
+ }
+ function validateSupabase(value){
+  if(value?.server!==SUPABASE_SERVER||value.encrypted?.format!==SUPABASE_FORMAT)throw Error('Acesso Supabase cifrado inválido.');
+  const clean=validate({...value,encrypted:{...value.encrypted,format:FORMAT}});return {...clean,encrypted:{...clean.encrypted,format:SUPABASE_FORMAT}};
+ }
+ async function encryptSupabase(value,pass){
+  const plain=supabaseConfig(value),c=provider(),salt=c.getRandomValues(new Uint8Array(16)),iv=c.getRandomValues(new Uint8Array(12)),derived=await key(c,pass,salt,'encrypt'),bytes=new TextEncoder().encode(JSON.stringify(plain));
+  try{const ciphertext=await c.subtle.encrypt({name:'AES-GCM',iv,additionalData:new TextEncoder().encode(SUPABASE_FORMAT),tagLength:128},derived,bytes);return validateSupabase({server:SUPABASE_SERVER,encrypted:{format:SUPABASE_FORMAT,kdf:'PBKDF2',hash:'SHA-256',iterations:ITERATIONS,salt:encode(salt),iv:encode(iv),ciphertext:encode(new Uint8Array(ciphertext))}})}finally{bytes.fill(0)}
+ }
+ async function decryptSupabase(value,pass){
+  const e=validateSupabase(value).encrypted,c=provider(),derived=await key(c,pass,decode(e.salt,16,16),'decrypt');let bytes;
+  try{bytes=new Uint8Array(await c.subtle.decrypt({name:'AES-GCM',iv:decode(e.iv,12,12),additionalData:new TextEncoder().encode(SUPABASE_FORMAT),tagLength:128},derived,decode(e.ciphertext,17,20000)));return supabaseConfig(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes)))}catch{throw Error('Palavra-passe incorreta ou acesso Supabase cifrado alterado. Nenhum dado foi importado.')}finally{bytes?.fill(0)}
+ }
+ const api={supabaseConfig,validateSupabase,encryptSupabase,decryptSupabase,FORMAT,ITERATIONS,validate,encrypt,decrypt,unifiConfig,validateUnifi,encryptUnifi,decryptUnifi};if(typeof module==='object'&&module.exports)module.exports=api;else root.CasaBackupCrypto=api;
 })(typeof window==='object'?window:globalThis);
