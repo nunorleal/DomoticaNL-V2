@@ -14,13 +14,14 @@
   if(busy)return;const includeKey=$('backup-include-cloud-key').checked,generation=readGeneration;setBusy(true);
   try{
    if(window.CasaShelly?.hasUnsavedChanges())throw Error('Há alterações Shelly por guardar. Use Guardar configuração no menu Shelly Cloud antes de exportar.');
-   await window.CasaHistorySyncAccess?.refresh();if(generation!==readGeneration)return;
+   await window.CasaHistorySyncAccess?.refresh();await window.CasaPresenceHistory?.sync(true);if(generation!==readGeneration)return;
    window.CasaSensorHistory?.snapshot();
    persist();persistRoomLayout();
    // Always include defaults even before the user has changed a preference.
    const env=CasaEnvironment.getState();localStorage.setItem('casa-nl-environment-v1',JSON.stringify({city:env.city,mode:env.mode}));localStorage.setItem('casa-nl-show-banners',JSON.stringify(labels));localStorage.setItem('casa-nl-show-blind-banners',JSON.stringify(showBlindBanners));
    const version=document.querySelector('[data-app-version]').textContent.replace(/^Versão\s*/,'').trim();
    window.CasaDailyEnergy?.flush();const before=localStorage.getItem('casa-nl-shelly-cloud-v1'),backup=CasaBackup.create(localStorage,version);if(window.CasaDailyEnergy)backup.data['casa-nl-daily-energy-v1']=window.CasaDailyEnergyCore.validate(window.CasaDailyEnergy.backupSnapshot());if(window.CasaEnergyCost)backup.data['casa-nl-electricity-tariffs-v1']=window.CasaEnergyCost.backupSnapshot();if(window.CasaSensorHistory)backup.data['casa-nl-sensor-history-v1']=window.CasaSensorHistory.snapshot();
+   if(window.CasaPresenceHistory)backup.data['casa-nl-presence-history-v1']=window.CasaPresenceHistory.snapshot();
    if(includeKey){
     const password=$('backup-password').value;if(password!==$('backup-password-confirm').value)throw Error('As palavras-passe do backup não coincidem.');
     const shelly={server:backup.data['casa-nl-shelly-cloud-v1']?.server,authKey:$('shelly-key').value.trim()};
@@ -39,7 +40,7 @@
    const now=new Date(),pad=value=>String(value).padStart(2,'0');
    const date=[now.getFullYear(),pad(now.getMonth()+1),pad(now.getDate())].join('-'),time=[now.getHours(),now.getMinutes(),now.getSeconds()].map(pad).join('-');
    a.href=url;a.download=`T2-NL-${date}_${time}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);status(includeKey?'Cópia JSON exportada com as chaves disponíveis encriptadas (Shelly Cloud, UniFi e Supabase).':'Cópia JSON exportada sem chaves Shelly Cloud, UniFi ou acesso Supabase.');
-  }catch(e){window.CasaDailyEnergy?.resume();window.CasaSensorHistory?.resume();status(e.message||'Não foi possível exportar os dados.',true)}finally{clearPasswords();setBusy(false)}
+  }catch(e){window.CasaDailyEnergy?.resume();window.CasaSensorHistory?.resume();window.CasaPresenceHistory?.resume();status(e.message||'Não foi possível exportar os dados.',true)}finally{clearPasswords();setBusy(false)}
  });
  $('import-data').addEventListener('click',()=>{clear();$('backup-file').click()});
  $('backup-file').addEventListener('change',async()=>{
@@ -59,7 +60,7 @@
  setBusy(false);
  $('cancel-import').addEventListener('click',()=>{clear();status('Importação cancelada. Os dados atuais foram mantidos.')});
  $('confirm-import').addEventListener('click',async()=>{
-  if(!pending||busy)return;const selected=sourceBackup,generation=readGeneration,restoreCredentials=$('backup-restore-cloud-key').checked;setBusy(true);
+  if(!pending||busy)return;const selected=sourceBackup,generation=readGeneration,restoreCredentials=$('backup-restore-cloud-key').checked;setBusy(true);let resumeTicket=null;
   try{
    const included=CasaBackup.credentials(sourceBackup);let decrypted=null;
    if(restoreCredentials&&included?.encrypted){status('A desencriptar a chave localmente…');decrypted=await CasaBackupCrypto.decrypt(included,$('backup-import-password').value);if(generation!==readGeneration||sourceBackup!==selected)return}
@@ -70,13 +71,14 @@
     if(generation!==readGeneration||sourceBackup!==selected)return;
    }
    let supabase=null;if(restoreCredentials&&sourceBackup.supabaseCredentials){supabase=await CasaBackupCrypto.decryptSupabase(sourceBackup.supabaseCredentials,$('backup-import-password').value);if(generation!==readGeneration||sourceBackup!==selected)return;}
-   updatePreview();window.CasaDailyEnergy?.suspend();window.CasaSensorHistory?.suspend();CasaBackup.restore(localStorage,pending,{
+   if(supabase){resumeTicket=await window.CasaBackupLoginResume.prepare('t2',supabase);if(generation!==readGeneration||sourceBackup!==selected){await window.CasaBackupLoginResume.cancel(resumeTicket);return;}}
+   updatePreview();window.CasaDailyEnergy?.suspend();window.CasaSensorHistory?.suspend();window.CasaPresenceHistory?.suspend();CasaBackup.restore(localStorage,pending,{
     restoreCredentials,decrypted,unifi,supabase,unifiStorageKey:window.CasaPresence?.backupStorageKey?.()
    });
    for(const id of [...motions.keys()])stopMotion(id);
    // The pagehide persistence must use imported states, never the previous rooms.
    const saved=pending.data['casa-nl-realistic-v2'];rooms=defaults.map(r=>({...r,...saved.find(s=>s.id===r.id)}));
-   restoreRoomLayout();persist();window.location.reload();
-  }catch(e){window.CasaDailyEnergy?.resume();window.CasaSensorHistory?.resume();status(e.message||'Não foi possível importar os dados.',true)}finally{$('backup-import-password').value='';setBusy(false)}
+   restoreRoomLayout();persist();window.CasaBackupLoginResume.arm(resumeTicket);window.location.reload();
+  }catch(e){await window.CasaBackupLoginResume?.cancel(resumeTicket);window.CasaDailyEnergy?.resume();window.CasaSensorHistory?.resume();window.CasaPresenceHistory?.resume();status(e.message||'Não foi possível importar os dados.',true)}finally{$('backup-import-password').value='';setBusy(false)}
  });
 })();

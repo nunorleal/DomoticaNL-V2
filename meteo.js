@@ -188,6 +188,7 @@
   activityDevices:()=>window.CasaMeteoActivity?.devices()||[],
   openActivityDevice,openIndoorSensor,openPresenceSettings,
   activitySnapshot:()=>window.CasaMeteoActivity?.snapshot()||[],
+  openPresenceHistory:id=>{if(!host.hidden)window.CasaPresenceHistoryView?.open(id,{trigger:frame,red:frame.contentDocument?.documentElement.classList.contains('red-night')})},
   presenceSnapshot:()=>window.CasaPresence?.snapshot?.()||[],
   openSensorHistory:()=>{window.CasaSensorHistoryView?.open(selectedIndoorSensor(),undefined,frame,{red:frame.contentDocument?.documentElement.classList.contains('red-night')});},
   indoorSensors,selectIndoorSensor,

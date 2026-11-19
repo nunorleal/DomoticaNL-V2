@@ -435,7 +435,20 @@
   window.addEventListener('pageshow', sync);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
   window.setInterval(() => { if (!document.hidden) sync(); }, cadence);
+  async function restoreImportedAccess(value){
+    const plain=window.CasaBackupCrypto.supabaseConfig(value);
+    email.value=plain.email;password.value=plain.password;
+    try{
+      if(!connect())throw Error('Não foi possível carregar a ligação ao Supabase.');
+      paint('A ligar ao Supabase com o acesso importado…');
+      const {error}=await client.auth.signInWithPassword({email:plain.email,password:plain.password});
+      backupLogin=plain;
+      if(error){form.hidden=false;paint('Acesso recuperado do backup. '+signInError(error));return false;}
+      password.value='';return true;
+    }catch{backupLogin=plain;form.hidden=false;paint('Acesso recuperado do backup. Prima Iniciar sessão para tentar novamente quando houver ligação.');return false;}
+  }
   window.CasaHistorySyncAccess={
+    restoreImported:restoreImportedAccess,
     credentials:()=>backupLogin?{...backupLogin}:null,
     email:()=>session?.user.email||email.value.trim(),
     refresh:()=>session?sync():Promise.resolve(),
@@ -444,11 +457,13 @@
   let savedLogin=null;try{const value=JSON.parse(localStorage.getItem(backupLoginKey)||'null');if(value)savedLogin=window.CasaBackupCrypto.validateSupabase(value)}catch{}
   if(savedLogin){
     const recovery=document.createElement('details');recovery.className='backup-supabase-recovery';
-    recovery.innerHTML='<summary>Recuperar acesso Supabase do backup</summary><label>Palavra-passe do backup<input type="password" autocomplete="off"></label><button type="button">Preencher acesso guardado</button><p role="status"></p>';
+    recovery.open=true;
+    recovery.innerHTML='<summary>Recuperar acesso Supabase do backup</summary><label>Palavra-passe do backup<input type="password" autocomplete="off"></label><button type="button">Recuperar e iniciar sessão</button><p role="status"></p>';
     form.after(recovery);
     const input=recovery.querySelector('input'),button=recovery.querySelector('button'),message=recovery.querySelector('p');
-    button.addEventListener('click',async()=>{button.disabled=true;try{const plain=await window.CasaBackupCrypto.decryptSupabase(savedLogin,input.value);email.value=plain.email;password.value=plain.password;backupLogin=plain;message.textContent='Acesso preenchido. Prima Entrar para ligar ao Supabase.';form.hidden=false;password.focus()}catch(e){message.textContent=e.message}finally{input.value='';button.disabled=false}});
+    button.addEventListener('click',async()=>{button.disabled=true;try{const plain=await window.CasaBackupCrypto.decryptSupabase(savedLogin,input.value);const connected=await restoreImportedAccess(plain);message.textContent=connected?'Sessão iniciada com o acesso do backup.':'Acesso recuperado. Pode voltar a tentar Iniciar sessão.';recovery.open=!connected}catch(e){message.textContent=e.message}finally{input.value='';button.disabled=false}});
   }
+  void window.CasaBackupLoginResume?.consume(house).then(value=>{if(value)return restoreImportedAccess(value)}).catch(()=>paint('Não foi possível retomar o acesso importado. Use Recuperar acesso Supabase do backup.'));
   try { if (!fromFile && localStorage.getItem(storageKey)) connect(); }
   catch { paint('O armazenamento da sessão está indisponível neste navegador.'); }
 })();

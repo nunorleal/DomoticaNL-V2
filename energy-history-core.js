@@ -35,5 +35,24 @@
   const known=buckets.filter(b=>b.value!==null),observedDays=buckets.reduce((n,b)=>n+b.observedDays,0),expectedDays=buckets.reduce((n,b)=>n+b.expectedDays,0);
   return {...r,period,buckets,total:known.length?known.reduce((n,b)=>n+b.value,0):null,observedDays,expectedDays,partial:known.some(b=>b.partial)||observedDays<expectedDays,firstDay:keys[0]||null,lastDay:keys.at(-1)||null,availableTotal:keys.length?keys.reduce((n,d)=>n+days[d].kWh,0):null,availableDays:keys.length};
  }
- return {PERIODS,range,shift,shiftBilling,series,add,label};
+ const SLOT=1800000;
+ const localDate=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Lisbon',year:'numeric',month:'2-digit',day:'2-digit'});
+ const localClock=new Intl.DateTimeFormat('pt-PT',{timeZone:'Europe/Lisbon',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+ const localOffset=new Intl.DateTimeFormat('pt-PT',{timeZone:'Europe/Lisbon',hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZoneName:'shortOffset'});
+ function dayAt(at){const p=Object.fromEntries(localDate.formatToParts(at).map(p=>[p.type,p.value]));return p.year+'-'+p.month+'-'+p.day}
+ function intraday(entry,anchor,now=Date.now()){
+  date(anchor);const row=entry?.days?.[anchor],buckets=[],start=Date.parse(anchor+'T00:00:00Z')-7200000;
+  for(let at=start;at<start+28*3600000;at+=SLOT){
+   if(dayAt(at)!==anchor)continue;
+   const id=String(at/SLOT),value=row?.observed&&at<now&&Object.hasOwn(row.slots||{},id)&&Number.isFinite(row.slots[id])&&row.slots[id]>=0?row.slots[id]:null;
+   buckets.push({id:'slot-'+id,start:anchor,end:anchor,label:localClock.format(at),fullLabel:localOffset.format(at)+' — '+localOffset.format(at+SLOT),at,value,future:at>=now,interrupted:row?.interrupted===true,estimated:row?.split===true,intraday:true});
+  }
+  const labels=new Map();for(const b of buckets)labels.set(b.label,(labels.get(b.label)||0)+1);
+  for(const b of buckets){const repeated=labels.get(b.label)>1||labels.get(localClock.format(b.at+SLOT))>1;b.fullLabel=repeated?b.fullLabel:b.label+' — '+localClock.format(b.at+SLOT);if(labels.get(b.label)>1)b.label=localOffset.format(b.at);}
+  const known=buckets.filter(b=>b.value!==null),distributedTotal=known.reduce((n,b)=>n+b.value,0),total=row?.observed&&Number.isFinite(row.kWh)?row.kWh:null;
+  const difference=total===null?null:Math.max(0,total-distributedTotal),unassigned=difference!==null&&difference<=Math.max(1e-9,(total||0)*1e-9)?0:difference;
+  const peak=known.reduce((best,b)=>!best||b.value>best.value?b:best,null);
+  return {buckets,distributedTotal,unassigned,peak:peak?.value>0?peak:null,observedSlots:known.length,estimated:row?.split===true};
+ }
+ return {PERIODS,range,shift,shiftBilling,series,intraday,add,label};
 });

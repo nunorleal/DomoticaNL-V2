@@ -1,7 +1,6 @@
 (function () {
   'use strict';
 
-  const ABSENCE_DELAY = 5 * 60_000;
   const MAX_AGE = 3 * 60_000;
   const POLL_INTERVAL = 60_000;
   const ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 20v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/></svg>';
@@ -58,7 +57,7 @@
     const layoutDefault = {shown: false, x: null, y: null};
     let layout = layoutDefault;
     let snapshot, account, selected, savedLayout, lastPoll = 0, syncing = false, syncQueued = false;
-    let absentSince = [], lastSuccess = 0, settingsGeneration = 0;
+    let settingsGeneration = 0;
     let isEmitter = () => false;
     let removed = false;
     let vehicle = {present:true,chargeOverride:false};
@@ -136,17 +135,20 @@
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'presence-person';
-      button.title = 'Toque para ver o nome e o estado da pessoa.';
+      button.title = 'Toque para ver as horas em casa.';
       button.innerHTML = '<span class="presence-portrait">' + ICON +
         '<img alt="" hidden></span>';
       button.addEventListener('click', () => {
-        selected = selected === index ? undefined : index;
-        render();
+        window.CasaPresenceHistoryView?.open(index,{trigger:button});
       });
       bar.insertBefore(button, caption);
       return button;
     });
 
+    window.CasaPresence.people=()=>defaults.map((_,id)=>({id,name:config()?.people?.[id]?.name||avatarName(id),photo:photos?.current(id)||null}));
+    const historyShortcuts=document.createElement('div');historyShortcuts.className='presence-history-shortcuts';
+    const historyButtons=defaults.map((name,id)=>{const b=document.createElement('button');b.type='button';b.dataset.presenceHistory=id;b.textContent='Histórico · '+name;historyShortcuts.append(b);return b});
+    group.append(historyShortcuts);
     window.CasaPresence.openSettings = () => {
       window.CasaSettingsMenu?.openPlant();
       settings.open = true;
@@ -163,6 +165,7 @@
     };
 
     function render() {
+      historyButtons.forEach((b,id)=>b.textContent='Histórico · '+(config()?.people?.[id]?.name||avatarName(id)));
       vehicle = window.CasaVehiclePresenceCore.state(snapshot?.people, charging(), snapshot?.vehicle || vehicle);
       document.body.classList.toggle('vehicle-absent', !vehicle.present);
       if (checkbox) checkbox.checked = layout.shown;
@@ -178,8 +181,8 @@
         const label = avatarName(index) + ' · ' + states[state];
         photos?.setImage(avatar, photos.current(index));
         avatar.dataset.state = state;
-        avatar.setAttribute('aria-label', label);
-        avatar.setAttribute('aria-pressed', String(selected === index));
+        avatar.setAttribute('aria-label', 'Histórico de presença · '+label);
+        avatar.setAttribute('aria-haspopup', 'dialog');
         if (selected === index) caption.textContent = label;
       });
       bar.hidden ||= avatars.every(avatar => avatar.hidden);
@@ -278,8 +281,7 @@
     inputs.host.addEventListener('change', () => discoverWith(sites));
 
     function resetPoll() {
-      lastPoll = lastSuccess = 0;
-      absentSince = [];
+      lastPoll = 0;
       snapshot = undefined;
     }
 
@@ -346,18 +348,15 @@
         devices = await connectedPhones(settings);
       } catch (error) {
         if (account === current && isEmitter() && config()?.revision === settings.revision) {
-          lastSuccess = 0;
-          absentSince = [];
           message.textContent = error.message?.startsWith('O UniFi devolveu') ? error.message : 'O UniFi está indisponível. A aguardar nova consulta.';
         }
         return;
       }
       if (account !== current || !isEmitter() || config()?.revision !== settings.revision) return;
       const now = Date.now();
-      if (now - lastSuccess > POLL_INTERVAL * 2) absentSince = [];
-      lastSuccess = now;
       let learned = false;
       const claimed = new Set(settings.people.map(person => person.mac).filter(Boolean));
+      const observations=[];
       const people = settings.people.map((person, index) => {
         const device = person.mac
           ? devices.find(candidate => mac(candidate.macAddress) === person.mac)
@@ -367,15 +366,8 @@
           claimed.add(person.mac);
           learned = true;
         }
-        let state = 'unknown';
-        if (device) {
-          state = 'home';
-          absentSince[index] = undefined;
-        } else if (person.address) {
-          absentSince[index] ??= now;
-          if (now - absentSince[index] >= ABSENCE_DELAY) state = 'away';
-          else if (snapshot?.people?.[index]?.state === 'home' && now - snapshot.checkedAt <= MAX_AGE) state = 'home';
-        }
+        const state=device?'home':(person.address||person.mac)?'away':'unknown';
+        observations.push({state,identity:window.CasaPresenceHistoryCore.fingerprint(JSON.stringify([settings.host,settings.site,index,person.mac||person.address||'']))});
         return {name: person.name, state};
       });
       if (learned) {
@@ -383,6 +375,7 @@
       }
       const next = {checkedAt: now, people,
         vehicle:window.CasaVehiclePresenceCore.state(people, charging(), vehicle)};
+      window.CasaPresenceHistory?.observe(observations,now);
       await store(current, 'status', next);
       if (current === account && config()?.revision === settings.revision) {
         snapshot = next;
@@ -447,10 +440,6 @@
       ++settingsGeneration;
       discover.disabled = inputs.host.disabled = inputs.site.disabled = false;
       populate();
-      if (!isEmitter()) {
-        lastSuccess = 0;
-        absentSince = [];
-      }
       void sync();
     }
     function connect(client, user, emitter) {
@@ -458,6 +447,7 @@
       if ((account?.user ?? null) === user && (account?.client ?? null) === client && user) return;
       vehicle = {present:true,chargeOverride:false};
       account = user ? {client, user} : null;
+      window.CasaPresenceHistory?.connect(client,user,()=>isEmitter());
       if (account) {
         const imported = storage.read('restored-config');
         if (imported) {

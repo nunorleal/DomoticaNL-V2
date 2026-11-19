@@ -1,7 +1,7 @@
 /* Lossless local history storage. Backups and callers continue to use ordinary JSON. */
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./vendor/lz-string-1.5.0.js'));else{root.CasaHistoryStorage=factory(root.LZString);root.CasaHistoryStorage.install(root)}})(typeof window==='undefined'?globalThis:window,function(LZ){
  'use strict';
- const keys=new Set(['casa-nl-daily-energy-v1','casa-leal-daily-energy-v1','casa-nl-sensor-history-v1','casa-leal-sensor-history-v1','casa-nl-consumption-history-v1','casa-nl-light-audit-v1']);
+ const keys=new Set(['casa-nl-presence-history-v1','casa-leal-presence-history-v1','casa-nl-daily-energy-v1','casa-leal-daily-energy-v1','casa-nl-sensor-history-v1','casa-leal-sensor-history-v1','casa-nl-consumption-history-v1','casa-nl-light-audit-v1']);
  const prefix='@casa-lz1:';
  function hash(text){let h=2166136261;for(let i=0;i<text.length;i++)h=Math.imul(h^text.charCodeAt(i),16777619);return (h>>>0).toString(16)}
  function encode(text){

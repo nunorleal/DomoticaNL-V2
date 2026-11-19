@@ -254,7 +254,8 @@
 
   // The source readings stay unrounded. Small boundary intervals are split by elapsed time.
   function addSlots(row, from, to, delta) {
-    if (!delta) return 0;
+    if(!Number.isFinite(delta)||delta<0||!Number.isFinite(from)||!Number.isFinite(to)||to<=from)return 0;
+    if (delta===0 && to-from>300000) return 0;
     const first = Math.floor(from / SLOT), last = Math.ceil(to / SLOT) - 1;
     if (first !== last && to - from > 300000) return 0;
     const slots = row.slots ||= {};
@@ -264,7 +265,7 @@
     if (first !== last) {
       added += Number(!Object.hasOwn(slots, last));
       slots[last] = (slots[last] || 0) + delta - firstEnergy;
-      row.split = true;
+      if(delta>0)row.split = true;
     }
     return added;
   }
