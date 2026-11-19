@@ -29,8 +29,21 @@
   --portrait-ring: linear-gradient(145deg, #dbe2e6, #637481);
   --presence-accent: #455763;
   position: relative;
-  width: 44px;
-  aspect-ratio: 1;
+  --presence-size: 44px;
+  box-sizing: border-box;
+  flex: 0 0 var(--presence-size);
+  width: var(--presence-size);
+  height: var(--presence-size);
+  min-width: var(--presence-size);
+  min-height: var(--presence-size);
+  max-width: var(--presence-size);
+  max-height: var(--presence-size);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  line-height: 1;
   padding: 3px;
   border-radius: 50%;
   background: var(--portrait-ring);
@@ -53,6 +66,7 @@
   border-radius: 50%;
   background: #e4ebf1;
 }
+.presence-bar .presence-portrait { box-sizing: border-box; min-width: 0; min-height: 0; }
 .presence-portrait { box-shadow: inset 0 0 0 1px #f0f4f7; }
 .presence-portrait svg, .presence-photo-thumb svg { width: 56%; height: 56%; }
 .presence-portrait img, .presence-photo-thumb img {
@@ -147,7 +161,7 @@
   .topbar.has-presences { padding-left: 20px; padding-right: 20px; gap: 12px; }
   .topbar.has-presences > .brand { font-size: 21px; gap: 8px; }
   .topbar.has-presences .header-information { gap: 16px; }
-  .topbar.has-presences .presence-person { width: 40px; }
+  .topbar.has-presences .presence-person { --presence-size: 40px; }
 }
 @media (max-width:760px) {
   body.has-header-presences { --plan-top: calc(154px + env(safe-area-inset-top)); }
@@ -170,7 +184,7 @@
     justify-self: end;
     gap: 10px;
   }
-  .topbar.has-presences .presence-person { width: 40px; }
+  .topbar.has-presences .presence-person { --presence-size: 40px; }
   .topbar.has-presences .weather-widget { gap: 4px; }
   .topbar.has-presences .weather-widget svg { width: 21px; height: 21px; }
   .topbar.has-presences .weather-widget strong { font-size: 20px; }
@@ -181,7 +195,7 @@
 }
 @media (max-width:360px) {
   .topbar.has-presences { column-gap: 8px; }
-  .topbar.has-presences .presence-person { width: 32px; }
+  .topbar.has-presences .presence-person { --presence-size: 32px; }
   .topbar.has-presences .header-information { gap: 6px; }
   .topbar.has-presences .weather-widget strong { font-size: 18px; }
   .topbar.has-presences .header-clock time { font-size: 20px; }
