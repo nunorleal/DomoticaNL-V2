@@ -1,12 +1,13 @@
 (function(){
  'use strict';const H=window.CasaPresenceHistory,C=window.CasaPresenceHistoryCore,K=window.CasaEnergyHistoryCore;
  const dialog=document.createElement('dialog');dialog.id='presence-history-dialog';dialog.setAttribute('aria-labelledby','presence-history-title');
- dialog.innerHTML='<header class="history-header"><div><span class="history-eyebrow">HORAS EM CASA</span><h2 id="presence-history-title"></h2></div><button type="button" class="presence-history-close" aria-label="Fechar histórico de presenças">×</button></header>'+
+ dialog.innerHTML='<header class="history-header"><div><span class="history-eyebrow">HORAS EM CASA</span><h2 id="presence-history-title"></h2></div><button type="button" class="presence-history-close" aria-label="Fechar histórico de presenças"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header>'+
   '<label class="presence-history-person">Pessoa<select aria-label="Pessoa do histórico"></select></label>'+
   '<section class="presence-stay" aria-label="Permanência atual"><span data-stay-label>Em casa há</span><strong role="timer" aria-label="Tempo da permanência atual" data-stay-time>—</strong><small data-stay-since></small></section>'+
   '<div class="history-periods" role="group" aria-label="Período">'+[['day','Dia'],['week','Semana'],['month','Mês'],['year','Ano']].map(([p,n])=>'<button type="button" data-presence-period="'+p+'" aria-pressed="false">'+n+'</button>').join('')+'</div>'+
   '<div class="history-navigation"><button type="button" data-previous aria-label="Período anterior">‹</button><strong data-range></strong><button type="button" data-next aria-label="Período seguinte">›</button></div><label class="history-date">Ir para a data<input type="date"></label>'+
   '<div class="presence-history-totals"><div><span>Em casa</span><strong data-total></strong></div><div><span>Média por dia observado</span><strong data-average></strong></div><div><span>Tempo com estado conhecido</span><strong data-covered></strong></div></div>'+
+  '<section class="presence-day" aria-label="Presença ao longo do dia"><h3>Ao longo do dia</h3><div class="presence-timeline" role="group" aria-label="Linha do tempo de presença"></div><div class="presence-timeline-axis"></div><p class="presence-timeline-legend"><span data-state="home">Em casa</span><span data-state="away">Ausente</span><span data-state="unknown">Sem confirmação</span></p><p class="presence-timeline-selection" role="status">Toque num segmento para consultar as horas.</p><h3>Períodos em casa</h3><div class="presence-day-list"></div><p class="presence-day-note">Horas aproximadas ao minuto · hora de Lisboa. O tracejado inclui falhas de consulta e períodos ainda por observar. O detalhe começa com as novas observações; os totais antigos são preservados.</p></section>'+
   '<div class="history-chart-scroll"><div class="history-chart"></div></div><p class="history-selection" role="status"></p>'+
   '<details class="history-values"><summary>Ver horas do período</summary><table><thead><tr><th>Data</th><th>Em casa</th><th>Estado conhecido</th></tr></thead><tbody></tbody></table></details>'+
   '<p class="history-footnote">Estimativa de presença pelo telefone no Wi-Fi, não da localização da pessoa. Contam apenas intervalos de até 3 minutos entre consultas consecutivas com o mesmo estado. Mudanças de estado e falhas não contam como tempo em casa nem como ausência. Registo parcial, até 400 dias; o histórico começa nesta versão e exige o emissor ativo.</p><p class="presence-history-sync" role="status"></p><button type="button" class="presence-history-settings">Definições de presença</button>';
@@ -30,6 +31,27 @@
   else for(let date=range.start;date<=range.end;date=K.add(date,1))bins.push({label:K.label(date,{day:'2-digit',month:'2-digit'}),rows:rows.filter(r=>r.date===date)});
   return {range,rows,bins};
  }
+ function clock(at,end){return at===end?'24:00':new Date(at).toLocaleTimeString('pt-PT',{timeZone:'Europe/Lisbon',hour:'2-digit',minute:'2-digit'})}
+ function renderDay(row){
+  const section=$('.presence-day');section.hidden=period!=='day';$('.history-chart-scroll').hidden=period==='day';$('.history-selection').hidden=period==='day';if(period!=='day')return;
+  const data=C.intervals(row,anchor),track=$('.presence-timeline'),axis=$('.presence-timeline-axis'),list=$('.presence-day-list');track.replaceChildren();axis.replaceChildren();list.replaceChildren();
+  const names={home:'Em casa',away:'Ausente',unknown:'Sem confirmação / por observar'};
+  for(const segment of data.segments){
+   const b=document.createElement('button');b.type='button';b.dataset.state=segment.state;b.style.width=((segment.to-segment.from)/(data.end-data.start)*100)+'%';
+   const label=clock(segment.from,data.end)+'–'+clock(segment.to,data.end)+' · '+names[segment.state]+' · '+hours(segment.to-segment.from);
+   b.title=label;b.setAttribute('aria-label',label);b.addEventListener('click',()=>{track.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',String(n===b)));$('.presence-timeline-selection').textContent=label});track.append(b);
+   if(segment.state==='home'){
+    const item=document.createElement('div'),time=document.createElement('span'),duration=document.createElement('span');time.textContent=clock(segment.from,data.end)+'–'+clock(segment.to,data.end);duration.textContent=hours(segment.to-segment.from);item.append(time,duration);list.append(item);
+   }
+  }
+  for(const hour of [0,6,12,18,24]){
+   const label=document.createElement('span');label.textContent=String(hour).padStart(2,'0')+':00';let at=hour===24?data.end:data.start;
+   if(hour>0&&hour<24){for(let t=data.start;t<data.end;t+=3600000)if(clock(t,data.end)===String(hour).padStart(2,'0')+':00'){at=t;break}}
+   label.style.left=((at-data.start)/(data.end-data.start)*100)+'%';axis.append(label);
+  }
+  if(!list.children.length){const empty=document.createElement('p');empty.textContent=row?.timeline?'Ainda sem períodos em casa confirmados neste dia.':'Ainda sem detalhe horário neste dia. O total disponível continua acima.';list.append(empty)}
+  $('.presence-timeline-selection').textContent='Toque num segmento para consultar as horas.';
+ }
  function render(){
   stay();
   const all=people(),current=all.find(p=>p.id===person),data=model(),totals=sum(data.rows),observed=data.rows.filter(r=>r.homeMs+r.awayMs>0).length;
@@ -49,6 +71,7 @@
    const tr=document.createElement('tr');for(const text of [bin.label,hours(known?s.home:null),hours(known?s.known:null)]){const td=document.createElement('td');td.textContent=text;tr.append(td)}tbody.append(tr);
   }
   $('.history-selection').textContent=totals.known?'Registo parcial. Toque numa barra para consultar as horas.':'Ainda sem intervalos observados neste período.';
+  renderDay(data.rows.find(r=>r.date===anchor));
   $('.presence-history-sync').textContent=H.message();
  }
  function open(id,options={}){if(!Number.isInteger(id)||id<0||id>2)return;person=id;period='day';anchor=C.day(Date.now());trigger=options.trigger||document.activeElement;dialog.classList.toggle('presence-history-red',!!options.red);render();if(!dialog.open)dialog.showModal();startTicker();void H.sync(true)}

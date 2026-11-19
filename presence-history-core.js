@@ -7,6 +7,30 @@
  const cutoff=at=>new Date(Date.parse(day(at)+'T12:00:00Z')-(MAX_DAYS-1)*DAY).toISOString().slice(0,10);
  const key=r=>r.person+':'+r.date;
  const state=value=>['home','away','unknown'].includes(value);
+ // One minute per two-bit slot: 0 unconfirmed, 1 home, 2 away. Two slots per hex character.
+ const boundsCache=new Map();
+ function bounds(date){
+  if(boundsCache.has(date))return boundsCache.get(date);
+  const noon=Date.parse(date+'T12:00:00Z');
+  function boundary(after){let lo=noon-DAY,hi=noon+DAY;while(hi-lo>1){const mid=Math.floor((lo+hi)/2);if(after?day(mid)<=date:day(mid)<date)lo=mid;else hi=mid}return hi}
+  const result={start:boundary(false),end:boundary(true)};
+  if(boundsCache.size>=450)boundsCache.delete(boundsCache.keys().next().value);boundsCache.set(date,result);return result;
+ }
+ function mark(row,from,to,metric){
+  const {start,end}=bounds(row.date),slots=(end-start)/60000;
+  const chars=(row.timeline||'0'.repeat(slots/2)).split(''),value=metric==='homeMs'?1:metric==='awayMs'?2:0;
+  const first=Math.max(0,Math.round((from-start)/60000)),last=Math.min(slots,Math.round((to-start)/60000));
+  for(let i=first;i<last;i++){const at=Math.floor(i/2),shift=(i%2)*2;chars[at]=((parseInt(chars[at],16)&~(3<<shift))|(value<<shift)).toString(16)}
+  row.timeline=chars.join('');
+ }
+ function intervals(row,date){
+  const {start,end}=bounds(date),segments=[],slots=(end-start)/60000;
+  for(let i=0;i<slots;i++){
+   const v=row?.timeline?(parseInt(row.timeline[Math.floor(i/2)],16)>>((i%2)*2))&3:0,state=['unknown','home','away'][v],from=start+i*60000,to=from+60000,last=segments[segments.length-1];
+   if(last?.state===state)last.to=to;else segments.push({state,from,to});
+  }
+  return {start,end,segments};
+ }
  function fingerprint(value){let h=2166136261;for(const c of value)h=Math.imul(h^c.charCodeAt(0),16777619);return (h>>>0).toString(16).padStart(8,'0')}
  function validateRow(r){
   if(!r||!Number.isInteger(r.person)||r.person<0||r.person>2||typeof r.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(r.date)||!Number.isFinite(Date.parse(r.date))||new Date(r.date).toISOString().slice(0,10)!==r.date)throw Error('Dia de presença inválido.');
@@ -15,7 +39,8 @@
   const o=r.observation;
   if(o!==null&&(!o||o.at!==r.lastAt||day(o.at)!==r.date||!state(o.state)||!/^[0-9a-f]{8}$/.test(o.identity)))throw Error('Observação de presença inválida.');
   if(o&&o.homeSince!==undefined&&o.homeSince!==null&&(!Number.isSafeInteger(o.homeSince)||o.homeSince<0||o.homeSince>o.at||o.state!=='home'))throw Error('Início da permanência inválido.');
-  return {person:r.person,date:r.date,homeMs:r.homeMs,awayMs:r.awayMs,unknownMs:r.unknownMs,from:r.from,to:r.to,lastAt:r.lastAt,observation:o?{at:o.at,state:o.state,identity:o.identity,homeSince:o.state==='home'?(o.homeSince??o.at):null}:null};
+  if(r.timeline!==undefined&&(typeof r.timeline!=='string'||r.timeline.length!==(bounds(r.date).end-bounds(r.date).start)/120000||!/^[01245689a]+$/.test(r.timeline)))throw Error('Detalhe horário de presença inválido.');
+  return {...(r.timeline!==undefined?{timeline:r.timeline}:{}),person:r.person,date:r.date,homeMs:r.homeMs,awayMs:r.awayMs,unknownMs:r.unknownMs,from:r.from,to:r.to,lastAt:r.lastAt,observation:o?{at:o.at,state:o.state,identity:o.identity,homeSince:o.state==='home'?(o.homeSince??o.at):null}:null};
  }
  function validate(v){
   if(!v||v.version!==1||!Array.isArray(v.rows)||v.rows.length>MAX_DAYS*3)throw Error('Histórico de presenças inválido.');
@@ -39,7 +64,7 @@
      const metric=old.state===p.state&&p.state!=='unknown'?(p.state==='home'?'homeMs':'awayMs'):'unknownMs';
      for(const [date,from,to]of split(old.at,at)){
       const id=key({person,date}),before=rows.get(id),r=before?{...before}:{person,date,homeMs:0,awayMs:0,unknownMs:0,from,to,lastAt:at,observation:null};
-      r[metric]+=to-from;r.from=Math.min(r.from,from);r.to=Math.max(r.to,to);r.lastAt=at;r.observation=null;rows.set(id,r);changed.set(id,r);
+      mark(r,from,to,metric);r[metric]+=to-from;r.from=Math.min(r.from,from);r.to=Math.max(r.to,to);r.lastAt=at;r.observation=null;rows.set(id,r);changed.set(id,r);
      }
     }
     const date=day(at),id=key({person,date}),before=rows.get(id),r=before?{...before}:{person,date,homeMs:0,awayMs:0,unknownMs:0,from:at,to:at,lastAt:at,observation:null};
@@ -54,5 +79,5 @@
   prune();baseline();
   return {observe,merge,current,rows:()=>{prune();return [...rows.values()]},snapshot:()=>{prune();return {version:1,rows:[...rows.values()]}}};
  }
- return {DAY,MAX_GAP,MAX_DAYS,day,cutoff,key,fingerprint,validateRow,validate,create};
+ return {DAY,MAX_GAP,MAX_DAYS,bounds,intervals,day,cutoff,key,fingerprint,validateRow,validate,create};
 });
