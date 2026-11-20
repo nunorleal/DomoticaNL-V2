@@ -349,7 +349,7 @@
 
   function openSyncDialog() {
     continuity.textContent = 'A consultar a sequência de gravações…';
-    dialog.showModal();
+    if(window.CasaSettingsShell)window.CasaSettingsShell.open(dialog);else dialog.showModal();
     if (connect()) sync();
   }
   access.addEventListener('click', openSyncDialog);

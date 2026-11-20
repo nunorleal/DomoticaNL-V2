@@ -207,3 +207,20 @@ body.vehicle-absent #open-car,
 body.vehicle-absent [data-vehicle="id4"] { display: none; }
 .garage-empty-floor { visibility: hidden; }
 body.vehicle-absent .garage-empty-floor { visibility: visible; }
+
+/* The history shortcut remains available even when nobody is home or photos are hidden. */
+.presence-bar .presence-history-access{display:flex;align-items:center;justify-content:center;gap:6px;flex:none;box-sizing:border-box;min-width:40px;height:40px;padding:0 9px;margin:0;border:1px solid #aec5d6;border-radius:20px;background:#e7eff5;color:#426e8c;font-size:12px;line-height:1;appearance:none;-webkit-appearance:none;cursor:pointer}
+.presence-history-access svg{display:block;flex:none;width:21px;height:21px;pointer-events:none}
+@media(max-width:1100px){.presence-bar .presence-history-access{width:36px;min-width:36px;height:36px;padding:0}.presence-history-access span{display:none}}
+@media(max-width:760px){.presence-bar .presence-history-access{width:32px;min-width:32px;height:32px}}
+
+.presence-bar .presence-history-access[hidden]{display:none!important}
+
+/* Presence history shortcuts use the same saved portraits, including absent residents. */
+.presence-history-shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;width:min(100%,360px);margin:16px auto}
+#settings-dialog .presence-history-shortcuts button{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;box-sizing:border-box;min-width:0;width:100%;padding:6px 0;margin:0;border:0;background:transparent;box-shadow:none;color:#426e8c;font:inherit;font-size:12px;line-height:1.35;text-align:center;cursor:pointer;appearance:none;-webkit-appearance:none}
+.presence-history-shortcut-photo{position:relative;display:grid;place-items:center;box-sizing:border-box;flex:none;width:64px;height:64px;min-width:64px;min-height:64px;overflow:hidden;border:2px solid #adc4d4;border-radius:50%;background:#e7eff5}
+.presence-history-shortcut-photo svg{width:60%;height:60%}.presence-history-shortcut-photo img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover}.presence-history-shortcut-photo img[hidden]{display:none!important}
+.presence-history-shortcut-label{max-width:100%;overflow-wrap:anywhere}
+#settings-dialog .presence-history-shortcuts button:focus-visible{outline:2px solid #426e8c;outline-offset:3px;border-radius:12px}
+@media(max-width:450px){.presence-history-shortcuts{gap:8px}.presence-history-shortcut-photo{width:56px;height:56px;min-width:56px;min-height:56px}}

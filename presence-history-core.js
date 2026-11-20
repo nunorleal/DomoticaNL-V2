@@ -31,6 +31,16 @@
   }
   return {start,end,segments};
  }
+ // Joint time is the intersection of the three minute timelines, never the minimum of daily totals.
+ function together(rows,date){
+  const {start,end}=bounds(date),people=[0,1,2].map(id=>rows.find(r=>r.person===id&&r.date===date)),chars=[],counts=[0,0,0];
+  for(let i=0;i<(end-start)/60000;i++){
+   const values=people.map(r=>r?.timeline?(parseInt(r.timeline[Math.floor(i/2)],16)>>((i%2)*2))&3:0);
+   const value=values.every(v=>v===1)?1:values.some(v=>v===2)?2:0;counts[value]++;
+   const at=Math.floor(i/2);chars[at]=((chars[at]||0)|(value<<((i%2)*2)));
+  }
+  return {date,homeMs:counts[1]*60000,awayMs:counts[2]*60000,unknownMs:counts[0]*60000,timeline:chars.map(v=>v.toString(16)).join('')};
+ }
  function fingerprint(value){let h=2166136261;for(const c of value)h=Math.imul(h^c.charCodeAt(0),16777619);return (h>>>0).toString(16).padStart(8,'0')}
  function validateRow(r){
   if(!r||!Number.isInteger(r.person)||r.person<0||r.person>2||typeof r.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(r.date)||!Number.isFinite(Date.parse(r.date))||new Date(r.date).toISOString().slice(0,10)!==r.date)throw Error('Dia de presença inválido.');
@@ -79,5 +89,5 @@
   prune();baseline();
   return {observe,merge,current,rows:()=>{prune();return [...rows.values()]},snapshot:()=>{prune();return {version:1,rows:[...rows.values()]}}};
  }
- return {DAY,MAX_GAP,MAX_DAYS,bounds,intervals,day,cutoff,key,fingerprint,validateRow,validate,create};
+ return {DAY,MAX_GAP,MAX_DAYS,bounds,intervals,together,day,cutoff,key,fingerprint,validateRow,validate,create};
 });

@@ -414,7 +414,7 @@
  $('open-shelly').addEventListener('click',()=>{
   fill();summary();
   if(!$('settings-dialog').open){showPopup('shelly-dialog');return}
-  if(!$('shelly-dialog').open)$('shelly-dialog').showModal();
+  if(!$('shelly-dialog').open){if(window.CasaSettingsShell)window.CasaSettingsShell.open($('shelly-dialog'));else $('shelly-dialog').showModal()}
   queueMicrotask(()=>window.CasaShelly?.focusPopup());
  });
  $('shelly-refresh').addEventListener('click',refresh);

@@ -108,7 +108,7 @@
     $('energy-show-euros').checked = config.enabled;
     paintRates();
     status('');
-    editor.showModal();
+    if(window.CasaSettingsShell)window.CasaSettingsShell.open(editor);else editor.showModal();
   });
 
   function paintRates() {
@@ -172,7 +172,7 @@
         + (result.unknown ? ' O consumo sem hora usa o preço médio de 10 horas em vazio e 14 horas fora de vazio.' : '');
       detailBody.append(table,notes);
     }
-    detail.showModal();
+    if(window.CasaSettingsShell)window.CasaSettingsShell.open(detail);else detail.showModal();
   }
   function paint(target,role,id,start,end) {
     target.hidden = !config.enabled;

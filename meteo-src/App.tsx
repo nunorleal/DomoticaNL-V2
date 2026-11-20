@@ -291,7 +291,7 @@ export default function App() {
     : [];
   const activityRows: ActivityRow[] = prefs.activityEnabled ? (bridge?.activitySnapshot?.() || []).filter((row:ActivityRow)=>prefs.activityDevices.includes(row.id)) : [];
   const peopleAtHome: HomePerson[] = bridge?.presenceSnapshot?.() || [];
-  const activityLines = Math.ceil(activityRows.length / 2);
+  const activityLines = Math.ceil((focus.expanded?Math.min(activityRows.length,2):activityRows.length) / 2);
   const stale = !!snapshot && now - snapshot.fetchedAt > 30 * 60000;
   const min = w
       ? Math.min(...days.map(({ i }) => w.daily.temperature_2m_min[i]))
@@ -409,7 +409,7 @@ export default function App() {
             Lâmpada: {lamp.error}
           </button>
         )}
-        <header className={["hero",bridge?.bedroomClimate?.()?.configured?"has-bedroom-climate":"",activityLines?"has-activity":"",peopleAtHome.length?"has-home-presence":""].filter(Boolean).join(" ")} data-activity-rows={activityLines}>
+        <header className={["hero",bridge?.bedroomClimate?.()?.configured?"has-bedroom-climate":"",activityLines?"has-activity":"",(peopleAtHome.length||bridge?.openPresenceHistory)?"has-home-presence":""].filter(Boolean).join(" ")} data-activity-rows={activityLines}>
           <div className="date">
             <span>{fmt(now, tz, { weekday: "long" })}</span>
             <p>
@@ -481,7 +481,7 @@ export default function App() {
           </div>
           <HomePresence rows={peopleAtHome} />
           <BedroomClimate unit={prefs.temp} now={now} />
-          <ActivityDevices rows={activityRows} onOpen={bridge?.openActivityDevice ? (id) => {
+          <ActivityDevices rows={activityRows} compact={focus.expanded} onShowAll={focus.wake} onOpen={bridge?.openActivityDevice ? (id) => {
             if (bridge.openActivityDevice(id)) focus.wake();
           } : undefined} />
           {prefs.demo !== "auto" && (

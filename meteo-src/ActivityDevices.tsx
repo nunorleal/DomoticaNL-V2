@@ -54,13 +54,15 @@ function ActivityCard({row,onOpen}:{row:ActivityRow;onOpen?:OpenActivity}) {
   </Card>;
 }
 
-export function ActivityDevices({rows,onOpen}:{rows:ActivityRow[];onOpen?:OpenActivity}) {
+export function ActivityDevices({rows,onOpen,compact=false,onShowAll}:{rows:ActivityRow[];onOpen?:OpenActivity;compact?:boolean;onShowAll?:()=>void}) {
   if(!rows.length)return null;
-  return <section className="meteo-activity" aria-label="Dispositivos em atividade">
-    {Array.from({length:Math.ceil(rows.length/2)},(_,index)=>
+  const visible=compact?rows.slice(0,2):rows,more=compact&&rows.length>visible.length;
+  return <section className="meteo-activity" data-has-more={more} aria-label="Dispositivos em atividade">
+    {Array.from({length:Math.ceil(visible.length/2)},(_,index)=>
       <div className="meteo-activity-row" key={index}>
-        {rows.slice(index*2,index*2+2).map(row=><ActivityCard row={row} key={row.id} onOpen={onOpen}/>)}
+        {visible.slice(index*2,index*2+2).map(row=><ActivityCard row={row} key={row.id} onOpen={onOpen}/>)}
       </div>
     )}
+    {more&&<button type="button" className="glass meteo-activity-more" onClick={onShowAll} title={`Ver todos os ${rows.length} dispositivos em funcionamento`} aria-label={`Ver todos os ${rows.length} dispositivos em funcionamento`}>…</button>}
   </section>;
 }

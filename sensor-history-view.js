@@ -101,7 +101,7 @@
  function open(id,title,button,options={}){
   dialog.classList.toggle('sensor-history-red',Boolean(options.red));
   role=id;name=title||H.sources().find(s=>s.role===id)?.name||'Sensor';trigger=button||document.activeElement;
-  period='day';anchor=C.day(Date.now());render();if(!dialog.open)dialog.showModal();
+  period='day';anchor=C.day(Date.now());render();if(!dialog.open){if(window.CasaSettingsShell)window.CasaSettingsShell.open(dialog,{trigger});else dialog.showModal()}
  }
  $('.sensor-history-close').addEventListener('click',()=>dialog.close());
  dialog.addEventListener('close',()=>{if(trigger?.isConnected)trigger.focus({preventScroll:true})});

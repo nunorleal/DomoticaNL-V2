@@ -131,6 +131,15 @@
     bar.innerHTML = '<output class="presence-caption" hidden></output>';
     header.insertBefore(bar, information);
     const caption = bar.querySelector('output');
+    const peopleAccess = document.createElement('button');
+    peopleAccess.type = 'button';
+    peopleAccess.className = 'presence-history-access';
+    peopleAccess.title = 'Pessoas · histórico de presenças';
+    peopleAccess.setAttribute('aria-label', 'Pessoas · histórico de presenças');
+    peopleAccess.setAttribute('aria-haspopup', 'dialog');
+    peopleAccess.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 4a3 3 0 0 1 0 6M18 13a5 5 0 0 1 3 5v3"/></svg><span>Pessoas</span>';
+    peopleAccess.addEventListener('click', () => window.CasaPresenceHistoryView?.open(0, {trigger: peopleAccess}));
+    bar.insertBefore(peopleAccess, caption);
     const avatars = defaults.map((_, index) => {
       const button = document.createElement('button');
       button.type = 'button';
@@ -147,7 +156,7 @@
 
     window.CasaPresence.people=()=>defaults.map((_,id)=>({id,name:config()?.people?.[id]?.name||avatarName(id),photo:photos?.current(id)||null}));
     const historyShortcuts=document.createElement('div');historyShortcuts.className='presence-history-shortcuts';
-    const historyButtons=defaults.map((name,id)=>{const b=document.createElement('button');b.type='button';b.dataset.presenceHistory=id;b.textContent='Histórico · '+name;historyShortcuts.append(b);return b});
+    const historyButtons=defaults.map((name,id)=>{const b=document.createElement('button');b.type='button';b.dataset.presenceHistory=id;b.setAttribute('aria-haspopup','dialog');b.innerHTML='<span class="presence-history-shortcut-photo">'+ICON+'<img alt="" hidden></span><span class="presence-history-shortcut-label"></span>';historyShortcuts.append(b);return b});
     group.append(historyShortcuts);
     window.CasaPresence.openSettings = () => {
       window.CasaSettingsMenu?.openPlant();
@@ -165,18 +174,18 @@
     };
 
     function render() {
-      historyButtons.forEach((b,id)=>b.textContent='Histórico · '+(config()?.people?.[id]?.name||avatarName(id)));
+      historyButtons.forEach((b,id)=>{const name=config()?.people?.[id]?.name||avatarName(id);b.querySelector('.presence-history-shortcut-label').textContent='Histórico '+name;b.setAttribute('aria-label','Histórico de presença · '+name);photos?.setImage(b,photos.current(id))});
       vehicle = window.CasaVehiclePresenceCore.state(snapshot?.people, charging(), snapshot?.vehicle || vehicle);
       document.body.classList.toggle('vehicle-absent', !vehicle.present);
       if (checkbox) checkbox.checked = layout.shown;
       else preference.setAttribute('aria-checked', String(layout.shown));
-      bar.hidden = !layout.shown;
+      bar.hidden = false;
       const age = Date.now() - Number(snapshot?.checkedAt);
       const fresh = age >= -30_000 && age <= MAX_AGE;
       avatars.forEach((avatar, index) => {
         const person = snapshot?.people?.[index];
         const state = fresh && Object.hasOwn(states, person?.state) ? person.state : 'unknown';
-        avatar.hidden = state !== 'home';
+        avatar.hidden = !layout.shown || state !== 'home';
         if (avatar.hidden && selected === index) selected = undefined;
         const label = avatarName(index) + ' · ' + states[state];
         photos?.setImage(avatar, photos.current(index));
@@ -185,7 +194,7 @@
         avatar.setAttribute('aria-haspopup', 'dialog');
         if (selected === index) caption.textContent = label;
       });
-      bar.hidden ||= avatars.every(avatar => avatar.hidden);
+      peopleAccess.hidden = avatars.some(avatar => !avatar.hidden);
       header.classList.toggle('has-presences', !bar.hidden);
       document.body.classList.toggle('has-header-presences', !bar.hidden);
       photos?.paint();
