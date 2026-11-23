@@ -11,3 +11,9 @@ button.room-device-description{min-height:48px;border-radius:6px}
 .room-device-description:focus-visible{outline:2px solid #87b8d8;outline-offset:3px}
 .room-device-open{flex:none;width:48px;height:48px;min-height:48px;padding:12px;border:1px solid #9eb8ca66;border-radius:50%;background:#8baac01c;color:#426b89}
 .room-device-open svg{width:24px;height:24px}
+
+/* Read-only window contact state, aligned with the room's control icons. */
+.room-window-state{display:grid;place-items:center;box-sizing:border-box;flex:none;color:#426e8c;pointer-events:none}
+.room-window-state svg{display:block;width:24px;height:24px}
+.room-window-state[data-state=open]{color:#bd5349;background:#fff0ed;border-color:#dca39c}
+.room-window-state[data-state=unknown]{color:#8897a4;background:#edf1f4;border-color:#c7d0d7}

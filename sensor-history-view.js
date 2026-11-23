@@ -5,7 +5,7 @@
  const dialog=document.createElement('dialog');
  dialog.id='sensor-history-dialog';dialog.className='sensor-history-dialog';
  dialog.setAttribute('aria-labelledby','sensor-history-title');
- dialog.innerHTML='<header class="history-header"><div><span class="history-eyebrow">TEMPERATURA E HUMIDADE</span><h2 id="sensor-history-title"></h2></div><button type="button" class="sensor-history-close" aria-label="Fechar histórico">×</button></header>'+
+ dialog.innerHTML='<header class="history-header"><div><span class="history-eyebrow">TEMPERATURA E HUMIDADE</span><h2 id="sensor-history-title"></h2></div><button type="button" class="sensor-history-close" aria-label="Fechar histórico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>'+
   '<div class="history-periods" role="group" aria-label="Período">'+[['day','Dia'],['week','Semana'],['month','Mês'],['year','Ano']].map(([id,name])=>'<button type="button" data-sensor-period="'+id+'" aria-pressed="false">'+name+'</button>').join('')+'</div>'+
   '<div class="history-navigation"><button type="button" data-previous aria-label="Período anterior">‹</button><strong data-range aria-live="polite"></strong><button type="button" data-next aria-label="Período seguinte">›</button></div>'+
   '<label class="history-date">Ir para a data<input type="date"></label><div class="sensor-history-charts"></div>'+
@@ -109,7 +109,36 @@
  dialog.addEventListener('pointerdown',event=>{const r=dialog.getBoundingClientRect();outside=event.target===dialog&&(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)});
  dialog.addEventListener('click',event=>{if(outside&&event.target===dialog)dialog.close();outside=false});
  dialog.querySelectorAll('[data-sensor-period]').forEach(button=>button.addEventListener('click',()=>{period=button.dataset.sensorPeriod;render()}));
- for(const [selector,direction]of [['[data-previous]',-1],['[data-next]',1]])$(selector).addEventListener('click',()=>{anchor=K.shift(period,anchor,direction);render()});
+ function shift(direction){if(direction>0&&$('[data-next]').disabled)return;anchor=K.shift(period,anchor,direction);render()}
+ for(const [selector,direction]of [['[data-previous]',-1],['[data-next]',1]])$(selector).addEventListener('click',()=>shift(direction));
+ // Horizontal touch gestures change the date window; vertical scroll and pinch zoom remain native.
+ let swipe=null,swipeClickUntil=0;
+ const releaseSwipe=id=>{if(dialog.hasPointerCapture?.(id))dialog.releasePointerCapture(id)};
+ dialog.addEventListener('pointerdown',event=>{
+  swipeClickUntil=0;
+  if(swipe){releaseSwipe(swipe.id);swipe=null}
+  if(!dialog.open||!event.isPrimary||!['touch','pen'].includes(event.pointerType)||event.target.closest('button,input,select,textarea,summary,a,[contenteditable]'))return;
+  const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)return;
+  swipe={id:event.pointerId,x:event.clientX,y:event.clientY,at:performance.now(),horizontal:false};
+ },{passive:true});
+ dialog.addEventListener('pointermove',event=>{
+  if(!swipe||event.pointerId!==swipe.id)return;
+  const x=Math.abs(event.clientX-swipe.x),y=Math.abs(event.clientY-swipe.y);
+  if(!swipe.horizontal&&y>12&&y>x){const id=swipe.id;swipe=null;releaseSwipe(id);return}
+  if(x>12&&x>y*1.4){swipe.horizontal=true;try{dialog.setPointerCapture(event.pointerId)}catch{}}
+  if(swipe.horizontal&&event.cancelable)event.preventDefault();
+ },{passive:false});
+ dialog.addEventListener('pointerup',event=>{
+  if(!swipe||event.pointerId!==swipe.id)return;
+  const start=swipe;swipe=null;releaseSwipe(start.id);
+  const x=event.clientX-start.x,y=event.clientY-start.y;
+  if(Math.abs(x)<48||Math.abs(x)<Math.abs(y)*1.4||performance.now()-start.at>1500)return;
+  swipeClickUntil=performance.now()+500;shift(x<0?1:-1);
+ });
+ const cancelSwipe=()=>{const id=swipe?.id;swipe=null;if(id!==undefined)releaseSwipe(id)};
+ dialog.addEventListener('pointercancel',cancelSwipe);dialog.addEventListener('lostpointercapture',cancelSwipe);dialog.addEventListener('close',cancelSwipe);
+ dialog.addEventListener('click',event=>{if(event.detail>0&&performance.now()<swipeClickUntil){event.preventDefault();event.stopImmediatePropagation()}},true);
+
  $('input[type=date]').addEventListener('change',event=>{try{K.range(period,event.target.value);anchor=event.target.value;render()}catch{render()}});
  document.addEventListener('click',event=>{
   const button=event.target.closest('[data-sensor-history]');

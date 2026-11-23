@@ -3,6 +3,9 @@
  'use strict';const $=id=>document.getElementById(id),C=CasaRoomDevicesCore;const inventories=new WeakMap();
  const powerKinds=['light','media','office','kitchen','heater','dehumidifier','fan','alarm'];
  const isPower=e=>powerKinds.includes(e.kind)&&(e.kind!=='alarm'||e.id==='arm')&&!(e.kind==='kitchen'&&CasaMediaCore.isKitchenMeter(e.id));
+ const entryIcon=kind=>'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(kind==='sensor'?'<path d="M4 3v17h17M8 16v-5m5 5V6m5 10V9"/>':'<rect x="3" y="3" width="18" height="14" rx="1"/><path d="M3 7h18M3 11h18M3 15h18M12 17v4"/>')+'</svg>';
+ const windowGlyph=state=>'<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1"/>'+(state==='open'?'<path d="m3 3 7 3v12l-7 3m18-18-7 3v12l7 3"/>':state==='closed'?'<path d="M12 3v18M3 12h18"/>':'<path d="M10 9a2 2 0 1 1 3 1.7c-1 .5-1 1-1 2.3M12 16h.01"/>')+'</svg>';
+ function paintWindow(indicator,state,label){if(indicator.dataset.state!==state){indicator.dataset.state=state;indicator.innerHTML=windowGlyph(state)}indicator.setAttribute('aria-label',label);indicator.title=label}
  const labels={light:'Iluminação',sensor:'Temperatura e humidade',cover:'Estore',window:'Janela',door:'Porta de entrada',heater:'Termoventilador',dehumidifier:'Desumidificador',fan:'Ventoinha'};
  const portable=()=>({heaterRoom:window.CasaHeater?.roomId(),dehumidifierRoom:window.CasaDehumidifier?.roomId()});
  const number=(v,unit)=>Number.isFinite(v)?v.toLocaleString('pt-PT',{maximumFractionDigits:1})+' '+unit:null;
@@ -39,14 +42,16 @@
    host.querySelector('.room-devices-refresh').addEventListener('click',()=>CasaShelly.refreshEquipment(cellar?'cellar':'room',room.id));
    for(const e of entries){const row=document.createElement('div');row.className='room-device-row';row.dataset.deviceKind=e.kind;row.dataset.deviceId=e.id;
     const details=document.createElement((['sensor','cover','media','office','kitchen','heater','dehumidifier','fan','alarm'].includes(e.kind)||e.kind==='light'&&['master','bedroom2','living'].includes(e.id))?'button':'div');details.className='room-device-description';if(details.tagName==='BUTTON'){details.type='button';details.addEventListener('click',()=>open(e))}
-    const title=document.createElement('strong'),status=document.createElement('small');title.textContent=e.kind==='alarm'?'Alarme · '+(e.id==='arm'?'Armação':'Disparo'):e.kind==='door'&&e.id==='cellar'?'Porta da cave':labels[e.kind]||CasaMediaCore.NAMES[e.id];details.append(title,status);row.append(details);let update=null;
+    const title=document.createElement('strong'),status=document.createElement('small');title.textContent=e.kind==='alarm'?'Alarme · '+(e.id==='arm'?'Armação':'Disparo'):e.kind==='door'&&e.id==='cellar'?'Porta da cave':labels[e.kind]||CasaMediaCore.NAMES[e.id];details.append(title,status);row.append(details);let update=null,indicator=null;
   if(isPower(e)){const power=document.createElement('button');row.append(power);update=CasaPowerButton.bind(power,()=>snapshot(e,room),'on',on=>command(e,room,on),e.kind==='alarm'?{on:'Armar alarme',off:'Desarmar alarme'}:{on:'Ligar '+title.textContent,off:'Desligar '+title.textContent})}
-    else if(e.kind==='cover'){const b=document.createElement('button');b.className='room-device-open secondary-action';b.type='button';b.setAttribute('aria-label','Abrir controlos do estore');b.innerHTML=icon('blind');b.addEventListener('click',()=>open(e));row.append(b)}
-    list.append(row);rows.push({e,status,details,update});
+    else if(e.kind==='cover'){const b=document.createElement('button');b.className='room-device-open secondary-action';b.type='button';b.setAttribute('aria-label','Abrir controlos do estore');b.innerHTML=entryIcon('cover');b.title='Abrir controlos do estore';b.addEventListener('click',()=>open(e));row.append(b)}
+    else if(e.kind==='sensor'){const b=document.createElement('button');b.className='room-device-open secondary-action';b.type='button';b.setAttribute('aria-label','Ver histórico de temperatura e humidade');b.title='Histórico de temperatura e humidade';b.innerHTML=entryIcon('sensor');b.addEventListener('click',()=>open(e));row.append(b)}
+    else if(e.kind==='window'){indicator=document.createElement('span');indicator.className='room-device-open room-window-state';indicator.setAttribute('role','img');row.append(indicator)}
+    list.append(row);rows.push({e,status,details,update,indicator});
    }
   }
   $(cellar?'basement-dialog-title':'room-title').textContent=room.name;host.querySelector('.room-device-count').textContent=entries.length+' dispositivos';
-  for(const row of rows){const d=snapshot(row.e,room),text=caption(row.e,d,room);if(row.status.textContent!==text)row.status.textContent=text;row.update?.(d);if(row.details.tagName==='BUTTON')row.details.setAttribute('aria-label',row.details.querySelector('strong').textContent+': '+text+'. Abrir controlos')}
+  for(const row of rows){const d=snapshot(row.e,room),text=caption(row.e,d,room);if(row.status.textContent!==text)row.status.textContent=text;row.update?.(d);if(row.indicator)paintWindow(row.indicator,d.configured&&d.open===true?'open':d.configured&&d.open===false?'closed':'unknown','Janela · '+text);if(row.details.tagName==='BUTTON')row.details.setAttribute('aria-label',row.details.querySelector('strong').textContent+': '+text+'. Abrir controlos')}
   host.querySelector('.room-devices-refresh').disabled=CasaShelly.isBusy();
  }
  function update(){if($('room-dialog')?.open&&detailView==='room')renderRoom(current());const d=$('basement-dialog');if(d?.open&&d.dataset.roomDeviceOverview==='cellar')renderRoom({id:'cellar',name:'Cave'})}
