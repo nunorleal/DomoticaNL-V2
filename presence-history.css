@@ -57,3 +57,6 @@
 #presence-history-dialog.presence-history-red .presence-history-together{background:#000;color:#ed5d50}#presence-history-dialog.presence-history-red .presence-history-together[aria-pressed=true]{background:#461b15;color:#ed5d50;border-color:#ed5d50}
 #presence-history-dialog.presence-history-red .presence-day[data-group=true]>.presence-timeline [data-state=home],#presence-history-dialog.presence-history-red .presence-day[data-group=true]>.presence-timeline-legend [data-state=home]:before{background:#ed5d50}
 @media(max-width:450px){.presence-history-people{gap:12px}.presence-history-photo{width:56px;height:56px;min-width:56px;min-height:56px}.presence-history-chooser{margin-bottom:16px}}
+
+/* Absent residents remain selectable in the history chooser. */
+#presence-history-dialog .presence-history-avatar.is-away .presence-history-photo{filter:grayscale(1);opacity:.5}
