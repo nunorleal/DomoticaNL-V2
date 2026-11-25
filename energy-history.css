@@ -12,3 +12,21 @@
 @media(max-width:450px){.history-periods button{padding-inline:2px}.history-billing label{width:min(124px,calc((100% - 8px)/2))}}
 
 .history-bar.is-interrupted .history-bar-track i{background-image:repeating-linear-gradient(135deg,#ffffff55 0 2px,transparent 2px 5px)}
+
+/* Daily electricity: optional half-hour line or bar chart. */
+.history-chart-options{display:flex;justify-content:center;gap:6px;margin:10px 0}
+.history-chart-options button{padding:7px 16px;border:1px solid #ccdce6;border-radius:9px;background:#e7eff5;color:#426e8c;font:inherit;font-size:12px;cursor:pointer}
+.history-chart-options button[aria-pressed=true]{background:#426e8c;color:#fff;border-color:#426e8c}
+.history-hour-info{font-size:11px;line-height:1.5;color:#63849c;margin:8px 0}
+#history-chart.is-intraday{gap:1px}
+#history-chart.is-line{display:block;height:auto}
+.energy-intraday-line{display:block;width:100%;height:auto;fill:none;stroke:none}
+.energy-intraday-line text{stroke:none;fill:#63849c;font:400 11px system-ui,sans-serif}
+.energy-line-grid{stroke:#d7e3ec;stroke-width:1}
+.energy-line-path{fill:none;stroke:#426e8c;stroke-width:2;pointer-events:none}
+.energy-intraday-line circle{fill:#426e8c;stroke:none;cursor:pointer}
+.energy-intraday-line circle[aria-pressed=true]{fill:#163f5c;stroke:#163f5c;stroke-width:2}
+.energy-intraday-line circle:focus-visible{outline:2px solid #426e8c;outline-offset:3px}
+
+/* Reserve horizontal gestures for date navigation, retaining vertical scroll and pinch zoom. */
+#energy-history-dialog{touch-action:pan-y pinch-zoom}

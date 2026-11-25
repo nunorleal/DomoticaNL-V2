@@ -1,0 +1,49 @@
+#sensor-history-dialog {
+ box-sizing: border-box;
+ width: min(680px, calc(100vw - 28px));
+ max-height: calc(100dvh - 28px);
+ overflow: auto;
+ padding: 24px;
+ border: 1px solid #cddde7;
+ border-radius: 25px;
+ background: #f5f8fc;
+ color: #233f56;
+ box-shadow: 0 20px 60px #102b3a4d;
+ text-align: left;
+}
+#sensor-history-dialog::backdrop { background: #142b3d70; backdrop-filter: blur(3px); }
+#sensor-history-dialog .sensor-history-close {
+ position:absolute;right:20px;top:18px;box-sizing:border-box;display:grid;place-items:center;
+ width:40px;height:40px;min-width:40px;min-height:40px;max-width:40px;max-height:40px;
+ padding:0;margin:0;appearance:none;-webkit-appearance:none;line-height:1;
+ border:1px solid #b7cdda;border-radius:50%;background:#e7eff5;color:#426e8c;box-shadow:none;cursor:pointer;
+}
+.sensor-history-close svg{display:block;width:20px;height:20px;pointer-events:none}
+#sensor-history-dialog .history-periods { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.sensor-history-chart { margin-top: 16px; padding: 12px 8px; border: 1px solid #d4e2ea; border-radius: 14px; background: #fff; }
+.sensor-history-chart h3 { margin: 0 8px; font-size: 16px; }
+.sensor-history-chart p { margin: 7px 8px; color: #63849c; font-size: 12px; }
+.sensor-history-chart svg { display: block; width: 100%; height: auto; }
+.sensor-history-chart svg text { fill: #63849c; stroke: none; font: 400 11px system-ui,sans-serif; }
+.sensor-history-grid { stroke: #d7e3ec; stroke-width: 1; }
+.sensor-history-line { fill: none; stroke: var(--sensor-history-color, #426e8c); stroke-width: 2; pointer-events: none; }
+.sensor-history-chart circle { fill: var(--sensor-history-color, #426e8c); cursor: pointer; }
+.sensor-history-chart circle:focus-visible { outline: 2px solid var(--sensor-history-color, #426e8c); outline-offset: 3px; }
+.sensor-history-sync { font-size: 11px; color: #8c582d; }
+[data-sensor-history] { cursor: pointer; }
+@media(max-width:450px) { #sensor-history-dialog { padding: 18px; } .sensor-history-chart p { font-size: 11px; } }
+
+#sensor-history-dialog.sensor-history-red { background:#000; color:#ed5d50; border-color:#8b3930; box-shadow:none; }
+#sensor-history-dialog.sensor-history-red::backdrop { background:#000d; backdrop-filter:none; }
+#sensor-history-dialog.sensor-history-red * { color:#ed5d50; border-color:#622b25; }
+#sensor-history-dialog.sensor-history-red button,#sensor-history-dialog.sensor-history-red input,#sensor-history-dialog.sensor-history-red section { background:#000; }
+#sensor-history-dialog.sensor-history-red svg text,#sensor-history-dialog.sensor-history-red circle { fill:#ed5d50; }
+#sensor-history-dialog.sensor-history-red .sensor-history-line { stroke:#ed5d50; }
+#sensor-history-dialog.sensor-history-red .sensor-history-grid { stroke:#622b25; }
+#sensor-history-dialog.sensor-history-red .history-periods { background:#000; border:1px solid #622b25; }
+#sensor-history-dialog.sensor-history-red [aria-pressed=true] { background:#461b15; border-color:#ed5d50; }
+
+.sensor-history-chart[data-metric="humidity"] { --sensor-history-color: #c94343; }
+
+/* Horizontal gestures navigate dates while retaining vertical scrolling and pinch zoom. */
+#sensor-history-dialog{touch-action:pan-y pinch-zoom}

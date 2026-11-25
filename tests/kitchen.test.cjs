@@ -48,9 +48,9 @@ test('two AEG channels share a single Shelly EM read and cannot control its rela
   assert.equal(d.activity,active);
   assert.equal(d.canControl,false);
   assert.equal(d.on,null);
-  for(const watts of [0,1,10,10.01]){
+  for(const watts of [0,1,3,10,10.01,10.8,15,15.01]){
    const result=M.kitchenMeterState(id,binding,{...reading,meter:{...meter,power:watts}},now);
-   assert.equal(result.activity,watts>(id==='oven'?10:0));
+   assert.equal(result.activity,watts>(id==='oven'?15:10));
    assert.equal(result.powerWatts,watts);
   }
   assert.equal(M.kitchenMeterState(id,binding,reading,now+45001).activity,null);

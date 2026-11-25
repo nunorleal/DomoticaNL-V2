@@ -1,0 +1,27 @@
+/* Fixed circular close targets, independent of native iPad button metrics. */
+dialog{--close-control-size:44px}
+:is(#sensor-history-dialog,#presence-history-dialog){--close-control-size:40px}
+dialog.settings-shell{--close-control-size:36px!important}
+dialog :is(.popup-close,.close,.energy-history-close,.energy-tariff-close,.room-power-close,.sensor-history-close,.presence-history-close,.appliance-timer-close){
+ position:absolute!important;box-sizing:border-box!important;appearance:none!important;-webkit-appearance:none!important;
+ display:grid!important;place-items:center!important;flex:none!important;
+ width:var(--close-control-size)!important;height:var(--close-control-size)!important;
+ min-width:var(--close-control-size)!important;max-width:var(--close-control-size)!important;
+ min-height:var(--close-control-size)!important;max-height:var(--close-control-size)!important;
+ inline-size:var(--close-control-size)!important;block-size:var(--close-control-size)!important;
+ min-inline-size:var(--close-control-size)!important;max-inline-size:var(--close-control-size)!important;
+ min-block-size:var(--close-control-size)!important;max-block-size:var(--close-control-size)!important;
+ padding:0!important;margin:0!important;border-radius:50%!important;
+ font-size:0!important;line-height:1!important;text-indent:0!important;
+}
+dialog .media-popup-header .popup-close{position:relative!important}
+dialog .appliance-timer-close{--close-control-size:32px;position:relative!important}
+dialog :is(.popup-close,.close,.energy-history-close,.energy-tariff-close,.room-power-close,.sensor-history-close,.presence-history-close,.appliance-timer-close)>svg{display:none!important}
+dialog :is(.popup-close,.close,.energy-history-close,.energy-tariff-close,.room-power-close,.sensor-history-close,.presence-history-close,.appliance-timer-close)::before,
+dialog :is(.popup-close,.close,.energy-history-close,.energy-tariff-close,.room-power-close,.sensor-history-close,.presence-history-close,.appliance-timer-close)::after{
+ content:""!important;position:absolute!important;inset:auto!important;top:50%!important;left:50%!important;
+ display:block!important;width:18px!important;height:2px!important;margin:0!important;padding:0!important;
+ border:0!important;border-radius:1px!important;background:currentColor!important;pointer-events:none;
+ transform:translate(-50%,-50%) rotate(45deg)!important;
+}
+dialog :is(.popup-close,.close,.energy-history-close,.energy-tariff-close,.room-power-close,.sensor-history-close,.presence-history-close,.appliance-timer-close)::after{transform:translate(-50%,-50%) rotate(-45deg)!important}

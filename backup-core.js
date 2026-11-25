@@ -11,6 +11,14 @@
   if(!object(data)||Object.keys(data).length>100)fail();safe(data);
   for(const k of Object.keys(data))if(!allowed(k))fail();
   if(Object.hasOwn(data,'casa-nl-appliance-timer-presets-v1')){const core=typeof module==='object'&&module.exports?require('./appliance-timer-store.js'):globalThis.CasaApplianceTimerStore;data['casa-nl-appliance-timer-presets-v1']=core.presetSettings(data['casa-nl-appliance-timer-presets-v1'])}
+  if(Object.hasOwn(data,'casa-nl-sensor-history-v1')){
+   const core=typeof module==='object'&&module.exports?require('./sensor-history-core.js'):globalThis.CasaSensorHistoryCore;
+   data['casa-nl-sensor-history-v1']=core.validate(data['casa-nl-sensor-history-v1']);
+  }
+  if(Object.hasOwn(data,'casa-nl-presence-history-v1')){
+   const core=typeof module==='object'&&module.exports?require('./presence-history-core.js'):globalThis.CasaPresenceHistoryCore;
+   data['casa-nl-presence-history-v1']=core.validate(data['casa-nl-presence-history-v1']);
+  }
   // Retired camera links are neither restored nor exported.
   delete data['casa-nl-camera-hall-v1'];
   if(Object.hasOwn(data,'casa-nl-show-cats-v1')&&typeof data['casa-nl-show-cats-v1']!=='boolean')fail();
@@ -59,7 +67,7 @@
   return data;
  }
  function create(storage,appVersion){const data={};for(let i=0;i<storage.length;i++){const k=storage.key(i);if(allowed(k)){try{data[k]=JSON.parse(storage.getItem(k))}catch{throw new Error('Não foi possível ler os dados guardados: '+k)}}}validateStorage(data);if(data['casa-nl-shelly-cloud-v1']){data['casa-nl-shelly-cloud-v1'].authKey='';data['casa-nl-shelly-cloud-v1'].rememberKey=false}return {application:'Casa NL',schemaVersion:1,appVersion,exportedAt:new Date().toISOString(),data}}
- function parse(text){if(typeof text!=='string'||new TextEncoder().encode(text).length>MAX_BYTES)throw new Error('O ficheiro deve ter no máximo 8 MB.');let value;try{value=JSON.parse(text)}catch{fail()}if(!object(value)||value.application!=='Casa NL'||value.schemaVersion!==1)fail();validateStorage(value.data);credentials(value);if(value.unifiCredentials!==undefined)backupCrypto().validateUnifi(value.unifiCredentials);return value}
+ function parse(text){if(typeof text!=='string'||new TextEncoder().encode(text).length>MAX_BYTES)throw new Error('O ficheiro deve ter no máximo 8 MB.');let value;try{value=JSON.parse(text)}catch{fail()}if(!object(value)||value.application!=='Casa NL'||value.schemaVersion!==1)fail();validateStorage(value.data);credentials(value);if(value.unifiCredentials!==undefined)backupCrypto().validateUnifi(value.unifiCredentials);if(value.supabaseCredentials!==undefined)backupCrypto().validateSupabase(value.supabaseCredentials);return value}
  const CLOUD='casa-nl-shelly-cloud-v1',GROUPS=['bindings','lightBindings','sensorBindings','windowBindings','mediaBindings','officeBindings','kitchenBindings','alarm'],SINGLES=['door','cellarDoor','fan','heater','dehumidifier','homeEnergy','christmasTree'];
  function credentials(backup){
   const config=backup.data[CLOUD],value=backup.shellyCredentials;
@@ -76,8 +84,10 @@
   validateStorage(out.data);return {backup:out,preserved:Math.max(0,associationCount(out.data[CLOUD])-before)};
  }
  function backupCrypto(){return typeof module==='object'&&module.exports?require('./backup-crypto.js'):globalThis.CasaBackupCrypto}
- function restore(storage,backup,{restoreCredentials=false,decrypted=null,unifi=null,unifiStorageKey='presence-unifi:t2:restored-config'}={}){
-  const clean=JSON.parse(JSON.stringify(backup));if(!Object.hasOwn(clean.data,'casa-nl-daily-energy-v1')){const old=storage.getItem('casa-nl-daily-energy-v1');if(old)clean.data['casa-nl-daily-energy-v1']=JSON.parse(old)}if(!Object.hasOwn(clean.data,'casa-nl-electricity-tariffs-v1')){const old=storage.getItem('casa-nl-electricity-tariffs-v1');if(old)clean.data['casa-nl-electricity-tariffs-v1']=JSON.parse(old)}const data=validateStorage(clean.data),included=credentials(clean),config=data[CLOUD];
+ function restore(storage,backup,{restoreCredentials=false,decrypted=null,unifi=null,supabase=null,unifiStorageKey='presence-unifi:t2:restored-config'}={}){
+  const clean=JSON.parse(JSON.stringify(backup));if(!Object.hasOwn(clean.data,'casa-nl-daily-energy-v1')){const old=storage.getItem('casa-nl-daily-energy-v1');if(old)clean.data['casa-nl-daily-energy-v1']=JSON.parse(old)}if(!Object.hasOwn(clean.data,'casa-nl-electricity-tariffs-v1')){const old=storage.getItem('casa-nl-electricity-tariffs-v1');if(old)clean.data['casa-nl-electricity-tariffs-v1']=JSON.parse(old)}if(!Object.hasOwn(clean.data,'casa-nl-sensor-history-v1')){
+   const old=storage.getItem('casa-nl-sensor-history-v1');if(old)clean.data['casa-nl-sensor-history-v1']=JSON.parse(old);
+  }if(!Object.hasOwn(clean.data,'casa-nl-presence-history-v1')){const old=storage.getItem('casa-nl-presence-history-v1');if(old)clean.data['casa-nl-presence-history-v1']=JSON.parse(old)}const data=validateStorage(clean.data),included=credentials(clean),config=data[CLOUD];
   if(config){
    let current=null;try{current=JSON.parse(storage.getItem(CLOUD)||'null')}catch{}
    config.authKey='';config.rememberKey=false;
@@ -98,9 +108,17 @@
     unifiEntry=JSON.stringify({...backupCrypto().unifiConfig(unifi),revision:Date.now()});
    }
   }
-  const previous=new Map();for(let i=0;i<storage.length;i++){const k=storage.key(i);if(allowed(k))previous.set(k,storage.getItem(k))}
-  if(unifiEntry!==null)previous.set(unifiStorageKey,storage.getItem(unifiStorageKey));
-  try{for(const k of previous.keys())storage.removeItem(k);for(const [k,v]of Object.entries(data))storage.setItem(k,JSON.stringify(v));if(unifiEntry!==null)storage.setItem(unifiStorageKey,unifiEntry)}catch(e){try{for(const k of Object.keys(data))storage.removeItem(k);for(const [k,v]of previous){if(v===null)storage.removeItem(k);else storage.setItem(k,v)}}catch{}throw new Error('Não foi possível guardar a importação neste navegador. Verifique o espaço disponível.')}
+  let supabaseEntry=null;
+  if(clean.supabaseCredentials!==undefined){
+   backupCrypto().validateSupabase(clean.supabaseCredentials);
+   if(restoreCredentials){if(!supabase)throw Error('Introduza a palavra-passe do backup antes de restaurar o acesso Supabase.');backupCrypto().supabaseConfig(supabase);supabaseEntry=JSON.stringify(clean.supabaseCredentials)}
+  }
+  const remove=[];for(let i=0;i<storage.length;i++){const k=storage.key(i);if(allowed(k))remove.push(k)}
+  const entries=Object.entries(data).map(([k,v])=>[k,JSON.stringify(v)]);
+  if(unifiEntry!==null)entries.push([unifiStorageKey,unifiEntry]);
+  const store=typeof module==='object'&&module.exports?require('./backup-storage.js'):globalThis.CasaBackupStorage;
+  if(supabaseEntry!==null)entries.push(['casa-history-sync-t2-backup-login',supabaseEntry]);
+  store.write(storage,entries,remove);
  }
 
  return {create,parse,restore,prepareImport,describe,associationCount,credentials,MAX_BYTES};

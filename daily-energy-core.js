@@ -75,5 +75,15 @@
   }
   return {record,today,history,snapshot:()=>JSON.parse(JSON.stringify(state))};
  }
- return {day,identity,validate,create,MAX_DAYS};
+ function backupSnapshot(local,shared){
+  const out=validate(local);if(!shared)return out;
+  for(const [id,remote]of Object.entries(validate(shared).entries)){
+   const entry=out.entries[id];if(!entry){out.entries[id]=remote;continue}
+   for(const [date,row]of Object.entries(remote.days))if(row.observed||!entry.days[date]?.observed)entry.days[date]=row;
+   if(remote.last[0]>entry.last[0])entry.last=remote.last;
+  }
+  for(const entry of Object.values(out.entries)){const dates=Object.keys(entry.days).sort();for(const date of dates.slice(0,Math.max(0,dates.length-MAX_DAYS)))delete entry.days[date];}
+  return validate(out);
+ }
+ return {day,identity,validate,create,backupSnapshot,MAX_DAYS};
 });

@@ -151,6 +151,22 @@
  });
  window.addEventListener('meteosettingsopen',loadFrame);
  function settings(){if(!host.hidden)home(false);document.getElementById('open-shelly').click()}
+ function openPresenceSettings(){
+  if(host.hidden||!window.CasaPresence?.openSettings)return false;
+  returnToMeteo=true;
+  setMeteoVisible(false);
+  window.CasaPresence.openSettings();
+  return true;
+ }
+ function openIndoorSensor(){
+  const id=selectedIndoorSensor();
+  if(host.hidden||!indoorSensors().some(sensor=>sensor.id===id&&sensor.configured))return false;
+  const floor=id==='cellar'?-1:0;
+  home(false);
+  if(window.CasaFloors.current()!==floor)window.CasaFloors.show(floor);
+  selectRoom(id);
+  return true;
+ }
  function toggleLamp(){return CasaMeteoCore.lampAction(window.CasaShelly,settings)}
  async function openMorningBlind({sunrise,sunset}={}){
   const context=()=>({red:!host.hidden&&!document.hidden&&frame.contentDocument?.querySelector('main')?.dataset.nightPalette==='red',now:Date.now(),sunrise,sunset});
@@ -170,8 +186,11 @@
   appVersion:()=>document.querySelector('meta[name="application-version"]')?.content,
   visible:()=>!host.hidden,preferences:CasaMeteoCore.preferences,ready,open,openFloor,home:()=>home(),settings,openMeteoSettings,settingsTarget:()=>document.getElementById('meteo-settings-content'),toggleLamp,openMorningBlind,
   activityDevices:()=>window.CasaMeteoActivity?.devices()||[],
-  openActivityDevice,
+  openActivityDevice,openIndoorSensor,openPresenceSettings,
   activitySnapshot:()=>window.CasaMeteoActivity?.snapshot()||[],
+  openPresenceHistory:id=>{if(!host.hidden)window.CasaPresenceHistoryView?.open(id,{trigger:frame,red:frame.contentDocument?.documentElement.classList.contains('red-night')})},
+  presenceSnapshot:()=>window.CasaPresence?.snapshot?.()||[],
+  openSensorHistory:()=>{window.CasaSensorHistoryView?.open(selectedIndoorSensor(),undefined,frame,{red:frame.contentDocument?.documentElement.classList.contains('red-night')});},
   indoorSensors,selectIndoorSensor,
   bedroomClimate:()=>CasaMeteoCore.indoorClimate(selectedIndoorSensor(),indoorSensors(),id=>window.CasaShelly?.sensorReading(id)),
   realTemperature:()=>CasaMeteoCore.realTemperature(window.CasaShelly?.sensorBinding('balcony'),window.CasaShelly?.sensorReading('balcony')),

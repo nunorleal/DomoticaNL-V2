@@ -192,7 +192,7 @@
  }
  function sensorMarkup(id){
   const d=sensorReading(id),value=(v,unit)=>Number.isFinite(v)?v.toLocaleString('pt-PT',{maximumFractionDigits:1})+unit:'—';
-  return `<div class="sensor-metrics"><div><span>Temperatura</span><strong data-sensor-temperature>${value(d?.temperature,' °C')}</strong></div>${id==='cellar'&&sensorBinding(id)?.type==='door-window2'?'':`<div><span>Humidade</span><strong data-sensor-humidity>${value(d?.humidity,' %')}</strong></div>`}</div><p class="sensor-caption">${escapeHTML(sensorCaption(id))}</p>${d?.battery!==null&&d?.battery!==undefined?`<p class="sensor-caption">Bateria: ${value(d.battery,' %')}</p>`:''}${d?.fetchedAt?`<small class="sensor-caption">Consultado na Cloud: ${new Date(d.fetchedAt).toLocaleString('pt-PT')}. A hora da medição pode ser anterior.</small>`:''}`;
+  return `<div class="sensor-metrics"><div><span>Temperatura</span><strong data-sensor-temperature>${value(d?.temperature,' °C')}</strong></div>${id==='cellar'&&sensorBinding(id)?.type==='door-window2'?'':`<div><span>Humidade</span><strong data-sensor-humidity>${value(d?.humidity,' %')}</strong></div>`}</div><button type="button" class="energy-history-shortcut" data-sensor-history="${id}">Histórico de temperatura e humidade</button><p class="sensor-caption">${escapeHTML(sensorCaption(id))}</p>${d?.battery!==null&&d?.battery!==undefined?`<p class="sensor-caption">Bateria: ${value(d.battery,' %')}</p>`:''}${d?.fetchedAt?`<small class="sensor-caption">Consultado na Cloud: ${new Date(d.fetchedAt).toLocaleString('pt-PT')}. A hora da medição pode ser anterior.</small>`:''}`;
  }
  function resultCard(id,type,body,label){
   const key=type+'-'+id,name=label||(id==='cellar'?'Cave':rooms.find(r=>r.id===id).name);
@@ -303,7 +303,7 @@
   return [tree,...entries.map(e=>e.kind==='light'?lightBinding(e.id):e.kind==='cover'?binding(e.id):e.kind==='sensor'?sensorBinding(e.id):e.kind==='window'?config.windowBindings?.[e.id]:e.kind==='door'?(e.id==='cellar'?config.cellarDoor:config.door):e.kind==='alarm'?config.alarm?.[e.id]:['media','office','kitchen'].includes(e.kind)?mediaBinding(e.id):config[e.kind])].filter(Boolean);
  }
  function popupIds(){
-  const dialog=[...document.querySelectorAll('dialog[open]:not(#energy-history-dialog)')].at(-1);if(!dialog)return null;let entries;
+  const dialog=[...document.querySelectorAll('dialog[open]:not(#energy-history-dialog):not(#sensor-history-dialog)')].at(-1);if(!dialog)return null;let entries;
   switch(dialog.id){
    case 'room-dialog':entries=detailView==='light'?[lightBinding(selected)]:detailView==='blind'?[binding(selected)]:roomDeviceBindings(selected);break;
    case 'media-dialog':case 'office-dialog':{const role=dialog.id==='media-dialog'?'media':'office',id=dialog.querySelector('[data-'+role+'-device][aria-pressed="true"]')?.dataset[role+'Device'];entries=[id==='living-lamp'?lightBinding('living'):mediaBinding(id)];break}
@@ -414,7 +414,7 @@
  $('open-shelly').addEventListener('click',()=>{
   fill();summary();
   if(!$('settings-dialog').open){showPopup('shelly-dialog');return}
-  if(!$('shelly-dialog').open)$('shelly-dialog').showModal();
+  if(!$('shelly-dialog').open){if(window.CasaSettingsShell)window.CasaSettingsShell.open($('shelly-dialog'));else $('shelly-dialog').showModal()}
   queueMicrotask(()=>window.CasaShelly?.focusPopup());
  });
  $('shelly-refresh').addEventListener('click',refresh);

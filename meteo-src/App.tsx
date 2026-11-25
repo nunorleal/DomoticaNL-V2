@@ -2,6 +2,7 @@ import { StormAtmosphere } from "./StormAtmosphere";
 import { ScreenRain } from "./ScreenRain";
 import { bridge, openCasaSettings } from "./bridge";
 import { ActivityDevices, type ActivityRow } from "./ActivityDevices";
+import { HomePresence, type HomePerson } from "./HomePresence";
 import { BedroomClimate } from "./BedroomClimate";
 import { RealTemperature } from "./RealTemperature";
 import { useBedsideMode } from "./useBedsideMode";
@@ -223,7 +224,7 @@ export default function App() {
     (prefs.night === "auto" &&
       isNightSchedule(localMinutes, prefs.start, prefs.end));
   const scheduledRed = redActive(prefs, localMinutes, scheduledNight);
-  const { red, night, blind, requestMorning } = useBedsideMode(prefs, scheduledNight, scheduledRed, tz, {now,sunrise,sunset});
+  const { red, night, blind, requestMorning, cycleMode } = useBedsideMode(prefs, scheduledNight, scheduledRed, tz, {now,sunrise,sunset});
   const focus = useFocusView(prefs.focusSeconds, open || bridge?.visible() === false);
   useEffect(() => { if (focus.expanded) dismissFocus.current?.focus({ preventScroll: true }); }, [focus.expanded]);
   useLayoutEffect(() => {
@@ -289,7 +290,8 @@ export default function App() {
         .slice(0, 7)
     : [];
   const activityRows: ActivityRow[] = prefs.activityEnabled ? (bridge?.activitySnapshot?.() || []).filter((row:ActivityRow)=>prefs.activityDevices.includes(row.id)) : [];
-  const activityLines = Math.ceil(activityRows.length / 2);
+  const peopleAtHome: HomePerson[] = bridge?.presenceSnapshot?.() || [];
+  const activityLines = Math.ceil((focus.expanded?Math.min(activityRows.length,2):activityRows.length) / 2);
   const stale = !!snapshot && now - snapshot.fetchedAt > 30 * 60000;
   const min = w
       ? Math.min(...days.map(({ i }) => w.daily.temperature_2m_min[i]))
@@ -377,9 +379,10 @@ export default function App() {
             </button>
             <button
               className={"icon-button " + (night ? "selected" : "")}
-              title="Modo de cabeceira"
+              title={red ? "Modo vermelho · mudar para normal" : night ? "Modo escuro · mudar para vermelho" : "Modo normal · mudar para escuro"}
               aria-label="Alternar modo de cabeceira"
-              onClick={() => update({ ...prefs, night: night ? "off" : "on" })}
+              aria-pressed={night}
+              onClick={cycleMode}
             >
               <Moon size={19} />
             </button>
@@ -406,7 +409,7 @@ export default function App() {
             Lâmpada: {lamp.error}
           </button>
         )}
-        <header className={["hero",bridge?.bedroomClimate?.()?.configured?"has-bedroom-climate":"",activityLines?"has-activity":""].filter(Boolean).join(" ")} data-activity-rows={activityLines}>
+        <header className={["hero",bridge?.bedroomClimate?.()?.configured?"has-bedroom-climate":"",activityLines?"has-activity":"",(peopleAtHome.length||bridge?.openPresenceHistory)?"has-home-presence":""].filter(Boolean).join(" ")} data-activity-rows={activityLines}>
           <div className="date">
             <span>{fmt(now, tz, { weekday: "long" })}</span>
             <p>
@@ -476,8 +479,9 @@ export default function App() {
                 : "—"}
             </span>
           </div>
+          <HomePresence rows={peopleAtHome} />
           <BedroomClimate unit={prefs.temp} now={now} />
-          <ActivityDevices rows={activityRows} onOpen={bridge?.openActivityDevice ? (id) => {
+          <ActivityDevices rows={activityRows} compact={focus.expanded} onShowAll={focus.wake} onOpen={bridge?.openActivityDevice ? (id) => {
             if (bridge.openActivityDevice(id)) focus.wake();
           } : undefined} />
           {prefs.demo !== "auto" && (

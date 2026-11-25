@@ -82,5 +82,6 @@
   if(!lamp.ready||!lamp.state){await s.refresh({quiet:true});return}
   await s.commandLight('master',!lamp.state.on,undefined,'meteo');
  }
- return {indoorClimate,idle,preferences,lampAction,screensaver,realTemperature,bedroomClimate,redActive,bedroomBlind,bedsideMode,morningBlindVisible,morningBlindAction};
+ function nextBedsidePalette({night=false,red=false}={}){return red?'day':night?'red':'color'}
+ return {nextBedsidePalette,indoorClimate,idle,preferences,lampAction,screensaver,realTemperature,bedroomClimate,redActive,bedroomBlind,bedsideMode,morningBlindVisible,morningBlindAction};
 });

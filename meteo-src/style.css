@@ -1658,7 +1658,8 @@ html.red-night,html.red-night body{background:#000}
 .hero .meteo-activity{width:100%;margin:8px auto 0;display:flex;flex-direction:column;gap:7px;flex-shrink:0}
 .meteo-activity-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;color:#fff}
 .meteo-activity-device{border-radius:17px;min-width:0;display:grid;grid-template-columns:19px minmax(0,1fr) auto;gap:8px;align-items:center;min-height:46px;padding:9px 10px;text-align:left}
-.focus-view button.meteo-activity-device{position:relative;z-index:21}
+/* Interactive equipment and the whole indoor sensor panel stay above the dismiss surface. */
+.focus-view :is(button.meteo-activity-device,.bedroom-climate){position:relative;z-index:21}
 .meteo-activity-device>svg{width:18px;height:18px;color:#8bd5ff;flex:none}.meteo-activity-device[data-kind=timer]>svg{color:#ffd481}
 .meteo-activity-name{display:flex;align-items:center;min-width:0;gap:4px;font-size:13px;line-height:1.25}
 .meteo-activity-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1765,3 +1766,86 @@ html.red-night,html.red-night body{background:#000}
 .settings .meteo-group-content { padding-bottom: 10px; }
 .settings .meteo-timer-field small { display: block; color: #b7cad8; }
 .settings .meteo-city { display: flex; justify-content: space-between; gap: 8px; }
+
+/* Confirmed household presence, above the indoor readings. */
+.hero .home-presence {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  gap: 20px;
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 16px auto 0;
+  padding: 9px 20px;
+  border-radius: 50px;
+  flex-shrink: 0;
+  color: #fff;
+}
+.home-presence-label { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 550; white-space: nowrap; }
+.home-presence-label svg { width: 25px; height: 25px; }
+.home-presence-people { display: flex; align-items: center; gap: 10px; padding-left: 20px; border-left: 1px solid #ffffff55; }
+.home-presence-person {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 2px solid #82d886;
+  border-radius: 50%;
+  background: #c3dbea26;
+  flex: none;
+}
+.home-presence-person img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.home-presence-person svg { width: 60%; height: 60%; }
+.focus-view .hero .home-presence { margin-top: .6dvh; padding: 6px 18px; }
+/* Keep the face buttons above the full-screen dismiss surface, including the glass stacking context. */
+.focus-view .hero .home-presence { position: relative; z-index: 21; pointer-events: none; }
+.focus-view .home-presence-person { pointer-events: auto; width: clamp(36px, 5dvh, 54px); height: clamp(36px, 5dvh, 54px); }
+.focus-view .hero.has-home-presence .clock { font-size: clamp(55px, min(25vw, 18dvh), 220px); min-height: 0; }
+.red-night .home-presence-person { border-color: currentColor; background: #000; }
+.red-night .home-presence-person img { filter: grayscale(1); }
+@media (max-width:480px) {
+  .hero .home-presence { gap: 12px; padding: 7px 14px; margin-top: 12px; }
+  .home-presence-label { font-size: 14px; gap: 7px; }
+  .home-presence-label svg { width: 21px; height: 21px; }
+  .home-presence-people { padding-left: 12px; gap: 7px; }
+  .home-presence-person { width: 40px; height: 40px; }
+}
+@media (max-height:650px) {
+  .focus-view .hero .home-presence { padding: 4px 12px; }
+  .focus-view .home-presence-label { font-size: 13px; }
+  .focus-view .home-presence-person { width: 32px; height: 32px; }
+}
+
+.climate-history-button { display:inline-flex; align-items:center; gap:5px; flex:none; border:1px solid #ffffff40; border-radius:10px; padding:7px 9px; background:#ffffff10; color:inherit; font:inherit; font-size:12px; cursor:pointer; }
+.climate-history-button svg { width:17px; height:17px; }
+@media(max-width:480px){.climate-history-button{padding:7px}.climate-history-button span{display:none}.bedroom-climate-heading .bedroom-climate-source{width:17px}}
+
+/* Banner actions keep the same layout and night palette. */
+button.home-presence-person{padding:0;color:inherit;cursor:pointer;font:inherit;}
+.climate-device-button{width:100%;padding:0;border:0;background:transparent;color:inherit;font:inherit;text-align:inherit;cursor:pointer;}
+.home-presence-person:focus-visible,.climate-device-button:focus-visible{outline:2px solid currentColor;outline-offset:3px;}
+
+button.home-presence-access{border:0;background:transparent;color:inherit;padding:0;margin:0;font-family:inherit;line-height:1.3;cursor:pointer;appearance:none;-webkit-appearance:none}
+.home-presence-access:focus-visible{outline:2px solid currentColor;outline-offset:4px;border-radius:6px}
+.focus-view .home-presence-access{pointer-events:auto}
+
+/* Clock glyphs must keep their own line box when the focus view has many banners. */
+main.focus-view{overflow-y:auto;flex-direction:column;justify-content:flex-start;align-items:center;padding-bottom:max(32px,3dvh)}
+.focus-view .hero{flex-shrink:0;max-height:none;margin-block:auto}
+.focus-view .hero .clock{flex-shrink:0}
+.focus-view .hero .location{flex-shrink:0;margin-top:8px}
+.focus-view .hero.has-home-presence.has-activity .clock{font-size:clamp(44px,min(25vw,var(--activity-clock)),220px)}
+.focus-view .hero.has-activity .date>span{font-size:clamp(22px,min(5vw,4dvh),38px)}
+.focus-view .hero.has-activity .date p{font-size:clamp(14px,min(3vw,2.5dvh),22px)}
+.focus-view .hero.has-activity .location h1{font-size:clamp(20px,min(4vw,3dvh),30px)}
+.focus-view .hero.has-activity .condition h2{font-size:clamp(18px,min(4vw,3dvh),30px)}
+.focus-view .hero.has-activity .condition p{font-size:clamp(12px,min(2.5vw,2dvh),20px)}
+
+/* The expanded clock shows one activity row; the ellipsis opens the complete normal view. */
+.focus-view .hero .meteo-activity[data-has-more=true]{position:relative;box-sizing:border-box;padding-right:40px}
+.focus-view .meteo-activity-more{position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:21;display:grid;place-items:center;box-sizing:border-box;width:30px;height:30px;min-width:30px;min-height:30px;margin:0;padding:0;border:1px solid #ffffff40;border-radius:50%;color:inherit;font-family:inherit;font-size:24px;line-height:1;cursor:pointer;appearance:none;-webkit-appearance:none}
+.focus-view .meteo-activity-more:focus-visible{outline:2px solid currentColor;outline-offset:3px}
