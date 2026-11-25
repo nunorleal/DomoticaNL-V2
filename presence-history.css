@@ -60,3 +60,6 @@
 
 /* Absent residents remain selectable in the history chooser. */
 #presence-history-dialog .presence-history-avatar.is-away .presence-history-photo{filter:grayscale(1);opacity:.5}
+
+/* Reserve horizontal gestures for date navigation, retaining vertical scroll and pinch zoom. */
+#presence-history-dialog{touch-action:pan-y pinch-zoom}

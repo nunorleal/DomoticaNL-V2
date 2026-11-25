@@ -112,4 +112,32 @@
  document.addEventListener('click',e=>{const b=e.target.closest('[data-presence-history]');if(b){e.preventDefault();open(Number(b.dataset.presenceHistory),{trigger:b})}});
  document.addEventListener('visibilitychange',()=>{if(dialog.open&&!document.hidden){stay();renderChooser()}});
  window.addEventListener('presencehistorychange',()=>{if(dialog.open)render()});window.CasaPresenceHistoryView={open};
+ // Horizontal touch gestures change the date window; vertical scroll and pinch zoom remain native.
+ let swipe=null,swipeClickUntil=0;
+ const releaseSwipe=id=>{if(dialog.hasPointerCapture?.(id))dialog.releasePointerCapture(id)};
+ dialog.addEventListener('pointerdown',event=>{
+  swipeClickUntil=0;
+  if(swipe){releaseSwipe(swipe.id);swipe=null}
+  if(!dialog.open||!event.isPrimary||!['touch','pen'].includes(event.pointerType)||(event.target.closest('button,input,select,textarea,summary,a,[contenteditable]')&&!event.target.closest('.history-chart,.presence-timeline,.presence-compare-lanes')))return;
+  const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)return;
+  swipe={id:event.pointerId,x:event.clientX,y:event.clientY,at:performance.now(),horizontal:false};
+ },{passive:true});
+ dialog.addEventListener('pointermove',event=>{
+  if(!swipe||event.pointerId!==swipe.id)return;
+  const x=Math.abs(event.clientX-swipe.x),y=Math.abs(event.clientY-swipe.y);
+  if(!swipe.horizontal&&y>12&&y>x){const id=swipe.id;swipe=null;releaseSwipe(id);return}
+  if(x>12&&x>y*1.4){swipe.horizontal=true;try{dialog.setPointerCapture(event.pointerId)}catch{}}
+  if(swipe.horizontal&&event.cancelable)event.preventDefault();
+ },{passive:false});
+ dialog.addEventListener('pointerup',event=>{
+  if(!swipe||event.pointerId!==swipe.id)return;
+  const start=swipe;swipe=null;releaseSwipe(start.id);
+  const x=event.clientX-start.x,y=event.clientY-start.y;
+  if(Math.abs(x)<48||Math.abs(x)<Math.abs(y)*1.4||performance.now()-start.at>1500)return;
+  swipeClickUntil=performance.now()+500;const button=dialog.querySelector(x<0?'[data-next]':'[data-previous]');if(button&&!button.disabled)button.click();
+ });
+ const cancelSwipe=()=>{const id=swipe?.id;swipe=null;if(id!==undefined)releaseSwipe(id)};
+ dialog.addEventListener('pointercancel',cancelSwipe);dialog.addEventListener('lostpointercapture',cancelSwipe);dialog.addEventListener('close',cancelSwipe);
+ dialog.addEventListener('click',event=>{if(event.detail>0&&performance.now()<swipeClickUntil){event.preventDefault();event.stopImmediatePropagation()}},true);
+
 })();

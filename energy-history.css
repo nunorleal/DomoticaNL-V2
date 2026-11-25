@@ -27,3 +27,6 @@
 .energy-intraday-line circle{fill:#426e8c;stroke:none;cursor:pointer}
 .energy-intraday-line circle[aria-pressed=true]{fill:#163f5c;stroke:#163f5c;stroke-width:2}
 .energy-intraday-line circle:focus-visible{outline:2px solid #426e8c;outline-offset:3px}
+
+/* Reserve horizontal gestures for date navigation, retaining vertical scroll and pinch zoom. */
+#energy-history-dialog{touch-action:pan-y pinch-zoom}
